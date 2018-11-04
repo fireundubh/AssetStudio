@@ -912,7 +912,21 @@ namespace AssetStudio
 		    return typeDef ?? module.ExportedTypes.Where(moduleExportedType => moduleExportedType.FullName == sourcePath).Select(moduleExportedType => moduleExportedType.Resolve()).FirstOrDefault();
 	    }
 
-		public static void AddNodes_MonoScript(TreeView monoPreviewBox, AssetPreloadData assetPreloadData)
+	    public static void AddNodes(TreeView treeView, AssetPreloadData assetPreloadData, bool isMonoBehaviour)
+	    {
+			treeView.Nodes.Clear();
+
+		    if (!isMonoBehaviour)
+		    {
+			    AddNodes_MonoScript(treeView, assetPreloadData);
+		    }
+		    else
+		    {
+			    AddNodes_MonoBehaviour(treeView, assetPreloadData);
+		    }
+	    }
+
+	    private static void AddNodes_MonoScript(TreeView monoPreviewBox, AssetPreloadData assetPreloadData)
 	    {
 			TryToLoadModules();
 
@@ -926,7 +940,7 @@ namespace AssetStudio
 		    }
 	    }
 
-	    public static void AddNodes_MonoBehaviour(TreeView previewTree, AssetPreloadData assetPreloadData, int indent = -1, bool isRoot = true)
+	    private static void AddNodes_MonoBehaviour(TreeView previewTree, AssetPreloadData assetPreloadData, int indent = -1, bool isRoot = true)
 	    {
 		    TryToLoadModules();
 
