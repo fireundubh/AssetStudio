@@ -173,6 +173,7 @@
     <Compile Include="Classes\Object.cs" />
     <Compile Include="StudioClasses\NativeMethods.cs" />
     <Compile Include="StudioClasses\NodeHelper.cs" />
+    <Compile Include="StudioClasses\NodeReader.cs" />
     <Compile Include="StudioClasses\PPtr.cs" />
     <Compile Include="Classes\Renderer.cs" />
     <Compile Include="Classes\Texture.cs" />
@@ -198,6 +199,7 @@
     <Compile Include="StudioClasses\BinaryWriterExtensions.cs" />
     <Compile Include="StudioClasses\BuildTarget.cs" />
     <Compile Include="StudioClasses\ClassIDType.cs" />
+    <Compile Include="StudioClasses\TypeReader.cs" />
     <Compile Include="StudioClasses\TypeTreeNode.cs" />
     <Compile Include="StudioClasses\TypeTreeHelper.cs" />
     <Compile Include="StudioClasses\ResourcesHelper.cs" />
