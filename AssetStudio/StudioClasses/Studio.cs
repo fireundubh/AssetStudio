@@ -8,6 +8,8 @@ using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 using dnlib.DotNet;
+using AssetStudio.Properties;
+using AssetStudio.StudioClasses;
 using static AssetStudio.Exporter;
 
 namespace AssetStudio
@@ -23,10 +25,11 @@ namespace AssetStudio
         public static Dictionary<string, SortedDictionary<int, TypeTreeItem>> AllTypeMap = new Dictionary<string, SortedDictionary<int, TypeTreeItem>>();
         public static string mainPath;
         public static string productName = "";
-        public static bool moduleLoaded;
         public static Dictionary<string, ModuleDef> LoadedModuleDic = new Dictionary<string, ModuleDef>();
         public static List<GameObjectTreeNode> treeNodeCollection = new List<GameObjectTreeNode>();
         public static Dictionary<GameObject, GameObjectTreeNode> treeNodeDictionary = new Dictionary<GameObject, GameObjectTreeNode>();
+
+	    public static ModuleContext moduleContext;
 
         //UI
         public static Action<int> SetProgressBarValue;
@@ -48,11 +51,11 @@ namespace AssetStudio
             return CheckFileType(reader);
         }
 
-        public static FileType CheckFileType(string fileName, out EndianBinaryReader reader)
-        {
-            reader = new EndianBinaryReader(File.OpenRead(fileName));
-            return CheckFileType(reader);
-        }
+	    public static FileType CheckFileType(string fileName, out EndianBinaryReader reader)
+	    {
+			reader = new EndianBinaryReader(File.OpenRead(fileName));
+			return CheckFileType(reader);
+	    }
 
         private static FileType CheckFileType(EndianBinaryReader reader)
         {
@@ -110,29 +113,37 @@ namespace AssetStudio
         private static int ExtractBundleFile(string bundleFileName, EndianBinaryReader reader)
         {
             StatusStripUpdate($"Decompressing {Path.GetFileName(bundleFileName)} ...");
+
             var bundleFile = new BundleFile(reader, bundleFileName);
             reader.Dispose();
-            if (bundleFile.fileList.Count > 0)
-            {
-                var extractPath = bundleFileName + "_unpacked\\";
-                Directory.CreateDirectory(extractPath);
-                return ExtractStreamFile(extractPath, bundleFile.fileList);
-            }
-            return 0;
+
+	        if (bundleFile.fileList.Count <= 0)
+	        {
+		        return 0;
+	        }
+
+	        string extractPath = bundleFileName + "_unpacked\\";
+	        Directory.CreateDirectory(extractPath);
+
+	        return ExtractStreamFile(extractPath, bundleFile.fileList);
         }
 
         private static int ExtractWebDataFile(string webFileName, EndianBinaryReader reader)
         {
             StatusStripUpdate($"Decompressing {Path.GetFileName(webFileName)} ...");
+
             var webFile = new WebFile(reader);
             reader.Dispose();
-            if (webFile.fileList.Count > 0)
-            {
-                var extractPath = webFileName + "_unpacked\\";
-                Directory.CreateDirectory(extractPath);
-                return ExtractStreamFile(extractPath, webFile.fileList);
-            }
-            return 0;
+
+	        if (webFile.fileList.Count <= 0)
+	        {
+		        return 0;
+	        }
+
+	        string extractPath = webFileName + "_unpacked\\";
+	        Directory.CreateDirectory(extractPath);
+
+	        return ExtractStreamFile(extractPath, webFile.fileList);
         }
 
         private static int ExtractStreamFile(string extractPath, List<StreamFile> fileList)
@@ -157,330 +168,378 @@ namespace AssetStudio
 
         public static void BuildAssetStructures(bool loadAssets, bool displayAll, bool buildHierarchy, bool buildClassStructures, bool displayOriginalName)
         {
-            #region first loop - read asset data & create list
+            // first loop - read asset data & create list
             if (loadAssets)
             {
-                SetProgressBarValue(0);
-                SetProgressBarMaximum(assetsfileList.Sum(x => x.preloadTable.Values.Count));
-                StatusStripUpdate("Building asset list...");
-
-                string fileIDfmt = "D" + assetsfileList.Count.ToString().Length;
-
-                for (var i = 0; i < assetsfileList.Count; i++)
-                {
-                    var assetsFile = assetsfileList[i];
-
-                    string fileID = i.ToString(fileIDfmt);
-                    AssetBundle ab = null;
-                    foreach (var asset in assetsFile.preloadTable.Values)
-                    {
-                        asset.uniqueID = fileID + asset.uniqueID;
-                        var exportable = false;
-                        switch (asset.Type)
-                        {
-                            case ClassIDType.GameObject:
-                                {
-                                    var m_GameObject = new GameObject(asset);
-                                    asset.Text = m_GameObject.m_Name;
-                                    assetsFile.GameObjectList.Add(asset.m_PathID, m_GameObject);
-                                    break;
-                                }
-                            case ClassIDType.Transform:
-                                {
-                                    var m_Transform = new Transform(asset);
-                                    assetsFile.TransformList.Add(asset.m_PathID, m_Transform);
-                                    break;
-                                }
-                            case ClassIDType.RectTransform:
-                                {
-                                    var m_Rect = new RectTransform(asset);
-                                    assetsFile.TransformList.Add(asset.m_PathID, m_Rect);
-                                    break;
-                                }
-                            case ClassIDType.Texture2D:
-                                {
-                                    var m_Texture2D = new Texture2D(asset, false);
-                                    if (!string.IsNullOrEmpty(m_Texture2D.path))
-                                        asset.FullSize = asset.Size + m_Texture2D.size;
-                                    goto case ClassIDType.NamedObject;
-                                }
-                            case ClassIDType.AudioClip:
-                                {
-                                    var m_AudioClip = new AudioClip(asset, false);
-                                    if (!string.IsNullOrEmpty(m_AudioClip.m_Source))
-                                        asset.FullSize = asset.Size + m_AudioClip.m_Size;
-                                    goto case ClassIDType.NamedObject;
-                                }
-                            case ClassIDType.VideoClip:
-                                {
-                                    var m_VideoClip = new VideoClip(asset, false);
-                                    if (!string.IsNullOrEmpty(m_VideoClip.m_OriginalPath))
-                                        asset.FullSize = asset.Size + (long)m_VideoClip.m_Size;
-                                    goto case ClassIDType.NamedObject;
-                                }
-                            case ClassIDType.NamedObject:
-                            case ClassIDType.Mesh:
-                            case ClassIDType.Shader:
-                            case ClassIDType.TextAsset:
-                            case ClassIDType.AnimationClip:
-                            case ClassIDType.Font:
-                            case ClassIDType.MovieTexture:
-                            case ClassIDType.Sprite:
-                                {
-                                    var obj = new NamedObject(asset);
-                                    asset.Text = obj.m_Name;
-                                    exportable = true;
-                                    break;
-                                }
-                            case ClassIDType.Avatar:
-                            case ClassIDType.AnimatorController:
-                            case ClassIDType.AnimatorOverrideController:
-                            case ClassIDType.Material:
-                            case ClassIDType.SpriteAtlas:
-                                {
-                                    var obj = new NamedObject(asset);
-                                    asset.Text = obj.m_Name;
-                                    break;
-                                }
-                            case ClassIDType.Animator:
-                                {
-                                    exportable = true;
-                                    break;
-                                }
-	                        case ClassIDType.MonoScript:
-								{
-									var m_Script = new MonoScript(asset);
-
-									asset.Text = m_Script.m_ClassName;
-									if (m_Script.m_Namespace == string.Empty)
-									{
-										asset.TypeString = string.Format("{0} ({1})", asset.TypeString, m_Script.m_AssemblyName);
-									}
-									else
-									{
-										asset.TypeString = string.Format("{0} : {1} ({2})", asset.TypeString, m_Script.m_Namespace, m_Script.m_AssemblyName);
-									}
-									break;
-								}
-                            case ClassIDType.MonoBehaviour:
-                                {
-                                    var m_MonoBehaviour = new MonoBehaviour(asset);
-
-	                                if (m_MonoBehaviour.m_Name != "")
-	                                {
-		                                asset.Text = m_MonoBehaviour.m_Name;
-	                                }
-
-	                                if (m_MonoBehaviour.m_Script.TryGetPD(out var script))
-	                                {
-		                                var m_Script = new MonoScript(script);
-
-		                                if (m_MonoBehaviour.m_Name == "")
-		                                {
-			                                asset.Text = m_Script.m_ClassName;
-		                                }
-
-		                                asset.TypeString = string.Format("{0} : {1}.{2} ({3})", asset.TypeString, m_Script.m_Namespace, m_Script.m_ClassName, m_Script.m_AssemblyName);
-	                                }
-                                    exportable = true;
-                                    break;
-                                }
-                            case ClassIDType.PlayerSettings:
-                                {
-                                    var plSet = new PlayerSettings(asset);
-                                    productName = plSet.productName;
-                                    break;
-                                }
-                            case ClassIDType.AssetBundle:
-                                {
-                                    ab = new AssetBundle(asset);
-                                    asset.Text = ab.m_Name;
-                                    break;
-                                }
-                        }
-                        if (asset.Text == "")
-                        {
-                            asset.Text = asset.TypeString + " #" + asset.uniqueID;
-                        }
-                        asset.SubItems.AddRange(new[] { asset.TypeString, asset.FullSize.ToString() });
-                        //处理同名文件
-                        if (!assetsNameHash.Add((asset.TypeString + asset.Text).ToUpper()))
-                        {
-                            asset.Text += " #" + asset.uniqueID;
-                        }
-                        //处理非法文件名
-                        asset.Text = FixFileName(asset.Text);
-                        if (displayAll)
-                        {
-                            exportable = true;
-                        }
-                        if (exportable)
-                        {
-                            assetsFile.exportableAssets.Add(asset);
-                        }
-                        ProgressBarPerformStep();
-                    }
-                    if (displayOriginalName)
-                    {
-                        assetsFile.exportableAssets.ForEach(x =>
-                        {
-                            var replacename = ab?.m_Container.Find(y => y.second.asset.m_PathID == x.m_PathID)?.first;
-                            if (!string.IsNullOrEmpty(replacename))
-                            {
-                                var ex = Path.GetExtension(replacename);
-                                x.Text = !string.IsNullOrEmpty(ex) ? replacename.Replace(ex, "") : replacename;
-                            }
-                        });
-                    }
-                    exportableAssets.AddRange(assetsFile.exportableAssets);
-                }
-
-                visibleAssets = exportableAssets;
-                assetsNameHash.Clear();
+	            BuildAssetList(displayAll, displayOriginalName);
             }
-            #endregion
 
-            #region second loop - build tree structure
+            // second loop - build tree structure
             if (buildHierarchy)
             {
-                var gameObjectCount = assetsfileList.Sum(x => x.GameObjectList.Values.Count);
-                if (gameObjectCount > 0)
-                {
-                    SetProgressBarValue(0);
-                    SetProgressBarMaximum(gameObjectCount);
-                    StatusStripUpdate("Building tree structure...");
-
-                    foreach (var assetsFile in assetsfileList)
-                    {
-                        var fileNode = new GameObjectTreeNode(null); //RootNode
-                        fileNode.Text = assetsFile.fileName;
-
-                        foreach (var m_GameObject in assetsFile.GameObjectList.Values)
-                        {
-                            foreach (var m_Component in m_GameObject.m_Components)
-                            {
-                                if (m_Component.TryGetPD(out var asset))
-                                {
-                                    switch (asset.Type)
-                                    {
-                                        case ClassIDType.Transform:
-                                            {
-                                                m_GameObject.m_Transform = m_Component;
-                                                break;
-                                            }
-                                        case ClassIDType.MeshRenderer:
-                                            {
-                                                m_GameObject.m_MeshRenderer = m_Component;
-                                                break;
-                                            }
-                                        case ClassIDType.MeshFilter:
-                                            {
-                                                m_GameObject.m_MeshFilter = m_Component;
-                                                if (m_Component.TryGetPD(out var assetPreloadData))
-                                                {
-                                                    var m_MeshFilter = new MeshFilter(assetPreloadData);
-                                                    if (m_MeshFilter.m_Mesh.TryGetPD(out assetPreloadData))
-                                                    {
-                                                        assetPreloadData.gameObject = m_GameObject;
-                                                    }
-                                                }
-                                                break;
-                                            }
-                                        case ClassIDType.SkinnedMeshRenderer:
-                                            {
-                                                m_GameObject.m_SkinnedMeshRenderer = m_Component;
-                                                if (m_Component.TryGetPD(out var assetPreloadData))
-                                                {
-                                                    var m_SkinnedMeshRenderer = new SkinnedMeshRenderer(assetPreloadData);
-                                                    if (m_SkinnedMeshRenderer.m_Mesh.TryGetPD(out assetPreloadData))
-                                                    {
-                                                        assetPreloadData.gameObject = m_GameObject;
-                                                    }
-                                                }
-                                                break;
-                                            }
-                                        case ClassIDType.Animator:
-                                            {
-                                                m_GameObject.m_Animator = m_Component;
-                                                asset.Text = m_GameObject.preloadData.Text;
-                                                break;
-                                            }
-                                    }
-                                }
-                            }
-
-                            var parentNode = fileNode;
-
-                            if (m_GameObject.m_Transform != null && m_GameObject.m_Transform.TryGetTransform(out var m_Transform))
-                            {
-                                if (m_Transform.m_Father.TryGetTransform(out var m_Father))
-                                {
-                                    if (m_Father.m_GameObject.TryGetGameObject(out var parentGameObject))
-                                    {
-                                        if (!treeNodeDictionary.TryGetValue(parentGameObject, out parentNode))
-                                        {
-                                            parentNode = new GameObjectTreeNode(parentGameObject);
-                                            treeNodeDictionary.Add(parentGameObject, parentNode);
-                                        }
-                                    }
-                                }
-                            }
-
-                            if (!treeNodeDictionary.TryGetValue(m_GameObject, out var currentNode))
-                            {
-                                currentNode = new GameObjectTreeNode(m_GameObject);
-                                treeNodeDictionary.Add(m_GameObject, currentNode);
-                            }
-                            parentNode.Nodes.Add(currentNode);
-                            ProgressBarPerformStep();
-                        }
-
-                        if (fileNode.Nodes.Count > 0)
-                        {
-                            treeNodeCollection.Add(fileNode);
-                        }
-                    }
-                }
+	            BuildTreeStructure();
             }
-            #endregion
 
-            #region build list of class strucutres
+            // build list of class structures
             if (buildClassStructures)
             {
-                foreach (var assetsFile in assetsfileList)
-                {
-                    if (AllTypeMap.TryGetValue(assetsFile.unityVersion, out var curVer))
-                    {
-                        foreach (var type in assetsFile.m_Types.Where(x => x.m_Nodes != null))
-                        {
-                            var key = type.classID;
-                            if (type.m_ScriptTypeIndex >= 0)
-                            {
-                                key = -1 - type.m_ScriptTypeIndex;
-                            }
-                            curVer[key] = new TypeTreeItem(key, type.m_Nodes);
-                        }
-                    }
-                    else
-                    {
-                        var items = new SortedDictionary<int, TypeTreeItem>();
-                        foreach (var type in assetsFile.m_Types.Where(x => x.m_Nodes != null))
-                        {
-                            var key = type.classID;
-                            if (type.m_ScriptTypeIndex >= 0)
-                            {
-                                key = -1 - type.m_ScriptTypeIndex;
-                            }
-                            items.Add(key, new TypeTreeItem(key, type.m_Nodes));
-                        }
-                        AllTypeMap.Add(assetsFile.unityVersion, items);
-                    }
-                }
+	            BuildClassStructures();
             }
-            #endregion
         }
 
-        public static string FixFileName(string str)
+	    private static void BuildAssetList(bool displayAll, bool displayOriginalName)
+	    {
+		    SetProgressBarValue(0);
+		    SetProgressBarMaximum(assetsfileList.Sum(x => x.preloadTable.Values.Count));
+		    StatusStripUpdate("Building asset list...");
+
+		    string fileIDfmt = "D" + assetsfileList.Count.ToString().Length;
+
+		    for (var i = 0; i < assetsfileList.Count; i++)
+		    {
+			    AssetsFile assetsFile = assetsfileList[i];
+
+			    string fileID = i.ToString(fileIDfmt);
+
+			    AssetBundle ab = null;
+
+			    foreach (AssetPreloadData asset in assetsFile.preloadTable.Values)
+			    {
+				    asset.uniqueID = fileID + asset.uniqueID;
+
+				    var exportable = false;
+
+				    switch (asset.Type)
+				    {
+					    case ClassIDType.GameObject:
+					    {
+						    var m_GameObject = new GameObject(asset);
+						    asset.Text = m_GameObject.m_Name;
+						    assetsFile.GameObjectList.Add(asset.m_PathID, m_GameObject);
+						    break;
+					    }
+					    case ClassIDType.Transform:
+					    {
+						    var m_Transform = new Transform(asset);
+						    assetsFile.TransformList.Add(asset.m_PathID, m_Transform);
+						    break;
+					    }
+					    case ClassIDType.RectTransform:
+					    {
+						    var m_Rect = new RectTransform(asset);
+						    assetsFile.TransformList.Add(asset.m_PathID, m_Rect);
+						    break;
+					    }
+					    case ClassIDType.Texture2D:
+					    {
+						    var m_Texture2D = new Texture2D(asset, false);
+						    if (!string.IsNullOrEmpty(m_Texture2D.path))
+						    {
+							    asset.FullSize = asset.Size + m_Texture2D.size;
+						    }
+						    goto case ClassIDType.NamedObject;
+					    }
+					    case ClassIDType.AudioClip:
+					    {
+						    var m_AudioClip = new AudioClip(asset, false);
+						    if (!string.IsNullOrEmpty(m_AudioClip.m_Source))
+						    {
+							    asset.FullSize = asset.Size + m_AudioClip.m_Size;
+						    }
+						    goto case ClassIDType.NamedObject;
+					    }
+					    case ClassIDType.VideoClip:
+					    {
+						    var m_VideoClip = new VideoClip(asset, false);
+						    if (!string.IsNullOrEmpty(m_VideoClip.m_OriginalPath))
+						    {
+							    asset.FullSize = asset.Size + (long) m_VideoClip.m_Size;
+						    }
+						    goto case ClassIDType.NamedObject;
+					    }
+					    case ClassIDType.NamedObject:
+					    case ClassIDType.Mesh:
+					    case ClassIDType.Shader:
+					    case ClassIDType.TextAsset:
+					    case ClassIDType.AnimationClip:
+					    case ClassIDType.Font:
+					    case ClassIDType.MovieTexture:
+					    case ClassIDType.Sprite:
+					    {
+						    var obj = new NamedObject(asset);
+						    asset.Text = obj.m_Name;
+						    exportable = true;
+						    break;
+					    }
+					    case ClassIDType.Avatar:
+					    case ClassIDType.AnimatorController:
+					    case ClassIDType.AnimatorOverrideController:
+					    case ClassIDType.Material:
+					    case ClassIDType.SpriteAtlas:
+					    {
+						    var obj = new NamedObject(asset);
+						    asset.Text = obj.m_Name;
+						    break;
+					    }
+					    case ClassIDType.Animator:
+					    {
+						    exportable = true;
+						    break;
+					    }
+					    case ClassIDType.MonoScript:
+					    {
+						    var m_Script = new MonoScript(asset);
+
+						    asset.Text = m_Script.m_ClassName;
+						    if (m_Script.m_Namespace == string.Empty)
+						    {
+							    asset.TypeString = string.Format("{0} ({1})", asset.TypeString, m_Script.m_AssemblyName);
+						    }
+						    else
+						    {
+							    asset.TypeString = string.Format("{0} : {1} ({2})", asset.TypeString, m_Script.m_Namespace, m_Script.m_AssemblyName);
+						    }
+						    break;
+					    }
+					    case ClassIDType.MonoBehaviour:
+					    {
+						    var m_MonoBehaviour = new MonoBehaviour(asset);
+
+						    if (m_MonoBehaviour.m_Name != "")
+						    {
+							    asset.Text = m_MonoBehaviour.m_Name;
+						    }
+
+						    if (m_MonoBehaviour.m_Script.TryGetPD(out AssetPreloadData script))
+						    {
+							    var m_Script = new MonoScript(script);
+
+							    if (m_MonoBehaviour.m_Name == "")
+							    {
+								    asset.Text = m_Script.m_ClassName;
+							    }
+
+							    asset.TypeString = string.Format("{0} : {1}.{2} ({3})", asset.TypeString, m_Script.m_Namespace, m_Script.m_ClassName, m_Script.m_AssemblyName);
+						    }
+						    exportable = true;
+						    break;
+					    }
+					    case ClassIDType.PlayerSettings:
+					    {
+						    var plSet = new PlayerSettings(asset);
+						    productName = plSet.productName;
+						    break;
+					    }
+					    case ClassIDType.AssetBundle:
+					    {
+						    ab = new AssetBundle(asset);
+						    asset.Text = ab.m_Name;
+						    break;
+					    }
+				    }
+
+				    if (asset.Text == "")
+				    {
+					    asset.Text = asset.TypeString + " #" + asset.uniqueID;
+				    }
+
+				    asset.SubItems.AddRange(new[]
+				    {
+					    asset.TypeString,
+					    asset.FullSize.ToString()
+				    });
+
+				    //处理同名文件
+				    if (!assetsNameHash.Add((asset.TypeString + asset.Text).ToUpper()))
+				    {
+					    asset.Text += " #" + asset.uniqueID;
+				    }
+
+				    //处理非法文件名
+				    asset.Text = FixFileName(asset.Text);
+
+				    if (displayAll)
+				    {
+					    exportable = true;
+				    }
+
+				    if (exportable)
+				    {
+					    assetsFile.exportableAssets.Add(asset);
+				    }
+
+				    ProgressBarPerformStep();
+			    }
+
+			    if (displayOriginalName)
+			    {
+				    assetsFile.exportableAssets.ForEach(x =>
+				                                        {
+					                                        string replacename = ab?.m_Container.Find(y => y.second.asset.m_PathID == x.m_PathID)?.first;
+					                                        if (!string.IsNullOrEmpty(replacename))
+					                                        {
+						                                        string ex = Path.GetExtension(replacename);
+						                                        x.Text = !string.IsNullOrEmpty(ex) ? replacename.Replace(ex, "") : replacename;
+					                                        }
+				                                        });
+			    }
+
+			    exportableAssets.AddRange(assetsFile.exportableAssets);
+		    }
+
+		    visibleAssets = exportableAssets;
+		    assetsNameHash.Clear();
+	    }
+
+	    private static void BuildTreeStructure()
+	    {
+		    int gameObjectCount = assetsfileList.Sum(x => x.GameObjectList.Values.Count);
+
+		    if (gameObjectCount <= 0)
+		    {
+			    return;
+		    }
+
+		    SetProgressBarValue(0);
+		    SetProgressBarMaximum(gameObjectCount);
+		    StatusStripUpdate("Building tree structure...");
+
+		    foreach (AssetsFile assetsFile in assetsfileList)
+		    {
+			    var fileNode = new GameObjectTreeNode(null); //RootNode
+			    fileNode.Text = assetsFile.fileName;
+
+			    foreach (GameObject m_GameObject in assetsFile.GameObjectList.Values)
+			    {
+				    foreach (PPtr m_Component in m_GameObject.m_Components)
+				    {
+					    if (!m_Component.TryGetPD(out AssetPreloadData asset))
+					    {
+						    continue;
+					    }
+
+					    switch (asset.Type)
+					    {
+						    case ClassIDType.Transform:
+						    {
+							    m_GameObject.m_Transform = m_Component;
+							    break;
+						    }
+						    case ClassIDType.MeshRenderer:
+						    {
+							    m_GameObject.m_MeshRenderer = m_Component;
+							    break;
+						    }
+						    case ClassIDType.MeshFilter:
+						    {
+							    m_GameObject.m_MeshFilter = m_Component;
+							    if (m_Component.TryGetPD(out AssetPreloadData assetPreloadData))
+							    {
+								    var m_MeshFilter = new MeshFilter(assetPreloadData);
+								    if (m_MeshFilter.m_Mesh.TryGetPD(out assetPreloadData))
+								    {
+									    assetPreloadData.gameObject = m_GameObject;
+								    }
+							    }
+							    break;
+						    }
+						    case ClassIDType.SkinnedMeshRenderer:
+						    {
+							    m_GameObject.m_SkinnedMeshRenderer = m_Component;
+							    if (m_Component.TryGetPD(out AssetPreloadData assetPreloadData))
+							    {
+								    var m_SkinnedMeshRenderer = new SkinnedMeshRenderer(assetPreloadData);
+								    if (m_SkinnedMeshRenderer.m_Mesh.TryGetPD(out assetPreloadData))
+								    {
+									    assetPreloadData.gameObject = m_GameObject;
+								    }
+							    }
+							    break;
+						    }
+						    case ClassIDType.Animator:
+						    {
+							    m_GameObject.m_Animator = m_Component;
+							    asset.Text = m_GameObject.preloadData.Text;
+							    break;
+						    }
+					    }
+				    }
+
+				    GameObjectTreeNode parentNode = fileNode;
+
+				    if (m_GameObject.m_Transform != null && m_GameObject.m_Transform.TryGetTransform(out Transform m_Transform))
+				    {
+					    if (m_Transform.m_Father.TryGetTransform(out Transform m_Father))
+					    {
+						    if (m_Father.m_GameObject.TryGetGameObject(out GameObject parentGameObject))
+						    {
+							    if (!treeNodeDictionary.TryGetValue(parentGameObject, out parentNode))
+							    {
+								    parentNode = new GameObjectTreeNode(parentGameObject);
+								    treeNodeDictionary.Add(parentGameObject, parentNode);
+							    }
+						    }
+					    }
+				    }
+
+				    if (!treeNodeDictionary.TryGetValue(m_GameObject, out GameObjectTreeNode currentNode))
+				    {
+					    currentNode = new GameObjectTreeNode(m_GameObject);
+					    treeNodeDictionary.Add(m_GameObject, currentNode);
+				    }
+
+				    parentNode.Nodes.Add(currentNode);
+
+				    ProgressBarPerformStep();
+			    }
+
+			    if (fileNode.Nodes.Count > 0)
+			    {
+				    treeNodeCollection.Add(fileNode);
+			    }
+		    }
+	    }
+
+	    private static void BuildClassStructures()
+	    {
+		    foreach (AssetsFile assetsFile in assetsfileList)
+		    {
+			    if (AllTypeMap.TryGetValue(assetsFile.unityVersion, out SortedDictionary<int, TypeTreeItem> curVer))
+			    {
+				    foreach (SerializedType type in assetsFile.m_Types.Where(x => x.m_Nodes != null))
+				    {
+					    int key = type.classID;
+
+					    if (type.m_ScriptTypeIndex >= 0)
+					    {
+						    key = -1 - type.m_ScriptTypeIndex;
+					    }
+
+					    curVer[key] = new TypeTreeItem(key, type.m_Nodes);
+				    }
+			    }
+			    else
+			    {
+				    var items = new SortedDictionary<int, TypeTreeItem>();
+
+				    foreach (SerializedType type in assetsFile.m_Types.Where(x => x.m_Nodes != null))
+				    {
+					    int key = type.classID;
+
+					    if (type.m_ScriptTypeIndex >= 0)
+					    {
+						    key = -1 - type.m_ScriptTypeIndex;
+					    }
+
+					    items.Add(key, new TypeTreeItem(key, type.m_Nodes));
+				    }
+
+				    AllTypeMap.Add(assetsFile.unityVersion, items);
+			    }
+		    }
+	    }
+
+	    public static string FixFileName(string str)
         {
             if (str.Length >= 260) return Path.GetRandomFileName();
             return Path.GetInvalidFileNameChars().Aggregate(str, (current, c) => current.Replace(c, '_'));
@@ -502,6 +561,16 @@ namespace AssetStudio
             }
             return selectFile.Distinct().ToArray();
         }
+
+	    private delegate bool ExportAssetCallback(AssetPreloadData assetPreloadData, string exportPath);
+
+	    private static void ExportAsset(AssetPreloadData assetPreloadData, string exportPath, ExportAssetCallback exportAssetCallback, ref int exportedCount)
+	    {
+		    if (exportAssetCallback(assetPreloadData, exportPath))
+		    {
+			    exportedCount++;
+		    }
+	    }
 
         public static void ExportAssets(string savePath, List<AssetPreloadData> toExportAssets, int assetGroupSelectedIndex, bool openAfterExport, bool forceRaw = false)
         {
@@ -526,7 +595,9 @@ namespace AssetStudio
                     {
                         exportpath = Path.Combine(savePath, "_export", asset.TypeString);
                     }
-                    StatusStripUpdate($"Exporting {asset.TypeString}: {asset.Text}");
+
+                    StatusStripUpdate(string.Format(Resources.ExportAssets_ExportingFormat, asset.TypeString, asset.Text));
+
                     try
                     {
 	                    if (forceRaw)
@@ -547,64 +618,34 @@ namespace AssetStudio
 				                    }
 				                    break;
 			                    case ClassIDType.AudioClip:
-				                    if (ExportAudioClip(asset, exportpath))
-				                    {
-					                    exportedCount++;
-				                    }
+				                    ExportAsset(asset, exportpath, ExportAudioClip, ref exportedCount);
 				                    break;
 			                    case ClassIDType.Shader:
-				                    if (ExportShader(asset, exportpath))
-				                    {
-					                    exportedCount++;
-				                    }
+				                    ExportAsset(asset, exportpath, ExportShader, ref exportedCount);
 				                    break;
 			                    case ClassIDType.TextAsset:
-				                    if (ExportTextAsset(asset, exportpath))
-				                    {
-					                    exportedCount++;
-				                    }
+				                    ExportAsset(asset, exportpath, ExportTextAsset, ref exportedCount);
 				                    break;
 			                    case ClassIDType.MonoScript:
-				                    if (ExportMonoScript(asset, exportpath))
-				                    {
-					                    exportedCount++;
-				                    }
+				                    ExportAsset(asset, exportpath, ExportMonoScript, ref exportedCount);
 				                    break;
 			                    case ClassIDType.MonoBehaviour:
-				                    if (ExportMonoBehaviour(asset, exportpath))
-				                    {
-					                    exportedCount++;
-				                    }
+				                    ExportAsset(asset, exportpath, ExportMonoBehaviour, ref exportedCount);
 				                    break;
 			                    case ClassIDType.Font:
-				                    if (ExportFont(asset, exportpath))
-				                    {
-					                    exportedCount++;
-				                    }
+				                    ExportAsset(asset, exportpath, ExportFont, ref exportedCount);
 				                    break;
 			                    case ClassIDType.Mesh:
-				                    if (ExportMesh(asset, exportpath))
-				                    {
-					                    exportedCount++;
-				                    }
+				                    ExportAsset(asset, exportpath, ExportMesh, ref exportedCount);
 				                    break;
 			                    case ClassIDType.VideoClip:
-				                    if (ExportVideoClip(asset, exportpath))
-				                    {
-					                    exportedCount++;
-				                    }
+				                    ExportAsset(asset, exportpath, ExportVideoClip, ref exportedCount);
 				                    break;
 			                    case ClassIDType.MovieTexture:
-				                    if (ExportMovieTexture(asset, exportpath))
-				                    {
-					                    exportedCount++;
-				                    }
+				                    ExportAsset(asset, exportpath, ExportMovieTexture, ref exportedCount);
 				                    break;
 			                    case ClassIDType.Sprite:
-				                    if (ExportSprite(asset, exportpath))
-				                    {
-					                    exportedCount++;
-				                    }
+				                    ExportAsset(asset, exportpath, ExportSprite, ref exportedCount);
 				                    break;
 			                    case ClassIDType.Animator:
 				                    if (ExportAnimator(asset, exportpath))
@@ -625,23 +666,25 @@ namespace AssetStudio
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"Export {asset.Type}:{asset.Text} error\r\n{ex.Message}\r\n{ex.StackTrace}");
+                        MessageBox.Show(string.Format(Resources.ExportAssets_ErrorFormat, asset.Type, asset.Text, Environment.NewLine, ex.Message, Environment.NewLine, ex.StackTrace));
                     }
+
                     ProgressBarPerformStep();
                 }
 
-                var statusText = exportedCount == 0 ? "Nothing exported." : $"Finished exporting {exportedCount} assets.";
+	            string statusText = exportedCount == 0 ? Resources.ExportAssets_NothingExported : string.Format(Resources.ExportAssets_FinishedFormat, exportedCount);
 
-                if (toExport > exportedCount)
+	            if (toExport > exportedCount)
                 {
-                    statusText += $" {toExport - exportedCount} assets skipped (not extractable or files already exist)";
+                    statusText += string.Format(Resources.ExportAssets_SkippedFormat, toExport - exportedCount);
                 }
 
                 StatusStripUpdate(statusText);
 
                 if (openAfterExport && exportedCount > 0)
                 {
-                    Process.Start(savePath);
+                    Process process = Process.Start(savePath);
+					process?.Dispose();
                 }
             });
         }
@@ -817,12 +860,7 @@ namespace AssetStudio
 
 	    private static void TryToLoadModules()
 	    {
-		    if (moduleLoaded)
-		    {
-			    return;
-		    }
-
-		    var path = Path.Combine(mainPath, "Managed");
+		    string path = Path.Combine(mainPath, "Managed");
 
 		    if (Directory.Exists(path))
 		    {
@@ -837,105 +875,114 @@ namespace AssetStudio
 				    LoadModules(openFolderDialog.Folder);
 			    }
 		    }
-
-		    moduleLoaded = true;
 	    }
 
 	    private static void LoadModules(string path)
 	    {
-		    var files = Directory.GetFiles(path, "*.dll");
-		    var moduleContext = new ModuleContext();
-		    var asmResolver = new AssemblyResolver(moduleContext, true);
-		    var resolver = new Resolver(asmResolver);
-		    moduleContext.AssemblyResolver = asmResolver;
-		    moduleContext.Resolver = resolver;
-		    try
+		    if (moduleContext == null)
 		    {
-			    foreach (var file in files)
+			    moduleContext = new ModuleContext();
+			    var asmResolver = new AssemblyResolver(moduleContext, true);
+			    var resolver = new Resolver(asmResolver);
+
+			    moduleContext.AssemblyResolver = asmResolver;
+			    moduleContext.Resolver = resolver;
+		    }
+
+		    string[] files = Directory.GetFiles(path, "*.dll");
+
+		    foreach (string file in files)
+		    {
+			    string moduleFileName = Path.GetFileName(file);
+
+			    if (LoadedModuleDic.ContainsKey(moduleFileName))
 			    {
-				    var module = ModuleDefMD.Load(file, moduleContext);
-				    LoadedModuleDic.Add(Path.GetFileName(file), module);
-			    }
-		    }
-		    catch
-		    {
-			    // ignored
-		    }
-	    }
-
-	    private static List<string> GetMonoScriptHeader(MonoScript m_MonoScript, ClassIDType classType = ClassIDType.MonoBehaviour)
-	    {
-		    var strings = new List<string>();
-
-		    if (classType == ClassIDType.MonoScript)
-		    {
-			    strings.Add("PPtr<MonoScript> m_Script");
-		    }
-
-		    if (m_MonoScript.version[0] > 3 || (m_MonoScript.version[0] == 3 && m_MonoScript.version[1] >= 4))
-		    {
-			    strings.Add($"\tint32 m_ExecutionOrder = {m_MonoScript.m_ExecutionOrder}");
-		    }
-
-		    strings.Add($"\tstring m_ClassName = {m_MonoScript.m_ClassName}");
-
-		    if (m_MonoScript.version[0] >= 3)
-		    {
-				var ns = m_MonoScript.m_Namespace;
-
-			    if (string.IsNullOrWhiteSpace(ns))
-			    {
-				    ns = "<root>";
+				    continue;
 			    }
 
-			    strings.Add($"\tstring m_Namespace = {ns}");
-		    }
+			    ModuleDefMD module = ModuleDefMD.Load(file, moduleContext);
 
-		    strings.Add($"\tstring m_AssemblyName = {m_MonoScript.m_AssemblyName}");
-
-		    if (m_MonoScript.version[0] < 2018 || (m_MonoScript.version[0] == 2018 && m_MonoScript.version[1] < 2))
-		    {
-			    strings.Add($"\tbool m_IsEditorScript = {m_MonoScript.m_IsEditorScript}");
+			    LoadedModuleDic.Add(moduleFileName, module);
 		    }
-
-		    if (classType == ClassIDType.MonoScript)
-		    {
-			    strings.Add("\n");
-		    }
-		    return strings;
 	    }
 
-	    private static List<string> GetMonoBehaviourHeader(MonoBehaviour m_MonoBehaviour)
+	    public static TypeDef GetTypeDefOfMonoScript(ModuleDef module, string sourcePath)
 	    {
-		    var strings = new List<string>();
-		    strings.Add("PPtr<GameObject> m_GameObject");
-		    strings.Add($"\tint m_FileID = {m_MonoBehaviour.m_GameObject.m_FileID}");
-		    strings.Add($"\tint64 m_PathID = {m_MonoBehaviour.m_GameObject.m_PathID}");
-		    strings.Add($"UInt8 m_Enabled = {m_MonoBehaviour.m_Enabled}");
-		    strings.Add("PPtr<MonoScript> m_Script");
-		    strings.Add($"\tint m_FileID = {m_MonoBehaviour.m_Script.m_FileID}");
-		    strings.Add($"\tint64 m_PathID = {m_MonoBehaviour.m_Script.m_PathID}");
-		    strings.Add($"string m_Name = \"{m_MonoBehaviour.m_Name}\"");
-			strings.Add("\n");
-		    return strings;
+		    TypeDef typeDef = module.Assembly.Find(sourcePath, false);
+		    return typeDef ?? module.ExportedTypes.Where(moduleExportedType => moduleExportedType.FullName == sourcePath).Select(moduleExportedType => moduleExportedType.Resolve()).FirstOrDefault();
 	    }
 
-        public static string GetScriptString(AssetPreloadData assetPreloadData)
+		public static void AddNodes_MonoScript(TreeView monoPreviewBox, AssetPreloadData assetPreloadData)
+	    {
+			TryToLoadModules();
+
+		    var m_Script = new MonoScript(assetPreloadData);
+
+		    TreeNodeCollection nodes = m_Script.RootNode.Nodes;
+
+		    foreach (TreeNode treeNode in nodes)
+		    {
+			    monoPreviewBox.Nodes.Add(treeNode);
+		    }
+	    }
+
+	    public static void AddNodes_MonoBehaviour(TreeView previewTree, AssetPreloadData assetPreloadData, int indent = -1, bool isRoot = true)
+	    {
+		    TryToLoadModules();
+
+			var m_MonoBehaviour = new MonoBehaviour(assetPreloadData);
+
+		    foreach (TreeNode node in m_MonoBehaviour.RootNode.Nodes)
+		    {
+			    previewTree.Nodes.Add(node);
+		    }
+
+			if (!m_MonoBehaviour.m_Script.TryGetPD(out AssetPreloadData script))
+			{
+				return;
+			}
+
+		    var m_Script = new MonoScript(script);
+
+			TreeNode scriptNode = previewTree.Nodes.Find("m_Script", true).FirstOrDefault();
+
+			if (scriptNode != null)
+			{
+				foreach (TreeNode node in m_Script.RootNode.Nodes["m_Script"].Nodes)
+				{
+					scriptNode.Nodes.Add(node);
+				}
+			}
+
+		    if (!LoadedModuleDic.TryGetValue(m_Script.m_AssemblyName, out ModuleDef module))
+		    {
+			    return;
+		    }
+
+		    TypeDef typeDef = GetTypeDefOfMonoScript(module, m_Script.BasePath);
+
+		    if (typeDef == null)
+		    {
+			    return;
+		    }
+
+		    TypeSig typeSig = typeDef.ToTypeSig();
+			DumpNode(previewTree, typeSig, assetPreloadData.sourceFile, null, indent, isRoot);
+	    }
+
+        public static string GetScriptString(AssetPreloadData assetPreloadData, int indent = -1, bool isRoot = true)
         {
 	        TryToLoadModules();
 
-	        List<string> strings = new List<string>();
+	        var strings = new List<string>();
 
 	        AssetPreloadData script = assetPreloadData;
 
-	        MonoBehaviour m_MonoBehaviour = null;
-
 	        if (assetPreloadData.Type == ClassIDType.MonoBehaviour)
 	        {
-		        m_MonoBehaviour = new MonoBehaviour(assetPreloadData);
+		        var m_MonoBehaviour = new MonoBehaviour(assetPreloadData);
 
-		        List<string> monoBehaviourHeader = GetMonoBehaviourHeader(m_MonoBehaviour);
-		        strings.AddRange(monoBehaviourHeader);
+		        strings.AddRange(m_MonoBehaviour.RootNodeText);
 
 		        if (!m_MonoBehaviour.m_Script.TryGetPD(out script))
 		        {
@@ -945,7 +992,16 @@ namespace AssetStudio
 
 	        var m_Script = new MonoScript(script);
 
-	        List<string> scriptHeader = GetMonoScriptHeader(m_Script, assetPreloadData.Type);
+	        List<string> scriptHeader = m_Script.RootNodeText;
+
+	        if (assetPreloadData.Type == ClassIDType.MonoBehaviour)
+	        {
+				// remove PPtr name
+				scriptHeader.RemoveAt(0);
+
+		        // remove newline
+				scriptHeader.RemoveAt(scriptHeader.Count - 1);
+	        }
 
 	        switch (assetPreloadData.Type)
 	        {
@@ -957,23 +1013,12 @@ namespace AssetStudio
 			        return string.Join(Environment.NewLine, strings);
 	        }
 
-	        if (!LoadedModuleDic.TryGetValue(m_Script.m_AssemblyName, out var module))
+	        if (!LoadedModuleDic.TryGetValue(m_Script.m_AssemblyName, out ModuleDef module))
 	        {
 				return string.Join(Environment.NewLine, strings);
 	        }
 
-	        string sourcePath = m_Script.m_Namespace == string.Empty ? m_Script.m_ClassName : string.Format("{0}.{1}", m_Script.m_Namespace, m_Script.m_ClassName);
-
-	        TypeDef typeDef = module.Assembly.Find(sourcePath, false);
-
-	        if (typeDef == null)
-	        {
-		        foreach (ExportedType moduleExportedType in module.ExportedTypes.Where(moduleExportedType => moduleExportedType.FullName == sourcePath))
-		        {
-			        typeDef = moduleExportedType.Resolve();
-			        break;
-		        }
-	        }
+	        TypeDef typeDef = GetTypeDefOfMonoScript(module, m_Script.BasePath);
 
 	        if (typeDef == null)
 	        {
@@ -982,252 +1027,628 @@ namespace AssetStudio
 
 	        var stringBuilder = new StringBuilder();
 	        stringBuilder.Append(string.Join(Environment.NewLine, strings));
+	        strings.Clear();
 
 	        try
 	        {
 		        TypeSig typeSig = typeDef.ToTypeSig();
-		        DumpType(typeSig, stringBuilder, assetPreloadData.sourceFile, null, -1, true);
+		        DumpType(typeSig, stringBuilder, assetPreloadData.sourceFile, null, indent, isRoot);
 	        }
-	        catch
+	        catch (Exception e)
 	        {
-		        if (assetPreloadData.Type == ClassIDType.MonoBehaviour)
-		        {
-			        stringBuilder.Clear();
-			        strings = GetMonoBehaviourHeader(m_MonoBehaviour);
-			        stringBuilder.Append(string.Join(Environment.NewLine, strings));
-		        }
+				Debug.WriteLine(e.Message);
+
+				if (assetPreloadData.Type != ClassIDType.MonoBehaviour)
+				{
+					return stringBuilder.ToString();
+				}
+
+				stringBuilder.Clear();
+
+			    var m_MonoBehaviour = new MonoBehaviour(assetPreloadData);
+
+			    stringBuilder.Append(string.Join(Environment.NewLine, m_MonoBehaviour.RootNodeText));
 	        }
 
 	        return stringBuilder.ToString();
         }
 
-        private static void DumpType(TypeSig typeSig, StringBuilder sb, AssetsFile assetsFile, string name, int indent, bool isRoot = false)
+		private static string Indent(int indentDepth, int additionalDepth = 0)
+		{
+			return new string('\t', indentDepth + additionalDepth);
+		}
+
+	    private static bool IsExcludedType(TypeDef typeDef, TypeSig typeSig)
+	    {
+		    if (typeDef.FullName == "UnityEngine.Font") //TODO
+		    {
+			    return true;
+		    }
+
+		    if (typeDef.FullName == "UnityEngine.GUIStyle") //TODO
+		    {
+			    return true;
+		    }
+
+		    if (typeSig.FullName == "System.Object")
+		    {
+			    return true;
+		    }
+
+		    if (typeDef.IsDelegate)
+		    {
+			    return true;
+		    }
+
+		    return false;
+	    }
+
+	    private static void DumpNode(TreeView previewTree, TypeSig typeSig, AssetsFile assetsFile, string name, int currentDepth, bool isRoot = false)
+	    {
+		    TypeDef typeDef = typeSig.ToTypeDefOrRef().ResolveTypeDefThrow();
+
+		    EndianBinaryReader reader = assetsFile.reader;
+
+		    if (IsExcludedType(typeDef, typeSig))
+		    {
+			    return;
+		    }
+
+		    if (ReadPrimitiveNode(previewTree, reader, typeDef, typeSig, name, currentDepth))
+		    {
+			    return;
+		    }
+
+		    if (ReadStringNode(previewTree, reader, typeDef, typeSig, name, currentDepth))
+		    {
+			    return;
+		    }
+
+		    if (ReadArraySigBaseNode(previewTree, reader, typeDef, typeSig, assetsFile, name, currentDepth))
+		    {
+			    return;
+		    }
+
+		    DumpClassOrValueTypeNode(previewTree, typeDef, assetsFile, name, currentDepth);
+	    }
+
+        private static void DumpType(TypeSig typeSig, StringBuilder sb, AssetsFile assetsFile, string name, int currentDepth, bool isRoot = false)
         {
-            var typeDef = typeSig.ToTypeDefOrRef().ResolveTypeDefThrow();
-            var reader = assetsFile.reader;
-            if (typeSig.IsPrimitive)
+            TypeDef typeDef = typeSig.ToTypeDefOrRef().ResolveTypeDefThrow();
+
+	        EndianBinaryReader reader = assetsFile.reader;
+
+	        if (IsExcludedType(typeDef, typeSig))
+	        {
+		        return;
+	        }
+
+            if (ReadPrimitiveValue(reader, typeDef, typeSig, sb, name, currentDepth))
             {
-                object value = null;
-                switch (typeSig.TypeName)
-                {
-                    case "Boolean":
-                        value = reader.ReadBoolean();
-                        break;
-                    case "Byte":
-                        value = reader.ReadByte();
-                        break;
-                    case "SByte":
-                        value = reader.ReadSByte();
-                        break;
-                    case "Int16":
-                        value = reader.ReadInt16();
-                        break;
-                    case "UInt16":
-                        value = reader.ReadUInt16();
-                        break;
-                    case "Int32":
-                        value = reader.ReadInt32();
-                        break;
-                    case "UInt32":
-                        value = reader.ReadUInt32();
-                        break;
-                    case "Int64":
-                        value = reader.ReadInt64();
-                        break;
-                    case "UInt64":
-                        value = reader.ReadUInt64();
-                        break;
-                    case "Single":
-                        value = reader.ReadSingle();
-                        break;
-                    case "Double":
-                        value = reader.ReadDouble();
-                        break;
-                    case "Char":
-                        value = reader.ReadChar();
-                        break;
-                }
-                reader.AlignStream(4);
-                sb.AppendLine($"{new string('\t', indent)}{typeDef.Name} {name} = {value}");
-                return;
+	            return;
             }
-            if (typeSig.FullName == "System.String")
+
+	        if (ReadStringValue(reader, typeDef, typeSig, sb, name, currentDepth))
+	        {
+		        return;
+	        }
+
+            if (ReadArraySigBaseValue(reader, typeDef, typeSig, sb, assetsFile, name, currentDepth))
             {
-	            var str = reader.ReadAlignedString();
-                sb.AppendLine($"{new string('\t', indent)}{typeDef.Name} {name} = \"{str}\"");
-                return;
+	            return;
             }
-            if (typeSig.FullName == "System.Object")
+
+	        if (ReadGenericInstSigValue(reader, typeSig, sb, assetsFile, name, currentDepth, isRoot))
+	        {
+		        return;
+	        }
+
+	        if (GetUnityObjectPPtrValue(typeDef, sb, assetsFile, name, currentDepth))
+	        {
+		        return;
+	        }
+
+	        if (ReadEnumValue(reader, typeDef, sb, name, currentDepth))
+	        {
+		        return;
+	        }
+
+	        if (currentDepth != -1 && !IsEngineType(typeDef) && !typeDef.IsSerializable)
             {
                 return;
             }
-            if (typeDef.IsDelegate)
+
+            if (ReadRectValue(reader, typeDef, sb, name, currentDepth))
             {
-                return;
+	            return;
             }
-            if (typeSig is ArraySigBase)
-            {
-                if (!typeDef.IsEnum && !IsBaseType(typeDef) && !IsAssignFromUnityObject(typeDef) && !IsEngineType(typeDef) && !typeDef.IsSerializable)
-                {
-                    return;
-                }
-                var size = reader.ReadInt32();
-                sb.AppendLine($"{new string('\t', indent)}{typeSig.TypeName} {name}");
-//                sb.AppendLine($"{new string('\t', indent + 1)}Array Array");
-                sb.AppendLine($"{new string('\t', indent + 1)}int size = {size}");
-	            if (typeSig.TypeName == "GUIStyle[]")
-	            {
-		            sb.AppendLine($"{new string('\t', indent + 2)}<truncated>");
-		            return;
-	            }
-                for (int i = 0; i < size; i++)
-                {
-                    sb.AppendLine($"{new string('\t', indent + 2)}[{i}]");
-                    DumpType(typeDef.ToTypeSig(), sb, assetsFile, "data", indent + 2);
-                }
-                return;
-            }
-            if (!isRoot && typeSig is GenericInstSig genericInstSig)
-            {
-                if (genericInstSig.GenericArguments.Count == 1)
-                {
-                    var type = genericInstSig.GenericArguments[0].ToTypeDefOrRef().ResolveTypeDefThrow();
-                    if (!type.IsEnum && !IsBaseType(type) && !IsAssignFromUnityObject(type) && !IsEngineType(type) && !type.IsSerializable)
-                    {
-                        return;
-                    }
-                    var size = reader.ReadInt32();
-                    sb.AppendLine($"{new string('\t', indent)}{typeSig.TypeName} {name}");
-//                    sb.AppendLine($"{new string('\t', indent + 1)}Array Array");
-                    sb.AppendLine($"{new string('\t', indent + 1)}int size = {size}");
-	                if (typeSig.TypeName == "GUIStyle[]")
-	                {
-		                sb.AppendLine($"{new string('\t', indent + 2)}<truncated>");
-		                return;
-	                }
-                    for (int i = 0; i < size; i++)
-                    {
-	                    sb.AppendLine($"{new string('\t', indent + 2)}[{i}]");
-                        DumpType(genericInstSig.GenericArguments[0], sb, assetsFile, "data", indent + 2);
-                    }
-                }
-                return;
-            }
-            if (indent != -1 && IsAssignFromUnityObject(typeDef))
-            {
-                var pptr = assetsFile.ReadPPtr();
-                sb.AppendLine($"{new string('\t', indent)}PPtr<{typeDef.Name}> {name} = {{fileID: {pptr.m_FileID}, pathID: {pptr.m_PathID}}}");
-                return;
-            }
-            if (typeDef.IsEnum)
-            {
-                sb.AppendLine($"{new string('\t', indent)}{typeDef.Name} {name} = {reader.ReadUInt32()}");
-                return;
-            }
-            if (indent != -1 && !IsEngineType(typeDef) && !typeDef.IsSerializable)
-            {
-                return;
-            }
-            if (typeDef.FullName == "UnityEngine.Rect")
-            {
-                sb.AppendLine($"{new string('\t', indent)}{typeDef.Name} {name}");
-                var rect = reader.ReadSingleArray(4);
-                return;
-            }
-            if (typeDef.FullName == "UnityEngine.LayerMask")
-            {
-                sb.AppendLine($"{new string('\t', indent)}{typeDef.Name} {name}");
-                var value = reader.ReadInt32();
-                return;
-            }
-            if (typeDef.FullName == "UnityEngine.AnimationCurve")
-            {
-                sb.AppendLine($"{new string('\t', indent)}{typeDef.Name} {name}");
-                var animationCurve = new AnimationCurve<float>(reader, reader.ReadSingle, assetsFile.version);
-                return;
-            }
-            if (typeDef.FullName == "UnityEngine.Gradient")
-            {
-                sb.AppendLine($"{new string('\t', indent)}{typeDef.Name} {name}");
-                if (assetsFile.version[0] == 5 && assetsFile.version[1] < 5)
-                    reader.Position += 68;
-                else if (assetsFile.version[0] == 5 && assetsFile.version[1] < 6)
-                    reader.Position += 72;
-                else
-                    reader.Position += 168;
-                return;
-            }
-            if (typeDef.FullName == "UnityEngine.RectOffset")
-            {
-                sb.AppendLine($"{new string('\t', indent)}{typeDef.Name} {name}");
-                var left = reader.ReadSingle();
-                var right = reader.ReadSingle();
-                var top = reader.ReadSingle();
-                var bottom = reader.ReadSingle();
-                return;
-            }
-            if (typeDef.FullName == "UnityEngine.GUIStyle") //TODO
-            {
-                return;
-            }
-            if (typeDef.IsClass || typeDef.IsValueType)
-            {
-                if (name != null && indent != -1)
-                {
-                    sb.AppendLine($"{new string('\t', indent)}{typeDef.Name} {name}");
-                }
-                if (indent == -1 && typeDef.BaseType.FullName != "UnityEngine.Object")
-                {
-                    DumpType(typeDef.BaseType.ToTypeSig(), sb, assetsFile, null, indent, true);
-                }
-                if (indent != -1 && typeDef.BaseType.FullName != "System.Object")
-                {
-                    DumpType(typeDef.BaseType.ToTypeSig(), sb, assetsFile, null, indent, true);
-                }
-                foreach (var fieldDef in typeDef.Fields)
-                {
-                    var access = fieldDef.Access & FieldAttributes.FieldAccessMask;
-                    if (access != FieldAttributes.Public)
-                    {
-                        if (fieldDef.CustomAttributes.Any(x => x.TypeFullName.Contains("SerializeField")))
-                        {
-                            DumpType(fieldDef.FieldType, sb, assetsFile, fieldDef.Name, indent + 1);
-                        }
-                    }
-                    else if ((fieldDef.Attributes & FieldAttributes.Static) == 0 && (fieldDef.Attributes & FieldAttributes.InitOnly) == 0 && (fieldDef.Attributes & FieldAttributes.NotSerialized) == 0)
-                    {
-                        DumpType(fieldDef.FieldType, sb, assetsFile, fieldDef.Name, indent + 1);
-                    }
-                }
-            }
+
+	        if (ReadLayerMaskValue(reader, typeDef, sb, name, currentDepth))
+	        {
+		        return;
+	        }
+
+	        if (ReadAnimationCurveValue(reader, typeDef, sb, assetsFile, name, currentDepth))
+	        {
+		        return;
+	        }
+
+	        if (ReadGradientValue(reader, typeDef, sb, assetsFile, name, currentDepth))
+	        {
+		        return;
+	        }
+
+	        if (ReadRectOffsetName(reader, typeDef, sb, name, currentDepth))
+	        {
+		        return;
+	        }
+
+            DumpClassOrValueType(typeDef, sb, assetsFile, name, currentDepth);
         }
 
-        private static bool IsAssignFromUnityObject(TypeDef typeDef)
+	    private static void DumpClassOrValueTypeNode(TreeView previewTree, TypeDef typeDef, AssetsFile assetsFile, string name, int currentDepth)
+	    {
+		    if (!typeDef.IsClass && !typeDef.IsValueType)
+		    {
+			    return;
+		    }
+
+		    if (name != null && currentDepth != -1)
+		    {
+			    previewTree.Nodes.Add(string.Format("{0} {1}", typeDef.Name, name));
+		    }
+
+		    if (currentDepth == -1 && typeDef.BaseType.FullName != "UnityEngine.Object")
+		    {
+			    DumpNode(previewTree, typeDef.BaseType.ToTypeSig(), assetsFile, null, currentDepth + 1, true);
+		    }
+
+		    if (currentDepth != -1 && typeDef.BaseType.FullName != "System.Object")
+		    {
+			    DumpNode(previewTree, typeDef.BaseType.ToTypeSig(), assetsFile, null, currentDepth + 1, true);
+		    }
+
+		    foreach (FieldDef fieldDef in typeDef.Fields)
+		    {
+			    FieldAttributes access = fieldDef.Access & FieldAttributes.FieldAccessMask;
+
+			    if (access != FieldAttributes.Public)
+			    {
+				    if (fieldDef.CustomAttributes.Any(x => x.TypeFullName.Contains("SerializeField")))
+				    {
+					    DumpNode(previewTree, fieldDef.FieldType, assetsFile, fieldDef.Name, currentDepth + 1);
+				    }
+			    }
+			    else if ((fieldDef.Attributes & FieldAttributes.Static) == 0 && (fieldDef.Attributes & FieldAttributes.InitOnly) == 0 && (fieldDef.Attributes & FieldAttributes.NotSerialized) == 0)
+			    {
+				    DumpNode(previewTree, fieldDef.FieldType, assetsFile, fieldDef.Name, currentDepth + 1);
+			    }
+		    }
+	    }
+
+	    private static void DumpClassOrValueType(TypeDef typeDef, StringBuilder sb, AssetsFile assetsFile, string name, int indentDepth)
+	    {
+		    if (!typeDef.IsClass && !typeDef.IsValueType)
+		    {
+			    return;
+		    }
+
+		    if (name != null && indentDepth != -1)
+		    {
+			    sb.AppendLine(string.Format("{0}{1} {2}", Indent(indentDepth), typeDef.Name, name));
+		    }
+
+		    if (indentDepth == -1 && typeDef.BaseType.FullName != "UnityEngine.Object")
+		    {
+			    DumpType(typeDef.BaseType.ToTypeSig(), sb, assetsFile, null, indentDepth, true);
+		    }
+
+		    if (indentDepth != -1 && typeDef.BaseType.FullName != "System.Object")
+		    {
+			    DumpType(typeDef.BaseType.ToTypeSig(), sb, assetsFile, null, indentDepth, true);
+		    }
+
+		    foreach (FieldDef fieldDef in typeDef.Fields)
+		    {
+			    FieldAttributes access = fieldDef.Access & FieldAttributes.FieldAccessMask;
+
+			    if (access != FieldAttributes.Public)
+			    {
+				    if (fieldDef.CustomAttributes.Any(x => x.TypeFullName.Contains("SerializeField")))
+				    {
+					    DumpType(fieldDef.FieldType, sb, assetsFile, fieldDef.Name, indentDepth + 1);
+				    }
+			    }
+			    else if ((fieldDef.Attributes & FieldAttributes.Static) == 0 && (fieldDef.Attributes & FieldAttributes.InitOnly) == 0 && (fieldDef.Attributes & FieldAttributes.NotSerialized) == 0)
+			    {
+				    DumpType(fieldDef.FieldType, sb, assetsFile, fieldDef.Name, indentDepth + 1);
+			    }
+		    }
+	    }
+
+	    private static object ReadAlignedPrimitiveValue(BinaryReader reader, TypeSig typeSig)
+	    {
+		    object value = null;
+
+		    // ReSharper disable once SwitchStatementMissingSomeCases
+		    switch (typeSig.TypeName)
+		    {
+			    case "Boolean":
+				    value = reader.ReadBoolean();
+				    break;
+			    case "Byte":
+				    value = reader.ReadByte();
+				    break;
+			    case "SByte":
+				    value = reader.ReadSByte();
+				    break;
+			    case "Int16":
+				    value = reader.ReadInt16();
+				    break;
+			    case "UInt16":
+				    value = reader.ReadUInt16();
+				    break;
+			    case "Int32":
+				    value = reader.ReadInt32();
+				    break;
+			    case "UInt32":
+				    value = reader.ReadUInt32();
+				    break;
+			    case "Int64":
+				    value = reader.ReadInt64();
+				    break;
+			    case "UInt64":
+				    value = reader.ReadUInt64();
+				    break;
+			    case "Single":
+				    value = reader.ReadSingle();
+				    break;
+			    case "Double":
+				    value = reader.ReadDouble();
+				    break;
+			    case "Char":
+				    value = reader.ReadChar();
+				    break;
+		    }
+
+		    reader.AlignStream(4);
+
+		    return value;
+	    }
+
+	    private static bool ReadPrimitiveNode(TreeView previewTree, BinaryReader reader, TypeDef typeDef, TypeSig typeSig, string name, int currentDepth)
+	    {
+		    if (!typeSig.IsPrimitive)
+		    {
+			    return false;
+		    }
+
+		    object value = ReadAlignedPrimitiveValue(reader, typeSig);
+
+		    previewTree.Nodes.Add(name, string.Format("{0} {1} = {2}", typeDef.Name, name, value));
+
+		    return true;
+	    }
+
+	    private static bool ReadPrimitiveValue(EndianBinaryReader reader, TypeDef typeDef, TypeSig typeSig, StringBuilder sb, string name, int indentDepth)
+	    {
+		    if (!typeSig.IsPrimitive)
+		    {
+			    return false;
+		    }
+
+		    object value = ReadAlignedPrimitiveValue(reader, typeSig);
+
+		    sb.AppendLine(string.Format("{0}{1} {2} = {3}", Indent(indentDepth), typeDef.Name, name, value));
+
+		    return true;
+	    }
+
+	    private static bool ReadStringNode(TreeView previewTree, EndianBinaryReader reader, TypeDef typeDef, TypeSig typeSig, string name, int currentDepth)
+	    {
+		    if (typeSig.FullName != "System.String")
+		    {
+			    return false;
+		    }
+
+		    string str = reader.ReadAlignedString();
+
+		    previewTree.Nodes.Add(name, string.Format("{0} {1} = \"{2}\"", typeDef.Name, name, str));
+
+		    return true;
+	    }
+
+	    private static bool ReadStringValue(EndianBinaryReader reader, TypeDef typeDef, TypeSig typeSig, StringBuilder sb, string name, int indentDepth)
+	    {
+		    if (typeSig.FullName != "System.String")
+		    {
+			    return false;
+		    }
+
+		    string str = reader.ReadAlignedString();
+		    sb.AppendLine(string.Format("{0}{1} {2} = \"{3}\"", Indent(indentDepth), typeDef.Name, name, str));
+
+		    return true;
+	    }
+
+	    private static bool ReadArrayNode(TreeView previewTree, EndianBinaryReader reader, TypeSig typeSig, string name, int currentDepth, out int size)
+	    {
+		    size = reader.ReadInt32();
+
+		    TreeNode arrayNode = previewTree.Nodes.Add(name, string.Format("{0} {1}", typeSig.TypeName, name));
+			NodeHelper.AddKeyedChildNode(arrayNode, name, ref size, "int size = {0}");
+
+		    if (typeSig.TypeName == "GUIStyle[]")
+		    {
+			    return true;
+		    }
+
+		    return false;
+	    }
+
+	    private static bool ReadArrayValue(EndianBinaryReader reader, TypeSig typeSig, StringBuilder sb, string name, int indentDepth, out int size)
+	    {
+		    size = reader.ReadInt32();
+
+		    sb.AppendLine(string.Format("{0}{1} {2}", Indent(indentDepth), typeSig.TypeName, name));
+		    sb.AppendLine(string.Format("{0}int size = {1}", Indent(indentDepth, 1), size));
+
+		    if (typeSig.TypeName == "GUIStyle[]")
+		    {
+			    sb.AppendLine(string.Format("{0}<truncated>", Indent(indentDepth, 2)));
+			    return true;
+		    }
+
+		    return false;
+	    }
+
+	    private static bool ReadArraySigBaseNode(TreeView previewTree, EndianBinaryReader reader, TypeDef typeDef, TypeSig typeSig, AssetsFile assetsFile, string name, int currentDepth)
+	    {
+		    if (!(typeSig is ArraySigBase))
+		    {
+			    return false;
+		    }
+
+		    if (!typeDef.IsEnum && !IsBaseType(typeDef) && !IsAssignFromUnityObject(typeDef) && !IsEngineType(typeDef) && !typeDef.IsSerializable)
+		    {
+			    return true;
+		    }
+
+		    if (ReadArrayNode(previewTree, reader, typeSig, name, currentDepth, out int size))
+		    {
+			    return true;
+		    }
+
+		    for (var i = 0; i < size; i++)
+		    {
+			    previewTree.Nodes.Add(string.Format("[{0}]", i));
+				DumpNode(previewTree, typeDef.ToTypeSig(), assetsFile, "data", currentDepth + 3);
+		    }
+
+		    return true;
+	    }
+
+	    private static bool ReadArraySigBaseValue(EndianBinaryReader reader, TypeDef typeDef, TypeSig typeSig, StringBuilder sb, AssetsFile assetsFile, string name, int indentDepth)
+	    {
+		    if (!(typeSig is ArraySigBase))
+		    {
+			    return false;
+		    }
+
+		    if (!typeDef.IsEnum && !IsBaseType(typeDef) && !IsAssignFromUnityObject(typeDef) && !IsEngineType(typeDef) && !typeDef.IsSerializable)
+		    {
+			    return true;
+		    }
+
+		    if (ReadArrayValue(reader, typeSig, sb, name, indentDepth, out int size))
+		    {
+			    return true;
+		    }
+
+		    for (var i = 0; i < size; i++)
+		    {
+			    sb.AppendLine(string.Format("{0}[{1}]", Indent(indentDepth, 2), i));
+			    DumpType(typeDef.ToTypeSig(), sb, assetsFile, "data", indentDepth + 3);
+		    }
+
+		    return true;
+	    }
+
+	    private static bool ReadGenericInstSigValue(EndianBinaryReader reader, TypeSig typeSig, StringBuilder sb, AssetsFile assetsFile, string name, int indentDepth, bool isRoot)
+	    {
+		    if (isRoot || !(typeSig is GenericInstSig genericInstSig))
+		    {
+			    return false;
+		    }
+
+		    if (genericInstSig.GenericArguments.Count != 1)
+		    {
+			    return true;
+		    }
+
+		    TypeDef type = genericInstSig.GenericArguments[0].ToTypeDefOrRef().ResolveTypeDefThrow();
+
+		    if (!type.IsEnum && !IsBaseType(type) && !IsAssignFromUnityObject(type) && !IsEngineType(type) && !type.IsSerializable)
+		    {
+			    return true;
+		    }
+
+		    if (ReadArrayValue(reader, typeSig, sb, name, indentDepth, out int size))
+		    {
+			    return true;
+		    }
+
+		    for (var i = 0; i < size; i++)
+		    {
+			    sb.AppendLine(string.Format("{0}[{1}]", Indent(indentDepth, 2), i));
+			    DumpType(genericInstSig.GenericArguments[0], sb, assetsFile, "data", indentDepth + 3);
+		    }
+
+		    return true;
+	    }
+
+	    private static bool GetUnityObjectPPtrValue(TypeDef typeDef, StringBuilder sb, AssetsFile assetsFile, string name, int indentDepth)
+	    {
+		    if (indentDepth == -1 || !IsAssignFromUnityObject(typeDef))
+		    {
+			    return false;
+		    }
+
+		    PPtr pptr = assetsFile.ReadPPtr();
+
+		    sb.AppendLine(string.Format("{0}PPtr<{1}> {2} = {3}", Indent(indentDepth), typeDef.Name, name, pptr.ID));
+
+		    Debug.WriteLine(string.Format("{0}PPtr<{1}> {2} = {3}", Indent(indentDepth), typeDef.Name, name, pptr.ID));
+
+		    if (pptr.TryGetGameObject(out GameObject gameObject))
+		    {
+			    if (gameObject.preloadData.Type != ClassIDType.MonoBehaviour)
+			    {
+				    return true;
+			    }
+		    }
+
+		    if (gameObject == null)
+		    {
+			    return true;
+		    }
+
+		    string script = GetScriptString(gameObject.preloadData, indentDepth, false);
+
+		    string text = Indent(indentDepth, 1) + script.Replace(Environment.NewLine, Environment.NewLine + Indent(indentDepth, 1));
+		    sb.Append(text);
+
+		    return true;
+	    }
+
+	    private static bool ReadEnumValue(EndianBinaryReader reader, TypeDef typeDef, StringBuilder sb, string name, int indentDepth)
+	    {
+		    if (!typeDef.IsEnum)
+		    {
+			    return false;
+		    }
+
+		    sb.AppendLine(string.Format("{0}{1} {2} = {3}", Indent(indentDepth), typeDef.Name, name, reader.ReadUInt32()));
+
+		    return true;
+	    }
+
+	    private static bool ReadRectValue(EndianBinaryReader reader, TypeDef typeDef, StringBuilder sb, string name, int indentDepth)
+	    {
+		    if (typeDef.FullName != "UnityEngine.Rect")
+		    {
+			    return false;
+		    }
+
+		    sb.AppendLine(string.Format("{0}{1} {2}", Indent(indentDepth), typeDef.Name, name));
+		    float[] rect = reader.ReadSingleArray(4);
+
+		    return true;
+	    }
+
+	    private static bool ReadLayerMaskValue(EndianBinaryReader reader, TypeDef typeDef, StringBuilder sb, string name, int indentDepth)
+	    {
+		    if (typeDef.FullName != "UnityEngine.LayerMask")
+		    {
+			    return false;
+		    }
+
+		    sb.AppendLine(string.Format("{0}{1} {2}", Indent(indentDepth), typeDef.Name, name));
+
+		    int value = reader.ReadInt32();
+
+		    return true;
+	    }
+
+	    private static bool ReadAnimationCurveValue(EndianBinaryReader reader, TypeDef typeDef, StringBuilder sb, AssetsFile assetsFile, string name, int indentDepth)
+	    {
+		    if (typeDef.FullName != "UnityEngine.AnimationCurve")
+		    {
+			    return false;
+		    }
+
+		    sb.AppendLine(string.Format("{0}{1} {2}", Indent(indentDepth), typeDef.Name, name));
+
+		    var animationCurve = new AnimationCurve<float>(reader, reader.ReadSingle, assetsFile.version);
+
+		    return true;
+	    }
+
+	    private static bool ReadGradientValue(EndianBinaryReader reader, TypeDef typeDef, StringBuilder sb, AssetsFile assetsFile, string name, int indentDepth)
+	    {
+		    if (typeDef.FullName != "UnityEngine.Gradient")
+		    {
+			    return false;
+		    }
+
+		    sb.AppendLine(string.Format("{0}{1} {2}", Indent(indentDepth), typeDef.Name, name));
+
+		    if (assetsFile.version[0] == 5 && assetsFile.version[1] < 5)
+		    {
+			    reader.Position += 68;
+		    }
+		    else if (assetsFile.version[0] == 5 && assetsFile.version[1] < 6)
+		    {
+			    reader.Position += 72;
+		    }
+		    else
+		    {
+			    reader.Position += 168;
+		    }
+
+		    return true;
+	    }
+
+	    private static bool ReadRectOffsetName(EndianBinaryReader reader, TypeDef typeDef, StringBuilder sb, string name, int indentDepth)
+	    {
+		    if (typeDef.FullName != "UnityEngine.RectOffset")
+		    {
+			    return false;
+		    }
+
+		    sb.AppendLine(string.Format("{0}{1} {2}", Indent(indentDepth), typeDef.Name, name));
+
+		    float left = reader.ReadSingle();
+		    float right = reader.ReadSingle();
+		    float top = reader.ReadSingle();
+		    float bottom = reader.ReadSingle();
+
+		    return true;
+	    }
+
+	    private static bool IsAssignFromUnityObject(TypeDef typeDef)
         {
             if (typeDef.FullName == "UnityEngine.Object")
             {
                 return true;
             }
-            if (typeDef.BaseType != null)
-            {
-                if (typeDef.BaseType.FullName == "UnityEngine.Object")
-                {
-                    return true;
-                }
-                while (true)
-                {
-                    typeDef = typeDef.BaseType.ResolveTypeDefThrow();
-                    if (typeDef.BaseType == null)
-                    {
-                        break;
-                    }
-                    if (typeDef.BaseType.FullName == "UnityEngine.Object")
-                    {
-                        return true;
-                    }
-                }
-            }
-            return false;
+
+	        if (typeDef.BaseType == null)
+	        {
+		        return false;
+	        }
+
+	        if (typeDef.BaseType.FullName == "UnityEngine.Object")
+	        {
+		        return true;
+	        }
+
+	        while (true)
+	        {
+		        typeDef = typeDef.BaseType.ResolveTypeDefThrow();
+
+		        if (typeDef.BaseType == null)
+		        {
+			        break;
+		        }
+
+		        if (typeDef.BaseType.FullName == "UnityEngine.Object")
+		        {
+			        return true;
+		        }
+	        }
+
+	        return false;
         }
 
         private static bool IsBaseType(IFullName typeDef)
