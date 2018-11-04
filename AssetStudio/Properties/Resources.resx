@@ -251,4 +251,10 @@ void main()
   <data name="MonoScript_Namespace_Format" xml:space="preserve">
     <value>string m_Namespace = "{0}"</value>
   </data>
+  <data name="Exporter_FileExistsPrompt_Text" xml:space="preserve">
+    <value>The destination already has a file named {0}. Do you want to overwrite the file?</value>
+  </data>
+  <data name="Exporter_FileExistsPrompt_Caption" xml:space="preserve">
+    <value>Replace or Skip Files</value>
+  </data>
 </root>

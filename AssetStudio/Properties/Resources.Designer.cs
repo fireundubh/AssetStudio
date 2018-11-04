@@ -179,6 +179,24 @@ namespace AssetStudio.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Replace or Skip Files.
+        /// </summary>
+        internal static string Exporter_FileExistsPrompt_Caption {
+            get {
+                return ResourceManager.GetString("Exporter_FileExistsPrompt_Caption", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The destination already has a file named {0}. Do you want to overwrite the file?.
+        /// </summary>
+        internal static string Exporter_FileExistsPrompt_Text {
+            get {
+                return ResourceManager.GetString("Exporter_FileExistsPrompt_Text", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to #version 140
         ///
         ///in vec3 normal;
