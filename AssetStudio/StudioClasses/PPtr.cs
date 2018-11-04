@@ -11,6 +11,14 @@ namespace AssetStudio
         public AssetsFile assetsFile;
         public int index = -2; //-2 - Prepare, -1 - Missing
 
+	    public string ID
+	    {
+		    get
+		    {
+			    return string.Format("{{m_FileID: {0}, m_PathID: {1}}}", this.m_FileID, this.m_PathID);
+		    }
+	    }
+
         private bool TryGet(out AssetsFile result)
         {
             result = null;
