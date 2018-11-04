@@ -203,4 +203,52 @@ void main()
   <data name="ContextMenu_ItemsSelectedFormat" xml:space="preserve">
     <value>({0} items selected)</value>
   </data>
+  <data name="ExportAssets_FinishedFormat" xml:space="preserve">
+    <value>Finished exporting {0} assets.</value>
+  </data>
+  <data name="ExportAssets_NothingExported" xml:space="preserve">
+    <value>Nothing exported.</value>
+  </data>
+  <data name="ExportAssets_ErrorFormat" xml:space="preserve">
+    <value>Export {0}:{1} error{2}{3}{4}{5}</value>
+  </data>
+  <data name="ExportAssets_ExportingFormat" xml:space="preserve">
+    <value>Exporting {0}: {1}</value>
+  </data>
+  <data name="ExportAssets_SkippedFormat" xml:space="preserve">
+    <value> {0} assets skipped (not extractable or files already exist)</value>
+  </data>
+  <data name="Behaviour_Enabled_Format" xml:space="preserve">
+    <value>UInt8 m_Enabled = {0}</value>
+  </data>
+  <data name="NamedObject_Name_Format" xml:space="preserve">
+    <value>string m_Name = "{0}"</value>
+  </data>
+  <data name="PPtr_FileID_Format" xml:space="preserve">
+    <value>int m_FileID = {0}</value>
+  </data>
+  <data name="PPtr_GameObject" xml:space="preserve">
+    <value>PPtr&lt;GameObject&gt; m_GameObject</value>
+  </data>
+  <data name="PPtr_MonoScript" xml:space="preserve">
+    <value>PPtr&lt;MonoScript&gt; m_Script</value>
+  </data>
+  <data name="PPtr_PathID_Format" xml:space="preserve">
+    <value>int64 m_PathID = {0}</value>
+  </data>
+  <data name="MonoScript_AssemblyName_Format" xml:space="preserve">
+    <value>string m_AssemblyName = "{0}"</value>
+  </data>
+  <data name="MonoScript_ClassName_Format" xml:space="preserve">
+    <value>string m_ClassName = "{0}"</value>
+  </data>
+  <data name="MonoScript_ExecutionOrder_Format" xml:space="preserve">
+    <value>int m_ExecutionOrder = {0}</value>
+  </data>
+  <data name="MonoScript_IsEditorScript_Format" xml:space="preserve">
+    <value>bool m_IsEditorScript = {0}</value>
+  </data>
+  <data name="MonoScript_Namespace_Format" xml:space="preserve">
+    <value>string m_Namespace = "{0}"</value>
+  </data>
 </root>

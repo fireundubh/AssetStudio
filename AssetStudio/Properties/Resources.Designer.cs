@@ -71,6 +71,15 @@ namespace AssetStudio.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to UInt8 m_Enabled = {0}.
+        /// </summary>
+        internal static string Behaviour_Enabled_Format {
+            get {
+                return ResourceManager.GetString("Behaviour_Enabled_Format", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Export selected asset.
         /// </summary>
         internal static string ContextMenu_ExportSelectedAsset {
@@ -121,6 +130,51 @@ namespace AssetStudio.Properties {
         internal static string ContextMenu_ItemsSelectedFormat {
             get {
                 return ResourceManager.GetString("ContextMenu_ItemsSelectedFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Export {0}:{1} error{2}{3}{4}{5}.
+        /// </summary>
+        internal static string ExportAssets_ErrorFormat {
+            get {
+                return ResourceManager.GetString("ExportAssets_ErrorFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Exporting {0}: {1}.
+        /// </summary>
+        internal static string ExportAssets_ExportingFormat {
+            get {
+                return ResourceManager.GetString("ExportAssets_ExportingFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Finished exporting {0} assets..
+        /// </summary>
+        internal static string ExportAssets_FinishedFormat {
+            get {
+                return ResourceManager.GetString("ExportAssets_FinishedFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Nothing exported..
+        /// </summary>
+        internal static string ExportAssets_NothingExported {
+            get {
+                return ResourceManager.GetString("ExportAssets_NothingExported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to  {0} assets skipped (not extractable or files already exist).
+        /// </summary>
+        internal static string ExportAssets_SkippedFormat {
+            get {
+                return ResourceManager.GetString("ExportAssets_SkippedFormat", resourceCulture);
             }
         }
         
@@ -178,6 +232,96 @@ namespace AssetStudio.Properties {
         internal static string fsColor {
             get {
                 return ResourceManager.GetString("fsColor", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to string m_AssemblyName = &quot;{0}&quot;.
+        /// </summary>
+        internal static string MonoScript_AssemblyName_Format {
+            get {
+                return ResourceManager.GetString("MonoScript_AssemblyName_Format", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to string m_ClassName = &quot;{0}&quot;.
+        /// </summary>
+        internal static string MonoScript_ClassName_Format {
+            get {
+                return ResourceManager.GetString("MonoScript_ClassName_Format", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to int m_ExecutionOrder = {0}.
+        /// </summary>
+        internal static string MonoScript_ExecutionOrder_Format {
+            get {
+                return ResourceManager.GetString("MonoScript_ExecutionOrder_Format", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to bool m_IsEditorScript = {0}.
+        /// </summary>
+        internal static string MonoScript_IsEditorScript_Format {
+            get {
+                return ResourceManager.GetString("MonoScript_IsEditorScript_Format", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to string m_Namespace = &quot;{0}&quot;.
+        /// </summary>
+        internal static string MonoScript_Namespace_Format {
+            get {
+                return ResourceManager.GetString("MonoScript_Namespace_Format", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to string m_Name = &quot;{0}&quot;.
+        /// </summary>
+        internal static string NamedObject_Name_Format {
+            get {
+                return ResourceManager.GetString("NamedObject_Name_Format", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to int m_FileID = {0}.
+        /// </summary>
+        internal static string PPtr_FileID_Format {
+            get {
+                return ResourceManager.GetString("PPtr_FileID_Format", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to PPtr&lt;GameObject&gt; m_GameObject.
+        /// </summary>
+        internal static string PPtr_GameObject {
+            get {
+                return ResourceManager.GetString("PPtr_GameObject", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to PPtr&lt;MonoScript&gt; m_Script.
+        /// </summary>
+        internal static string PPtr_MonoScript {
+            get {
+                return ResourceManager.GetString("PPtr_MonoScript", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to int64 m_PathID = {0}.
+        /// </summary>
+        internal static string PPtr_PathID_Format {
+            get {
+                return ResourceManager.GetString("PPtr_PathID_Format", resourceCulture);
             }
         }
         
