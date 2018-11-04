@@ -852,17 +852,22 @@ namespace AssetStudio
                         break;
                     }
 	            case ClassIDType.MonoScript:
+		            this.monoPreviewBox.Nodes.Clear();
+		            AddNodes_MonoScript(this.monoPreviewBox, asset);
+		            break;
                 case ClassIDType.MonoBehaviour:
                     {
-                        if (asset.serializedType?.m_Nodes != null)
-                        {
-                            textPreviewBox.Text = asset.Dump();
-                        }
-                        else
-                        {
-							textPreviewBox.Text = GetScriptString(asset);
-                        }
-                        textPreviewBox.Visible = true;
+//                        if (asset.serializedType?.m_Nodes != null)
+//                        {
+//                            textPreviewBox.Text = asset.Dump();
+//                        }
+//                        else
+//                        {
+//							textPreviewBox.Text = GetScriptString(asset);
+//                        }
+//                        textPreviewBox.Visible = true;
+	                    this.monoPreviewBox.Nodes.Clear();
+						AddNodes_MonoBehaviour(this.monoPreviewBox, asset);
 
                         break;
                     }
@@ -1112,6 +1117,19 @@ namespace AssetStudio
                         break;
                     }
             }
+
+	        switch (asset.Type)
+	        {
+		        case ClassIDType.MonoBehaviour:
+		        case ClassIDType.MonoScript:
+			        this.monoPreviewBox.Visible = true;
+			        this.textPreviewBox.Visible = false;
+			        break;
+		        default:
+			        this.monoPreviewBox.Nodes.Clear();
+			        this.monoPreviewBox.Visible = false;
+			        break;
+	        }
         }
 
         private void FMODinit()
