@@ -754,6 +754,7 @@ namespace AssetStudio
 			this.fontPreviewBox.Text = resources.GetString("fontPreviewBox.Text");
 			this.fontPreviewBox.Visible = false;
 			this.fontPreviewBox.WordWrap = false;
+			this.fontPreviewBox.VisibleChanged += new System.EventHandler(this.fontPreviewBox_VisibleChanged);
 			//
 			// textPreviewBox
 			//

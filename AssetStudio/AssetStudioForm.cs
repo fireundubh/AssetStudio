@@ -151,6 +151,8 @@ namespace AssetStudio
                 progressBar1.Maximum = openBundleDialog.FileNames.Length;
                 ExtractFile(openBundleDialog.FileNames);
             }
+
+			openBundleDialog.Dispose();
         }
 
         private void extractFolderToolStripMenuItem_Click(object sender, EventArgs e)
@@ -444,8 +446,10 @@ namespace AssetStudio
 
         private void showExpOpt_Click(object sender, EventArgs e)
         {
-            ExportOptions exportOpt = new ExportOptions();
+	        using (ExportOptions exportOpt = new ExportOptions())
+	        {
             exportOpt.ShowDialog();
+	        }
         }
 
         private void assetListView_RetrieveVirtualItem(object sender, RetrieveVirtualItemEventArgs e)
@@ -1832,7 +1836,8 @@ namespace AssetStudio
             var selectasset = (AssetPreloadData)assetListView.Items[assetListView.SelectedIndices[0]];
             var args = $"/select, \"{selectasset.sourceFile.parentPath ?? selectasset.sourceFile.filePath}\"";
             var pfi = new ProcessStartInfo("explorer.exe", args);
-            Process.Start(pfi);
+            Process process = Process.Start(pfi);
+	        process?.Dispose();
         }
 
         private void exportAnimatorwithAnimationClipMenuItem_Click(object sender, EventArgs e)
@@ -2045,6 +2050,12 @@ namespace AssetStudio
             assetListView.EndUpdate();
         }
 
-
+	    private void fontPreviewBox_VisibleChanged(object sender, EventArgs e)
+	    {
+		    if (!this.fontPreviewBox.Visible)
+		    {
+				this.fontPreviewBox.SelectionFont.Dispose();
+		    }
+	    }
     }
 }
