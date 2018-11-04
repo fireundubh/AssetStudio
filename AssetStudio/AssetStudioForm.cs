@@ -448,7 +448,7 @@ namespace AssetStudio
         {
 	        using (ExportOptions exportOpt = new ExportOptions())
 	        {
-            exportOpt.ShowDialog();
+		        exportOpt.ShowDialog();
 	        }
         }
 
@@ -602,7 +602,7 @@ namespace AssetStudio
                     {
                         int xdiff = reverseSort ? b.Text.CompareTo(a.Text) : a.Text.CompareTo(b.Text);
                         if (xdiff != 0) return xdiff;
-                        return secondSortColumn == 1 ? a.TypeString.CompareTo(b.TypeString) : a.FullSize.CompareTo(b.FullSize);
+	                    return secondSortColumn == 1 ? a.TypeString.CompareTo(b.TypeString) : a.FullSize.CompareTo(b.FullSize);
                     });
                     break;
                 case 1:
@@ -610,7 +610,7 @@ namespace AssetStudio
                     {
                         int xdiff = reverseSort ? b.TypeString.CompareTo(a.TypeString) : a.TypeString.CompareTo(b.TypeString);
                         if (xdiff != 0) return xdiff;
-                        return secondSortColumn == 2 ? a.FullSize.CompareTo(b.FullSize) : a.Text.CompareTo(b.Text);
+	                    return secondSortColumn == 2 ? a.FullSize.CompareTo(b.FullSize) : a.Text.CompareTo(b.Text);
                     });
                     break;
                 case 2:
@@ -618,7 +618,7 @@ namespace AssetStudio
                     {
                         int xdiff = reverseSort ? b.FullSize.CompareTo(a.FullSize) : a.FullSize.CompareTo(b.FullSize);
                         if (xdiff != 0) return xdiff;
-                        return secondSortColumn == 1 ? a.TypeString.CompareTo(b.TypeString) : a.Text.CompareTo(b.Text);
+	                    return secondSortColumn == 1 ? a.TypeString.CompareTo(b.TypeString) : a.Text.CompareTo(b.Text);
                     });
                     break;
             }
@@ -670,7 +670,7 @@ namespace AssetStudio
 
         private void PreviewAsset(AssetPreloadData asset)
         {
-            switch (asset.Type)
+	        switch (asset.Type)
             {
                 case ClassIDType.Texture2D:
                     {
@@ -800,8 +800,8 @@ namespace AssetStudio
                         }
 
                         if (m_AudioClip.m_AudioData == null)
-                            break;
-                        FMOD.CREATESOUNDEXINFO exinfo = new FMOD.CREATESOUNDEXINFO();
+	                        break;
+	                    FMOD.CREATESOUNDEXINFO exinfo = new FMOD.CREATESOUNDEXINFO();
 
                         exinfo.cbsize = Marshal.SizeOf(exinfo);
                         exinfo.length = (uint)m_AudioClip.m_Size;
@@ -985,10 +985,10 @@ namespace AssetStudio
                             if (m_Mesh.m_Normals != null && m_Mesh.m_Normals.Length > 0)
                             {
                                 if (m_Mesh.m_Normals.Length == m_Mesh.m_VertexCount * 3)
-                                    count = 3;
+	                                count = 3;
                                 else if (m_Mesh.m_Normals.Length == m_Mesh.m_VertexCount * 4)
-                                    count = 4;
-                                normalData = new Vector3[m_Mesh.m_VertexCount];
+	                                count = 4;
+	                            normalData = new Vector3[m_Mesh.m_VertexCount];
                                 for (int n = 0; n < m_Mesh.m_VertexCount; n++)
                                 {
                                     normalData[n] = new Vector3(
@@ -999,7 +999,7 @@ namespace AssetStudio
                             }
                             else
                                 normalData = null;
-                            // calculate normal by ourself
+	                        // calculate normal by ourself
                             normal2Data = new Vector3[m_Mesh.m_VertexCount];
                             int[] normalCalculatedCount = new int[m_Mesh.m_VertexCount];
                             for (int i = 0; i < m_Mesh.m_VertexCount; i++)
@@ -1114,7 +1114,7 @@ namespace AssetStudio
                         }
                         else
                             StatusStripUpdate("Only supported export the raw file.");
-                        break;
+	                    break;
                     }
             }
 
@@ -1792,7 +1792,6 @@ namespace AssetStudio
 
             FMODreset();
 
-            moduleLoaded = false;
             LoadedModuleDic.Clear();
             treeNodeCollection.Clear();
             treeNodeDictionary.Clear();
@@ -1804,8 +1803,8 @@ namespace AssetStudio
             {
                 jumpToSceneHierarchyToolStripMenuItem.Visible = false;
                 showOriginalFileToolStripMenuItem.Visible = false;
-                exportAnimatorwithselectedAnimationClipMenuItem.Visible = false;
-                exportobjectswithselectedAnimationClipMenuItem.Visible = false;
+                exportAnimatorWithSelectedAnimationClipMenuItem.Visible = false;
+                exportObjectsWithSelectedAnimationClipMenuItem.Visible = false;
 
                 if (assetListView.SelectedIndices.Count == 1)
                 {
@@ -1817,11 +1816,11 @@ namespace AssetStudio
                     var selectedAssets = GetSelectedAssets();
                     if (selectedAssets.Any(x => x.Type == ClassIDType.Animator) && selectedAssets.Any(x => x.Type == ClassIDType.AnimationClip))
                     {
-                        exportAnimatorwithselectedAnimationClipMenuItem.Visible = true;
+                        exportAnimatorWithSelectedAnimationClipMenuItem.Visible = true;
                     }
                     else if (selectedAssets.All(x => x.Type == ClassIDType.AnimationClip))
                     {
-                        exportobjectswithselectedAnimationClipMenuItem.Visible = true;
+                        exportObjectsWithSelectedAnimationClipMenuItem.Visible = true;
                     }
                 }
 
