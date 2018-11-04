@@ -579,21 +579,23 @@ namespace AssetStudio
                 Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
 
                 int toExport = toExportAssets.Count;
-                int exportedCount = 0;
+                var exportedCount = 0;
 
                 SetProgressBarValue(0);
                 SetProgressBarMaximum(toExport);
-                foreach (var asset in toExportAssets)
+
+                foreach (AssetPreloadData asset in toExportAssets)
                 {
-                    var exportpath = Path.Combine(savePath, "_export");
+                    string exportPath = Path.Combine(savePath, "_export");
+
                     if (assetGroupSelectedIndex == 1)
                     {
-	                    var sourceFileName = Path.GetFileNameWithoutExtension(asset.sourceFile.filePath) ?? throw new InvalidOperationException();
-                        exportpath += Path.Combine(sourceFileName, "_export");
+	                    string sourceFileName = Path.GetFileNameWithoutExtension(asset.sourceFile.filePath) ?? throw new InvalidOperationException();
+                        exportPath = Path.Combine(exportPath, sourceFileName);
                     }
                     else if (assetGroupSelectedIndex == 0)
                     {
-                        exportpath = Path.Combine(savePath, "_export", asset.TypeString);
+                        exportPath = Path.Combine(savePath, "_export", asset.TypeString);
                     }
 
                     StatusStripUpdate(string.Format(Resources.ExportAssets_ExportingFormat, asset.TypeString, asset.Text));
@@ -602,7 +604,7 @@ namespace AssetStudio
                     {
 	                    if (forceRaw)
 	                    {
-		                    if (ExportRawFile(asset, exportpath))
+		                    if (ExportRawFile(asset, exportPath))
 		                    {
 			                    exportedCount++;
 		                    }
@@ -612,43 +614,43 @@ namespace AssetStudio
 		                    switch (asset.Type)
 		                    {
 			                    case ClassIDType.Texture2D:
-				                    if (ExportTexture2D(asset, exportpath, true))
+				                    if (ExportTexture2D(asset, exportPath, true))
 				                    {
 					                    exportedCount++;
 				                    }
 				                    break;
 			                    case ClassIDType.AudioClip:
-				                    ExportAsset(asset, exportpath, ExportAudioClip, ref exportedCount);
+				                    ExportAsset(asset, exportPath, ExportAudioClip, ref exportedCount);
 				                    break;
 			                    case ClassIDType.Shader:
-				                    ExportAsset(asset, exportpath, ExportShader, ref exportedCount);
+				                    ExportAsset(asset, exportPath, ExportShader, ref exportedCount);
 				                    break;
 			                    case ClassIDType.TextAsset:
-				                    ExportAsset(asset, exportpath, ExportTextAsset, ref exportedCount);
+				                    ExportAsset(asset, exportPath, ExportTextAsset, ref exportedCount);
 				                    break;
 			                    case ClassIDType.MonoScript:
-				                    ExportAsset(asset, exportpath, ExportMonoScript, ref exportedCount);
+				                    ExportAsset(asset, exportPath, ExportMonoScript, ref exportedCount);
 				                    break;
 			                    case ClassIDType.MonoBehaviour:
-				                    ExportAsset(asset, exportpath, ExportMonoBehaviour, ref exportedCount);
+				                    ExportAsset(asset, exportPath, ExportMonoBehaviour, ref exportedCount);
 				                    break;
 			                    case ClassIDType.Font:
-				                    ExportAsset(asset, exportpath, ExportFont, ref exportedCount);
+				                    ExportAsset(asset, exportPath, ExportFont, ref exportedCount);
 				                    break;
 			                    case ClassIDType.Mesh:
-				                    ExportAsset(asset, exportpath, ExportMesh, ref exportedCount);
+				                    ExportAsset(asset, exportPath, ExportMesh, ref exportedCount);
 				                    break;
 			                    case ClassIDType.VideoClip:
-				                    ExportAsset(asset, exportpath, ExportVideoClip, ref exportedCount);
+				                    ExportAsset(asset, exportPath, ExportVideoClip, ref exportedCount);
 				                    break;
 			                    case ClassIDType.MovieTexture:
-				                    ExportAsset(asset, exportpath, ExportMovieTexture, ref exportedCount);
+				                    ExportAsset(asset, exportPath, ExportMovieTexture, ref exportedCount);
 				                    break;
 			                    case ClassIDType.Sprite:
-				                    ExportAsset(asset, exportpath, ExportSprite, ref exportedCount);
+				                    ExportAsset(asset, exportPath, ExportSprite, ref exportedCount);
 				                    break;
 			                    case ClassIDType.Animator:
-				                    if (ExportAnimator(asset, exportpath))
+				                    if (ExportAnimator(asset, exportPath))
 				                    {
 					                    exportedCount++;
 				                    }
@@ -656,7 +658,7 @@ namespace AssetStudio
 			                    case ClassIDType.AnimationClip:
 				                    break;
 			                    default:
-				                    if (ExportRawFile(asset, exportpath))
+				                    if (ExportRawFile(asset, exportPath))
 				                    {
 					                    exportedCount++;
 				                    }
@@ -1039,7 +1041,7 @@ namespace AssetStudio
 	        }
 
 	        var stringBuilder = new StringBuilder();
-	        stringBuilder.Append(string.Join(Environment.NewLine, strings));
+	        stringBuilder.Append(string.Join(Environment.NewLine, strings).Replace(Environment.NewLine + Environment.NewLine, Environment.NewLine));
 	        strings.Clear();
 
 	        try

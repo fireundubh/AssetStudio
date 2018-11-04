@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -32,7 +33,7 @@ namespace AssetStudio.StudioClasses
 				}
 			}
 
-			strings.Add("\n");
+			strings.Add(Environment.NewLine);
 
 			return strings;
 		}
