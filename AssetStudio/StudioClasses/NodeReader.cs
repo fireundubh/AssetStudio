@@ -82,16 +82,7 @@ namespace AssetStudio.StudioClasses
             {
                 PPtr pptr = assetsFile.ReadPPtr();
 
-                string nodeText = !isArray ? string.Format("{0} {1} = {2}", typeDef.Name, name, pptr.ID) : string.Format("[{0}] {1} {2} = {3}", arrayIndex, typeDef.Name, name, pptr.ID);
-
-                var node = new TreeNode
-                {
-                    Name = name,
-                    Text = nodeText,
-                    Tag = typeSig.ElementType
-                };
-
-                rootNode.Nodes.Add(node);
+                CreateValueNode(rootNode, typeDef, typeSig, name, pptr.ID, false, isArray, arrayIndex, out TreeNode node);
 
                 yield return node;
                 yield break;
@@ -102,19 +93,7 @@ namespace AssetStudio.StudioClasses
             {
                 uint value = reader.ReadUInt32();
 
-                string nodeText = !isArray ? string.Format("{0} {1} = {2}", typeDef.Name, name, value) : string.Format("[{0}] {1} {2} = {3}", arrayIndex, typeDef.Name, name, value);
-
-                var node = new TreeNode
-                {
-                    Name = name,
-                    Text = nodeText,
-                    Tag = typeSig.ElementType
-                };
-
-                if (!isRoot)
-                {
-                    rootNode.Nodes.Add(node);
-                }
+                CreateValueNode(rootNode, typeDef, typeSig, name, value, isRoot, isArray, arrayIndex, out TreeNode node);
 
                 yield return node;
                 yield break;
@@ -130,19 +109,7 @@ namespace AssetStudio.StudioClasses
             {
                 float[] value = reader.ReadSingleArray(4);
 
-                string nodeText = !isArray ? string.Format("{0} {1} = {2}", typeDef.Name, name, value) : string.Format("[{0}] {1} {2} = {3}", arrayIndex, typeDef.Name, name, value);
-
-                var node = new TreeNode
-                {
-                    Name = name,
-                    Text = nodeText,
-                    Tag = typeSig.ElementType
-                };
-
-                if (!isRoot)
-                {
-                    rootNode.Nodes.Add(node);
-                }
+                CreateValueNode(rootNode, typeDef, typeSig, name, value, isRoot, isArray, arrayIndex, out TreeNode node);
 
                 yield return node;
                 yield break;
@@ -153,19 +120,7 @@ namespace AssetStudio.StudioClasses
             {
                 int value = reader.ReadInt32();
 
-                string nodeText = !isArray ? string.Format("{0} {1} = {2}", typeDef.Name, name, value) : string.Format("[{0}] {1} {2} = {3}", arrayIndex, typeDef.Name, name, value);
-
-                var node = new TreeNode
-                {
-                    Name = name,
-                    Text = nodeText,
-                    Tag = typeSig.ElementType
-                };
-
-                if (!isRoot)
-                {
-                    rootNode.Nodes.Add(node);
-                }
+                CreateValueNode(rootNode, typeDef, typeSig, name, value, isRoot, isArray, arrayIndex, out TreeNode node);
 
                 yield return node;
                 yield break;
@@ -187,19 +142,7 @@ namespace AssetStudio.StudioClasses
                     reader.Position += 168;
                 }
 
-                string nodeText = !isArray ? string.Format("{0} {1}", typeDef.Name, name) : string.Format("[{0}] {1} {2}", arrayIndex, typeDef.Name, name);
-
-                var node = new TreeNode
-                {
-                    Name = name,
-                    Text = nodeText,
-                    Tag = typeSig.ElementType
-                };
-
-                if (!isRoot)
-                {
-                    rootNode.Nodes.Add(node);
-                }
+                CreateKeyNode(rootNode, typeDef, typeSig, name, isRoot, isArray, arrayIndex, out TreeNode node);
 
                 yield return node;
                 yield break;
@@ -213,19 +156,7 @@ namespace AssetStudio.StudioClasses
                 float top = reader.ReadSingle();
                 float bottom = reader.ReadSingle();
 
-                string nodeText = !isArray ? string.Format("{0} {1}", typeDef.Name, name) : string.Format("[{0}] {1} {2}", arrayIndex, typeDef.Name, name);
-
-                var node = new TreeNode
-                {
-                    Name = name,
-                    Text = nodeText,
-                    Tag = typeSig.ElementType
-                };
-
-                if (!isRoot)
-                {
-                    rootNode.Nodes.Add(node);
-                }
+                CreateKeyNode(rootNode, typeDef, typeSig, name, isRoot, isArray, arrayIndex, out TreeNode node);
 
                 yield return node;
                 yield break;
@@ -241,6 +172,40 @@ namespace AssetStudio.StudioClasses
             foreach (TreeNode node in DumpNodeObject(assetsFile, name, typeDef, rootNode).AsEnumerable())
             {
                 yield return node;
+            }
+        }
+
+        private static void CreateKeyNode(TreeNode rootNode, TypeDef typeDef, TypeSig typeSig, string name, bool isRoot, bool isArray, int arrayIndex, out TreeNode node)
+        {
+            string nodeText = !isArray ? string.Format("{0} {1}", typeDef.Name, name) : string.Format("[{0}] {1} {2}", arrayIndex, typeDef.Name, name);
+
+            node = new TreeNode
+            {
+                Name = name,
+                Text = nodeText,
+                Tag = typeSig.ElementType
+            };
+
+            if (!isRoot)
+            {
+                rootNode.Nodes.Add(node);
+            }
+        }
+
+        private static void CreateValueNode(TreeNode rootNode, TypeDef typeDef, TypeSig typeSig, string name, object value, bool isRoot, bool isArray, int arrayIndex, out TreeNode node)
+        {
+            string nodeText = !isArray ? string.Format("{0} {1} = {2}", typeDef.Name, name, value) : string.Format("[{0}] {1} {2} = {3}", arrayIndex, typeDef.Name, name, value);
+
+            node = new TreeNode
+            {
+                Name = name,
+                Text = nodeText,
+                Tag = typeSig.ElementType
+            };
+
+            if (!isRoot)
+            {
+                rootNode.Nodes.Add(node);
             }
         }
 
