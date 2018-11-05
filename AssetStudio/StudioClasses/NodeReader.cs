@@ -1,193 +1,223 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
+using AssetStudio.Extensions;
 using dnlib.DotNet;
 
 namespace AssetStudio.StudioClasses
 {
-	public class NodeReader
-	{
-		public static void DumpNode(TreeView previewTree, TypeSig typeSig, AssetsFile assetsFile, string name, int currentDepth, bool isRoot = false, bool isArray = false, int arrayIndex = 0)
-		{
-			TypeDef typeDef = typeSig.ToTypeDefOrRef().ResolveTypeDefThrow();
+    public static class NodeReader
+    {
+        public static IEnumerator<TreeNode> DumpNode(TypeSig typeSig, AssetsFile assetsFile, string name, TreeNode rootNode, bool isArray = false, int arrayIndex = 0)
+        {
+            bool isRoot = rootNode == null;
+            TypeDef typeDef = typeSig.ToTypeDefOrRef().ResolveTypeDefThrow();
 
-			EndianBinaryReader reader = assetsFile.reader;
+            EndianBinaryReader reader = assetsFile.reader;
 
-			if (Studio.IsExcludedType(typeDef, typeSig))
-			{
-				return;
-			}
+            if (Studio.IsExcludedType(typeDef, typeSig))
+            {
+                yield break;
+            }
 
-			if (ReadPrimitiveNode(previewTree, reader, typeDef, typeSig, name, currentDepth, isArray, arrayIndex))
-			{
-				return;
-			}
+            if (typeSig.IsPrimitive)
+            {
+                object value = TypeReader.ReadAlignedPrimitiveValue(reader, typeSig);
 
-			if (ReadStringNode(previewTree, reader, typeDef, typeSig, name, currentDepth, isArray, arrayIndex))
-			{
-				return;
-			}
+                string nodeText = !isArray ? $"{typeDef.Name} {name} = {value}" : $"[{arrayIndex}] {typeDef.Name} {name} = {value}";
 
-			if (ReadArraySigBaseNode(previewTree, reader, typeDef, typeSig, assetsFile, name, currentDepth))
-			{
-				return;
-			}
+                var node = new TreeNode
+                {
+                    Name = name,
+                    Text = nodeText,
+                    Tag = typeSig.ElementType
+                };
+                
+                if (!isRoot)
+                {
+                    rootNode.Nodes.Add(node);
+                }
 
-			if (ReadGenericInstSigNode(previewTree, reader, typeSig, assetsFile, name, currentDepth, isRoot))
-			{
-				return;
-			}
+                yield return node;
+                yield break;
+            }
 
-			DumpClassOrValueTypeNode(previewTree, typeDef, assetsFile, name, currentDepth);
-		}
+            if (typeSig.FullName == "System.String")
+            {
+                string str = reader.ReadAlignedString();
 
-		private static void DumpClassOrValueTypeNode(TreeView previewTree, TypeDef typeDef, AssetsFile assetsFile, string name, int currentDepth)
-		{
-			if (!typeDef.IsClass && !typeDef.IsValueType)
-			{
-				return;
-			}
+                string nodeText = !isArray ? $"{typeDef.Name} {name} = \"{str}\"" : $"[{arrayIndex}] {typeDef.Name} {name} = \"{str}\"";
 
-			if (name != null && currentDepth != -1)
-			{
-				TreeNode node = previewTree.Nodes.Add(name, string.Format("{0} {1}", typeDef.Name, name));
-				node.Tag = typeDef.ToTypeSig().ElementType;
-			}
+                var node = new TreeNode
+                {
+                    Name = name,
+                    Text = nodeText,
+                    Tag = typeSig.ElementType
+                };
+                
+                if (!isRoot)
+                {
+                    rootNode.Nodes.Add(node);
+                }
 
-			if (currentDepth == -1 && typeDef.BaseType.FullName != "UnityEngine.Object")
-			{
-				DumpNode(previewTree, typeDef.BaseType.ToTypeSig(), assetsFile, null, currentDepth, true);
-			}
+                yield return node;
+                yield break;
+            }
 
-			if (currentDepth != -1 && typeDef.BaseType.FullName != "System.Object")
-			{
-				DumpNode(previewTree, typeDef.BaseType.ToTypeSig(), assetsFile, null, currentDepth, true);
-			}
+            if (typeSig is ArraySigBase)
+            {
+                foreach (TreeNode node in NodeDumpArray(typeDef, typeSig, assetsFile, name, reader, rootNode).AsEnumerable())
+                {
+                    yield return node;
+                }
 
-			foreach (FieldDef fieldDef in typeDef.Fields)
-			{
-				FieldAttributes access = fieldDef.Access & FieldAttributes.FieldAccessMask;
+                yield break;
+            }
 
-				if (access != FieldAttributes.Public)
-				{
-					if (fieldDef.CustomAttributes.Any(x => x.TypeFullName.Contains("SerializeField")))
-					{
-						DumpNode(previewTree, fieldDef.FieldType, assetsFile, fieldDef.Name, currentDepth + 1);
-					}
-				}
-				else if ((fieldDef.Attributes & FieldAttributes.Static) == 0 && (fieldDef.Attributes & FieldAttributes.InitOnly) == 0 && (fieldDef.Attributes & FieldAttributes.NotSerialized) == 0)
-				{
-					DumpNode(previewTree, fieldDef.FieldType, assetsFile, fieldDef.Name, currentDepth + 1);
-				}
-			}
-		}
+            if (!isRoot && typeSig is GenericInstSig genericInstSig)
+            {
+                if (genericInstSig.GenericArguments.Count != 1)
+                {
+                    // TODO
+                    yield break;
+                }
+                
+                TypeSig genTypeSig = genericInstSig.GenericArguments[0];
+                TypeDef type = genTypeSig.ToTypeDefOrRef().ResolveTypeDefThrow();
 
-		private static bool ReadPrimitiveNode(TreeView previewTree, BinaryReader reader, TypeDef typeDef, TypeSig typeSig, string name, int currentDepth, bool isArray = false, int arrayIndex = 0)
-		{
-			if (!typeSig.IsPrimitive)
-			{
-				return false;
-			}
+                foreach (TreeNode node in NodeDumpArray(type, genTypeSig, assetsFile, name, reader, rootNode).AsEnumerable())
+                {
+                    yield return node;
+                }
 
-			object value = TypeReader.ReadAlignedPrimitiveValue(reader, typeSig);
+                yield break;
+            }
 
-			string nodeText = !isArray ? string.Format("{0} {1} = {2}", typeDef.Name, name, value) : string.Format("[{0}] {1} {2} = {3}", arrayIndex, typeDef.Name, name, value);
+            if (!typeDef.IsClass && !typeDef.IsValueType)
+            {
+                // TODO
+                yield break;
+            }
 
-			TreeNode node = previewTree.Nodes.Add(name, nodeText);
-			node.Tag = typeSig.ElementType;
+            foreach (TreeNode node in DumpNodeObject(assetsFile, name, typeDef, rootNode).AsEnumerable())
+            {
+                yield return node;
+            }
+        }
 
-			return true;
-		}
+        private static IEnumerator<TreeNode> NodeDumpArray(TypeDef type, TypeSig typeSig, AssetsFile assetsFile, string name, EndianBinaryReader reader, TreeNode rootNode)
+        {
+            bool isRoot = rootNode == null;
+            if (!type.IsEnum && !Studio.IsBaseType(type) && !Studio.IsAssignFromUnityObject(type) && !Studio.IsEngineType(type) && !type.IsSerializable)
+            {
+                yield break;
+            }
+            
+            int size = reader.ReadInt32();
 
-		private static bool ReadStringNode(TreeView previewTree, EndianBinaryReader reader, TypeDef typeDef, TypeSig typeSig, string name, int currentDepth, bool isArray = false, int arrayIndex = 0)
-		{
-			if (typeSig.FullName != "System.String")
-			{
-				return false;
-			}
+            string nodeText = $"{typeSig.TypeName} {name}";
+                
+            var arrayNode = new TreeNode
+            {
+                Name = name,
+                Text = nodeText,
+                Tag = typeSig.ElementType
+            };
+                
+            if (!isRoot)
+            {
+                rootNode.Nodes.Add(arrayNode);
+            }
 
-			string str = reader.ReadAlignedString();
+            yield return arrayNode;
 
-			string nodeText = !isArray ? string.Format("{0} {1} = \"{2}\"", typeDef.Name, name, str) : string.Format("[{0}] {1} {2} = \"{3}\"", arrayIndex, typeDef.Name, name, str);
+            TreeNode arraySizeNode = NodeHelper.AddKeyedChildNode(arrayNode, name, ref size, "int size = {0}");
 
-			TreeNode node = previewTree.Nodes.Add(name, nodeText);
-			node.Tag = typeSig.ElementType;
+            bool readArrayNode = typeSig.TypeName == "GUIStyle[]";
 
-			return true;
-		}
+            if (readArrayNode)
+            {
+                yield break;
+            }
+                
+            for (var i = 0; i < size; i++)
+            {
+                foreach (TreeNode node in DumpNode(typeSig, assetsFile, "data", arraySizeNode, isArray: true, arrayIndex: i).AsEnumerable())
+                {
+                    yield return node;
+                }
+            }
+        }
 
-		private static bool ReadArrayNode(TreeView previewTree, EndianBinaryReader reader, TypeSig typeSig, string name, int currentDepth, out int size)
-		{
-			size = reader.ReadInt32();
+        private static IEnumerator<TreeNode> DumpNodeObject(AssetsFile assetsFile, string name, TypeDef typeDef, TreeNode rootNode)
+        {
+            bool isRoot = rootNode == null;
+            if (name != null)
+            {
+                string nodeText = $"{typeDef.Name} {name}";
+                var node = new TreeNode
+                {
+                    Name = name,
+                    Text = nodeText,
+                    Tag = typeDef.ToTypeSig().ElementType
+                };
+                if (!isRoot)
+                {
+                    rootNode.Nodes.Add(node);
+                }
 
-			TreeNode arrayNode = previewTree.Nodes.Add(name, string.Format("{0} {1}", typeSig.TypeName, name));
-			arrayNode.Tag = typeSig.ElementType;
+                yield return node;
+                rootNode = node;
+            }
 
-			NodeHelper.AddKeyedChildNode(arrayNode, name, ref size, "int size = {0}");
+            if (isRoot && typeDef.BaseType.FullName != "UnityEngine.Object")
+            {
+                foreach (TreeNode node in DumpNode(typeDef.BaseType.ToTypeSig(), assetsFile, null, rootNode, true).AsEnumerable())
+                {
+                    yield return node;
+                }
+            }
 
-			if (typeSig.TypeName == "GUIStyle[]")
-			{
-				return true;
-			}
+            if (!isRoot && typeDef.BaseType.FullName != "System.Object")
+            {
+                foreach (TreeNode node in DumpNode(typeDef.BaseType.ToTypeSig(), assetsFile, null, rootNode, true).AsEnumerable())
+                {
+                    yield return node;
+                }
+            }
 
-			return false;
-		}
+            foreach (TreeNode node in DumpNodeFields(assetsFile, typeDef, rootNode).AsEnumerable())
+            {
+                yield return node;
+            }
+        }
 
-		private static bool ReadArraySigBaseNode(TreeView previewTree, EndianBinaryReader reader, TypeDef typeDef, TypeSig typeSig, AssetsFile assetsFile, string name, int currentDepth)
-		{
-			if (!(typeSig is ArraySigBase))
-			{
-				return false;
-			}
+        private static IEnumerator<TreeNode> DumpNodeFields(AssetsFile assetsFile, TypeDef typeDef, TreeNode rootNode)
+        {
+            foreach (FieldDef fieldDef in typeDef.Fields)
+            {
+                FieldAttributes access = fieldDef.Access & FieldAttributes.FieldAccessMask;
 
-			if (!typeDef.IsEnum && !Studio.IsBaseType(typeDef) && !Studio.IsAssignFromUnityObject(typeDef) && !Studio.IsEngineType(typeDef) && !typeDef.IsSerializable)
-			{
-				return true;
-			}
-
-			if (ReadArrayNode(previewTree, reader, typeSig, name, currentDepth, out int size))
-			{
-				return true;
-			}
-
-			for (var i = 0; i < size; i++)
-			{
-				DumpNode(previewTree, typeDef.ToTypeSig(), assetsFile, "data", currentDepth + 3, isArray: true, arrayIndex: i);
-			}
-
-			return true;
-		}
-
-		private static bool ReadGenericInstSigNode(TreeView previewTree, EndianBinaryReader reader, TypeSig typeSig, AssetsFile assetsFile, string name, int indentDepth, bool isRoot)
-		{
-			if (isRoot || !(typeSig is GenericInstSig genericInstSig))
-			{
-				return false;
-			}
-
-			if (genericInstSig.GenericArguments.Count != 1)
-			{
-				return true;
-			}
-
-			TypeDef type = genericInstSig.GenericArguments[0].ToTypeDefOrRef().ResolveTypeDefThrow();
-
-			if (!type.IsEnum && !Studio.IsBaseType(type) && !Studio.IsAssignFromUnityObject(type) && !Studio.IsEngineType(type) && !type.IsSerializable)
-			{
-				return true;
-			}
-
-			if (ReadArrayNode(previewTree, reader, typeSig, name, indentDepth, out int size))
-			{
-				return true;
-			}
-
-			for (var i = 0; i < size; i++)
-			{
-				DumpNode(previewTree, genericInstSig.GenericArguments[0], assetsFile, "data", indentDepth + 3, isArray: true, arrayIndex: i);
-			}
-
-			return true;
-		}
-	}
+                if (access != FieldAttributes.Public)
+                {
+                    if (!fieldDef.CustomAttributes.Any(x => x.TypeFullName.Contains("SerializeField")))
+                    {
+                        continue;
+                    }
+                    
+                    foreach (TreeNode node in DumpNode(fieldDef.FieldType, assetsFile, fieldDef.Name, rootNode).AsEnumerable())
+                    {
+                        yield return node;
+                    }
+                }
+                else if ((fieldDef.Attributes & FieldAttributes.Static) == 0 && (fieldDef.Attributes & FieldAttributes.InitOnly) == 0 && (fieldDef.Attributes & FieldAttributes.NotSerialized) == 0)
+                {
+                    foreach (TreeNode node in DumpNode(fieldDef.FieldType, assetsFile, fieldDef.Name, rootNode).AsEnumerable())
+                    {
+                        yield return node;
+                    }
+                }
+            }
+        }
+    }
 }

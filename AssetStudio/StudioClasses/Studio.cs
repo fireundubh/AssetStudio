@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
+using AssetStudio.Extensions;
 using dnlib.DotNet;
 using AssetStudio.Properties;
 using AssetStudio.StudioClasses;
@@ -595,7 +596,8 @@ namespace AssetStudio
                     }
                     else if (assetGroupSelectedIndex == 0)
                     {
-                        exportPath = Path.Combine(savePath, "_export", asset.TypeString);
+                        //exportPath = Path.Combine(savePath, "_export", asset.TypeString);
+                        exportPath = Path.Combine(savePath, "_export", asset.Type.ToString());
                     }
 
                     StatusStripUpdate(string.Format(Resources.ExportAssets_ExportingFormat, asset.TypeString, asset.Text));
@@ -982,7 +984,28 @@ namespace AssetStudio
 			    return;
 		    }
 
-			NodeReader.DumpNode(previewTree, typeDef.ToTypeSig(), assetPreloadData.sourceFile, null, indent, isRoot);
+			
+		    IEnumerator<TreeNode> nodeEnumerator = NodeReader.DumpNode(typeDef.ToTypeSig(), assetPreloadData.sourceFile, null, null);
+		    if (!nodeEnumerator.MoveNext())
+		    {
+			    throw new InvalidOperationException("no nodes");
+		    }
+		    TreeNode rootNode = nodeEnumerator.Current;
+		    if (rootNode == null)
+		    {
+			    throw new InvalidOperationException("no root node");
+		    }
+		    previewTree.Nodes.Add(rootNode);
+		    foreach (TreeNode node in nodeEnumerator.AsEnumerable())
+		    {
+			    // visit each node as needed, or just iterate to fill tree
+
+			    // this check is possibly not needed
+			    if (node.Parent == null)
+			    {
+				    previewTree.Nodes.Add(node);
+			    }
+		    }
 	    }
 
         public static string GetScriptString(AssetPreloadData assetPreloadData, int indent = -1, bool isRoot = true)
