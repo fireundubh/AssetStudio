@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 using AssetStudio.Extensions;
@@ -15,55 +15,37 @@ namespace AssetStudio.StudioClasses
 
             EndianBinaryReader reader = assetsFile.reader;
 
-            if (Studio.IsExcludedType(typeDef, typeSig))
-            {
-                yield break;
-            }
-
+            // TypeReader equivalent: ReadPrimitiveValue
             if (typeSig.IsPrimitive)
             {
-                object value = TypeReader.ReadAlignedPrimitiveValue(reader, typeSig);
-
-                string nodeText = !isArray ? $"{typeDef.Name} {name} = {value}" : $"[{arrayIndex}] {typeDef.Name} {name} = {value}";
-
-                var node = new TreeNode
-                {
-                    Name = name,
-                    Text = nodeText,
-                    Tag = typeSig.ElementType
-                };
-                
-                if (!isRoot)
-                {
-                    rootNode.Nodes.Add(node);
-                }
+                ReadPrimitiveNode(rootNode, reader, typeDef, typeSig, name, isRoot, isArray, arrayIndex, out TreeNode node);
 
                 yield return node;
                 yield break;
             }
 
+            // TypeReader equivalent: ReadStringValue
             if (typeSig.FullName == "System.String")
             {
-                string str = reader.ReadAlignedString();
-
-                string nodeText = !isArray ? $"{typeDef.Name} {name} = \"{str}\"" : $"[{arrayIndex}] {typeDef.Name} {name} = \"{str}\"";
-
-                var node = new TreeNode
-                {
-                    Name = name,
-                    Text = nodeText,
-                    Tag = typeSig.ElementType
-                };
-                
-                if (!isRoot)
-                {
-                    rootNode.Nodes.Add(node);
-                }
+                ReadStringNode(rootNode, reader, typeDef, typeSig, name, isRoot, isArray, arrayIndex, out TreeNode node);
 
                 yield return node;
                 yield break;
             }
 
+            // skip
+            if (typeSig.FullName == "System.Object")
+            {
+                yield break;
+            }
+
+            // skip
+            if (typeDef.IsDelegate)
+            {
+                yield break;
+            }
+
+            // TypeReader equivalent: ReadArraySigBaseValue
             if (typeSig is ArraySigBase)
             {
                 foreach (TreeNode node in NodeDumpArray(typeDef, typeSig, assetsFile, name, reader, rootNode).AsEnumerable())
@@ -74,6 +56,7 @@ namespace AssetStudio.StudioClasses
                 yield break;
             }
 
+            // TypeReader equivalent: ReadGenericInstSigValue
             if (!isRoot && typeSig is GenericInstSig genericInstSig)
             {
                 if (genericInstSig.GenericArguments.Count != 1)
@@ -81,7 +64,7 @@ namespace AssetStudio.StudioClasses
                     // TODO
                     yield break;
                 }
-                
+
                 TypeSig genTypeSig = genericInstSig.GenericArguments[0];
                 TypeDef type = genTypeSig.ToTypeDefOrRef().ResolveTypeDefThrow();
 
@@ -93,6 +76,70 @@ namespace AssetStudio.StudioClasses
                 yield break;
             }
 
+            // TypeReader equivalent: GetUnityObjectPPtrValue
+            if (!isRoot && Studio.IsAssignFromUnityObject(typeDef))
+            {
+                PPtr pptr = assetsFile.ReadPPtr();
+
+                yield return new TreeNode(string.Format("PPtr<{0}> {1} = {2}", typeDef.Name, name, pptr.ID));
+            }
+
+            // TypeReader equivalent: ReadEnumValue
+            if (typeDef.IsEnum)
+            {
+                yield return new TreeNode(string.Format("{0} {1} = {2}", typeDef.Name, name, reader.ReadUInt32()));
+            }
+
+            if (!isRoot && !Studio.IsEngineType(typeDef) && !typeDef.IsSerializable)
+            {
+                yield break;
+            }
+
+            // TypeReader equivalent: ReadRectValue
+            if (typeDef.FullName == "UnityEngine.Rect")
+            {
+                float[] rect = reader.ReadSingleArray(4);
+                yield return new TreeNode(string.Format("{0} {1}", typeDef.Name, name));
+            }
+
+            // TypeReader equivalent: ReadLayerMaskValue
+            if (typeDef.FullName == "UnityEngine.LayerMask")
+            {
+                int value = reader.ReadInt32();
+                yield return new TreeNode(string.Format("{0} {1}", typeDef.Name, name));
+            }
+
+            // TypeReader equivalent: ReadGradientValue
+            if (typeDef.FullName == "UnityEngine.Gradient")
+            {
+                if (assetsFile.version[0] == 5 && assetsFile.version[1] < 5)
+                {
+                    reader.Position += 68;
+                }
+                else if (assetsFile.version[0] == 5 && assetsFile.version[1] < 6)
+                {
+                    reader.Position += 72;
+                }
+                else
+                {
+                    reader.Position += 168;
+                }
+
+                yield return new TreeNode(string.Format("{0} {1}", typeDef.Name, name));
+            }
+
+            // TypeReader equivalent: ReadRectOffsetName
+            if (typeDef.FullName == "UnityEngine.RectOffset")
+            {
+                float left = reader.ReadSingle();
+                float right = reader.ReadSingle();
+                float top = reader.ReadSingle();
+                float bottom = reader.ReadSingle();
+
+                yield return new TreeNode(string.Format("{0} {1}", typeDef.Name, name));
+            }
+
+            // TypeReader equivalent: DumpClassOrValueType
             if (!typeDef.IsClass && !typeDef.IsValueType)
             {
                 // TODO
@@ -105,6 +152,44 @@ namespace AssetStudio.StudioClasses
             }
         }
 
+        private static void ReadStringNode(TreeNode rootNode, EndianBinaryReader reader, TypeDef typeDef, TypeSig typeSig, string name, bool isRoot, bool isArray, int arrayIndex, out TreeNode node)
+        {
+            string str = reader.ReadAlignedString();
+
+            string nodeText = !isArray ? $"{typeDef.Name} {name} = \"{str}\"" : $"[{arrayIndex}] {typeDef.Name} {name} = \"{str}\"";
+
+            node = new TreeNode
+            {
+                Name = name,
+                Text = nodeText,
+                Tag = typeSig.ElementType
+            };
+
+            if (!isRoot)
+            {
+                rootNode.Nodes.Add(node);
+            }
+        }
+
+        private static void ReadPrimitiveNode(TreeNode rootNode, EndianBinaryReader reader, TypeDef typeDef, TypeSig typeSig, string name, bool isRoot, bool isArray, int arrayIndex, out TreeNode node)
+        {
+            object value = TypeReader.ReadAlignedPrimitiveValue(reader, typeSig);
+
+            string nodeText = !isArray ? $"{typeDef.Name} {name} = {value}" : $"[{arrayIndex}] {typeDef.Name} {name} = {value}";
+
+            node = new TreeNode
+            {
+                Name = name,
+                Text = nodeText,
+                Tag = typeSig.ElementType
+            };
+
+            if (!isRoot)
+            {
+                rootNode.Nodes.Add(node);
+            }
+        }
+
         private static IEnumerator<TreeNode> NodeDumpArray(TypeDef type, TypeSig typeSig, AssetsFile assetsFile, string name, EndianBinaryReader reader, TreeNode rootNode)
         {
             bool isRoot = rootNode == null;
@@ -112,18 +197,18 @@ namespace AssetStudio.StudioClasses
             {
                 yield break;
             }
-            
+
             int size = reader.ReadInt32();
 
             string nodeText = $"{typeSig.TypeName} {name}";
-                
+
             var arrayNode = new TreeNode
             {
                 Name = name,
                 Text = nodeText,
                 Tag = typeSig.ElementType
             };
-                
+
             if (!isRoot)
             {
                 rootNode.Nodes.Add(arrayNode);
@@ -139,7 +224,7 @@ namespace AssetStudio.StudioClasses
             {
                 yield break;
             }
-                
+
             for (var i = 0; i < size; i++)
             {
                 foreach (TreeNode node in DumpNode(typeSig, assetsFile, "data", arraySizeNode, isArray: true, arrayIndex: i).AsEnumerable())
@@ -152,15 +237,18 @@ namespace AssetStudio.StudioClasses
         private static IEnumerator<TreeNode> DumpNodeObject(AssetsFile assetsFile, string name, TypeDef typeDef, TreeNode rootNode)
         {
             bool isRoot = rootNode == null;
+
             if (name != null)
             {
                 string nodeText = $"{typeDef.Name} {name}";
+
                 var node = new TreeNode
                 {
                     Name = name,
                     Text = nodeText,
                     Tag = typeDef.ToTypeSig().ElementType
                 };
+
                 if (!isRoot)
                 {
                     rootNode.Nodes.Add(node);
@@ -204,7 +292,7 @@ namespace AssetStudio.StudioClasses
                     {
                         continue;
                     }
-                    
+
                     foreach (TreeNode node in DumpNode(fieldDef.FieldType, assetsFile, fieldDef.Name, rootNode).AsEnumerable())
                     {
                         yield return node;
