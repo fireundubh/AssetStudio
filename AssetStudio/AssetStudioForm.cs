@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -13,6 +13,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing.Text;
 using AssetStudio.Properties;
+using dnlib.DotNet;
 using FMOD;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
@@ -700,17 +701,33 @@ namespace AssetStudio
 			resizeAssetListColumns();
 		}
 
+	    private static void UnloadModules()
+	    {
+	        foreach (string key in LoadedModuleDic.Keys)
+	        {
+	            ModuleDef module = LoadedModuleDic[key];
+	            module.Dispose();
+	        }
+
+	        LoadedModuleDic.Clear();
+
+	        moduleContext = null;
+	    }
+
 		private void selectAsset(object sender, ListViewItemSelectionChangedEventArgs e)
 		{
+		    UnloadModules();
+
 			previewPanel.BackgroundImage = Resources.preview;
 			previewPanel.BackgroundImageLayout = ImageLayout.Center;
-			assetInfoLabel.Visible = false;
-			assetInfoLabel.Text = null;
-			textPreviewBox.Visible = false;
-			fontPreviewBox.Visible = false;
-			FMODpanel.Visible = false;
-			glControl1.Visible = false;
-			lastLoadedAsset = null;
+		    assetInfoLabel.Visible = false;
+		    assetInfoLabel.Text = null;
+		    textPreviewBox.Visible = false;
+		    monoPreviewBox.Visible = false;
+		    fontPreviewBox.Visible = false;
+		    FMODpanel.Visible = false;
+		    glControl1.Visible = false;
+		    lastLoadedAsset = null;
 			StatusStripUpdate("");
 
 			FMODreset();
