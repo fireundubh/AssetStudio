@@ -202,7 +202,6 @@
     <Compile Include="StudioClasses\BuildTarget.cs" />
     <Compile Include="StudioClasses\ClassIDType.cs" />
     <Compile Include="StudioClasses\TypeReader.cs" />
-    <Compile Include="StudioClasses\Studio.DumpNode.cs" />
     <Compile Include="StudioClasses\TypeTreeNode.cs" />
     <Compile Include="StudioClasses\TypeTreeHelper.cs" />
     <Compile Include="StudioClasses\ResourcesHelper.cs" />
