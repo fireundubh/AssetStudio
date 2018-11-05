@@ -6,6 +6,7 @@ namespace AssetStudio.Extensions
     public class WrappedEnumerator : IEnumerable
     {
         protected readonly IEnumerator enumerator;
+
         // ReSharper disable once MemberCanBeProtected.Global
         public WrappedEnumerator(IEnumerator enumerator)
         {
