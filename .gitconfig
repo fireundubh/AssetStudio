@@ -1,0 +1,9 @@
+[core]
+    whitespace = fix,trailing-space,-indent-with-non-tab,-tab-in-indent
+
+[apply]
+	whitespace = nowarn
+
+[rerere]
+	enabled = 1
+

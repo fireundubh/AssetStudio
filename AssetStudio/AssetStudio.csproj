@@ -171,6 +171,8 @@
     <Compile Include="Classes\MonoScript.cs" />
     <Compile Include="Classes\NamedObject.cs" />
     <Compile Include="Classes\Object.cs" />
+    <Compile Include="Extensions\EnumeratorExtensions.cs" />
+    <Compile Include="Extensions\WrappedEnumerator.cs" />
     <Compile Include="StudioClasses\NativeMethods.cs" />
     <Compile Include="StudioClasses\NodeHelper.cs" />
     <Compile Include="StudioClasses\NodeReader.cs" />
@@ -200,6 +202,7 @@
     <Compile Include="StudioClasses\BuildTarget.cs" />
     <Compile Include="StudioClasses\ClassIDType.cs" />
     <Compile Include="StudioClasses\TypeReader.cs" />
+    <Compile Include="StudioClasses\Studio.DumpNode.cs" />
     <Compile Include="StudioClasses\TypeTreeNode.cs" />
     <Compile Include="StudioClasses\TypeTreeHelper.cs" />
     <Compile Include="StudioClasses\ResourcesHelper.cs" />
