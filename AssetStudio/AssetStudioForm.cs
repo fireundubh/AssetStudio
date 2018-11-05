@@ -1755,18 +1755,39 @@ namespace AssetStudio
 			}
 		}
 
-		private void ProgressBarPerformStep()
+        private int progressBarStepDelta;
+        private Stopwatch progressBarStepTimer;
+        private static readonly TimeSpan Fps = TimeSpan.FromMilliseconds(1000/30f); // 30fps target
+
+        private void ProgressBarPerformStep()
 		{
-			if (InvokeRequired)
+
+            Interlocked.Increment(ref this.progressBarStepDelta);
+
+            // timers aren't "real" - minimal alloc here
+            Stopwatch sw = Interlocked.CompareExchange(ref this.progressBarStepTimer, Stopwatch.StartNew(), null);
+
+            if (sw == null || sw.Elapsed <= Fps)
+            {
+                return;
+            }
+
+            // don't double-reset timer
+            Interlocked.CompareExchange(ref this.progressBarStepTimer, Stopwatch.StartNew(), sw);
+
+			if (this.InvokeRequired)
 			{
-				BeginInvoke(new Action(() =>
-				                       {
-					                       progressBar1.PerformStep();
-				                       }));
+                this.BeginInvoke(new Action(() =>
+                {
+                    this.progressBar1.Value += Interlocked.Exchange(ref this.progressBarStepDelta, 0);
+                    //this.progressBar1.Update();
+                }));
+
 			}
 			else
 			{
-				progressBar1.PerformStep();
+                this.progressBar1.Value += Interlocked.Exchange(ref this.progressBarStepDelta, 0);
+                //this.progressBar1.Update();
 			}
 		}
 
