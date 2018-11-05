@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
@@ -81,13 +82,42 @@ namespace AssetStudio.StudioClasses
             {
                 PPtr pptr = assetsFile.ReadPPtr();
 
-                yield return new TreeNode(string.Format("PPtr<{0}> {1} = {2}", typeDef.Name, name, pptr.ID));
+                string nodeText = !isArray ? string.Format("{0} {1} = {2}", typeDef.Name, name, pptr.ID) : string.Format("[{0}] {1} {2} = {3}", arrayIndex, typeDef.Name, name, pptr.ID);
+
+                var node = new TreeNode
+                {
+                    Name = name,
+                    Text = nodeText,
+                    Tag = typeSig.ElementType
+                };
+
+                rootNode.Nodes.Add(node);
+
+                yield return node;
+                yield break;
             }
 
             // TypeReader equivalent: ReadEnumValue
             if (typeDef.IsEnum)
             {
-                yield return new TreeNode(string.Format("{0} {1} = {2}", typeDef.Name, name, reader.ReadUInt32()));
+                uint value = reader.ReadUInt32();
+
+                string nodeText = !isArray ? string.Format("{0} {1} = {2}", typeDef.Name, name, value) : string.Format("[{0}] {1} {2} = {3}", arrayIndex, typeDef.Name, name, value);
+
+                var node = new TreeNode
+                {
+                    Name = name,
+                    Text = nodeText,
+                    Tag = typeSig.ElementType
+                };
+
+                if (!isRoot)
+                {
+                    rootNode.Nodes.Add(node);
+                }
+
+                yield return node;
+                yield break;
             }
 
             if (!isRoot && !Studio.IsEngineType(typeDef) && !typeDef.IsSerializable)
@@ -98,15 +128,47 @@ namespace AssetStudio.StudioClasses
             // TypeReader equivalent: ReadRectValue
             if (typeDef.FullName == "UnityEngine.Rect")
             {
-                float[] rect = reader.ReadSingleArray(4);
-                yield return new TreeNode(string.Format("{0} {1}", typeDef.Name, name));
+                float[] value = reader.ReadSingleArray(4);
+
+                string nodeText = !isArray ? string.Format("{0} {1} = {2}", typeDef.Name, name, value) : string.Format("[{0}] {1} {2} = {3}", arrayIndex, typeDef.Name, name, value);
+
+                var node = new TreeNode
+                {
+                    Name = name,
+                    Text = nodeText,
+                    Tag = typeSig.ElementType
+                };
+
+                if (!isRoot)
+                {
+                    rootNode.Nodes.Add(node);
+                }
+
+                yield return node;
+                yield break;
             }
 
             // TypeReader equivalent: ReadLayerMaskValue
             if (typeDef.FullName == "UnityEngine.LayerMask")
             {
                 int value = reader.ReadInt32();
-                yield return new TreeNode(string.Format("{0} {1}", typeDef.Name, name));
+
+                string nodeText = !isArray ? string.Format("{0} {1} = {2}", typeDef.Name, name, value) : string.Format("[{0}] {1} {2} = {3}", arrayIndex, typeDef.Name, name, value);
+
+                var node = new TreeNode
+                {
+                    Name = name,
+                    Text = nodeText,
+                    Tag = typeSig.ElementType
+                };
+
+                if (!isRoot)
+                {
+                    rootNode.Nodes.Add(node);
+                }
+
+                yield return node;
+                yield break;
             }
 
             // TypeReader equivalent: ReadGradientValue
@@ -125,7 +187,22 @@ namespace AssetStudio.StudioClasses
                     reader.Position += 168;
                 }
 
-                yield return new TreeNode(string.Format("{0} {1}", typeDef.Name, name));
+                string nodeText = !isArray ? string.Format("{0} {1}", typeDef.Name, name) : string.Format("[{0}] {1} {2}", arrayIndex, typeDef.Name, name);
+
+                var node = new TreeNode
+                {
+                    Name = name,
+                    Text = nodeText,
+                    Tag = typeSig.ElementType
+                };
+
+                if (!isRoot)
+                {
+                    rootNode.Nodes.Add(node);
+                }
+
+                yield return node;
+                yield break;
             }
 
             // TypeReader equivalent: ReadRectOffsetName
@@ -136,7 +213,22 @@ namespace AssetStudio.StudioClasses
                 float top = reader.ReadSingle();
                 float bottom = reader.ReadSingle();
 
-                yield return new TreeNode(string.Format("{0} {1}", typeDef.Name, name));
+                string nodeText = !isArray ? string.Format("{0} {1}", typeDef.Name, name) : string.Format("[{0}] {1} {2}", arrayIndex, typeDef.Name, name);
+
+                var node = new TreeNode
+                {
+                    Name = name,
+                    Text = nodeText,
+                    Tag = typeSig.ElementType
+                };
+
+                if (!isRoot)
+                {
+                    rootNode.Nodes.Add(node);
+                }
+
+                yield return node;
+                yield break;
             }
 
             // TypeReader equivalent: DumpClassOrValueType
