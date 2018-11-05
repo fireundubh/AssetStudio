@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 
 namespace AssetStudio
 {
-    public class AssetsFile
+    public class AssetsFile : IDisposable
     {
         public EndianBinaryReader reader;
         public string filePath;
@@ -347,6 +347,20 @@ namespace AssetStudio
                 assetsFile = this
             };
             return result;
+        }
+
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                this.reader?.Dispose();
+            }
         }
     }
 }
