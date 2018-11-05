@@ -1,9 +1,10 @@
-using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows.Forms;
 using AssetStudio.Extensions;
 using dnlib.DotNet;
+using static AssetStudio.Logging.LoggingHelper;
 
 namespace AssetStudio.StudioClasses
 {
@@ -41,12 +42,14 @@ namespace AssetStudio.StudioClasses
             // skip
             if (typeSig.FullName == "System.Object")
             {
+                LogWarn("typeSig.FullName == \"System.Object\"");
                 yield break;
             }
 
             // skip
             if (typeDef.IsDelegate)
             {
+                LogWarn("typeDef.IsDelegate");
                 yield break;
             }
 
@@ -67,6 +70,7 @@ namespace AssetStudio.StudioClasses
                 if (genericInstSig.GenericArguments.Count != 1)
                 {
                     // TODO
+                    LogWarn("genericInstSig.GenericArguments.Count != 1");
                     yield break;
                 }
 
@@ -105,6 +109,7 @@ namespace AssetStudio.StudioClasses
 
             if (!isRoot && !Studio.IsEngineType(typeDef) && !typeDef.IsSerializable)
             {
+                LogWarn("!isRoot && !Studio.IsEngineType(typeDef) && !typeDef.IsSerializable");
                 yield break;
             }
 
@@ -170,6 +175,7 @@ namespace AssetStudio.StudioClasses
             if (!typeDef.IsClass && !typeDef.IsValueType)
             {
                 // TODO
+                LogWarn("!typeDef.IsClass && !typeDef.IsValueType");
                 yield break;
             }
 
@@ -241,10 +247,10 @@ namespace AssetStudio.StudioClasses
 
             TreeNode arraySizeNode = NodeHelper.AddKeyedChildNode(arrayNode, name, ref size, "int size = {0}");
 
-            bool readArrayNode = typeSig.TypeName == "GUIStyle[]";
-
-            if (readArrayNode)
+            if (typeSig.TypeName == "GUIStyle[]")
             {
+                //TODO
+                LogWarn("typeSig.TypeName == \"GUIStyle[]\"");
                 yield break;
             }
 
