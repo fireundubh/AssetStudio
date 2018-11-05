@@ -19,7 +19,9 @@ namespace AssetStudio.StudioClasses
             // TypeReader equivalent: ReadPrimitiveValue
             if (typeSig.IsPrimitive)
             {
-                ReadPrimitiveNode(rootNode, reader, typeDef, typeSig, name, isRoot, isArray, arrayIndex, out TreeNode node);
+                object value = TypeReader.ReadAlignedPrimitiveValue(reader, typeSig);
+
+                CreateValueNode(rootNode, typeDef, typeSig, name, value, false, isArray, arrayIndex, out TreeNode node);
 
                 yield return node;
                 yield break;
@@ -28,7 +30,9 @@ namespace AssetStudio.StudioClasses
             // TypeReader equivalent: ReadStringValue
             if (typeSig.FullName == "System.String")
             {
-                ReadStringNode(rootNode, reader, typeDef, typeSig, name, isRoot, isArray, arrayIndex, out TreeNode node);
+                string value = reader.ReadAlignedString();
+
+                CreateValueNode(rootNode, typeDef, typeSig, name, string.Concat("\"", value, "\""), false, isArray, arrayIndex, out TreeNode node);
 
                 yield return node;
                 yield break;
@@ -195,44 +199,6 @@ namespace AssetStudio.StudioClasses
         private static void CreateValueNode(TreeNode rootNode, TypeDef typeDef, TypeSig typeSig, string name, object value, bool isRoot, bool isArray, int arrayIndex, out TreeNode node)
         {
             string nodeText = !isArray ? string.Format("{0} {1} = {2}", typeDef.Name, name, value) : string.Format("[{0}] {1} {2} = {3}", arrayIndex, typeDef.Name, name, value);
-
-            node = new TreeNode
-            {
-                Name = name,
-                Text = nodeText,
-                Tag = typeSig.ElementType
-            };
-
-            if (!isRoot)
-            {
-                rootNode.Nodes.Add(node);
-            }
-        }
-
-        private static void ReadStringNode(TreeNode rootNode, EndianBinaryReader reader, TypeDef typeDef, TypeSig typeSig, string name, bool isRoot, bool isArray, int arrayIndex, out TreeNode node)
-        {
-            string str = reader.ReadAlignedString();
-
-            string nodeText = !isArray ? $"{typeDef.Name} {name} = \"{str}\"" : $"[{arrayIndex}] {typeDef.Name} {name} = \"{str}\"";
-
-            node = new TreeNode
-            {
-                Name = name,
-                Text = nodeText,
-                Tag = typeSig.ElementType
-            };
-
-            if (!isRoot)
-            {
-                rootNode.Nodes.Add(node);
-            }
-        }
-
-        private static void ReadPrimitiveNode(TreeNode rootNode, EndianBinaryReader reader, TypeDef typeDef, TypeSig typeSig, string name, bool isRoot, bool isArray, int arrayIndex, out TreeNode node)
-        {
-            object value = TypeReader.ReadAlignedPrimitiveValue(reader, typeSig);
-
-            string nodeText = !isArray ? $"{typeDef.Name} {name} = {value}" : $"[{arrayIndex}] {typeDef.Name} {name} = {value}";
 
             node = new TreeNode
             {
