@@ -12,15 +12,22 @@
 ###############################################################################
 *.cs     diff=csharp
 
-###############################################################################
-# behavior for image files
-#
-# image files are treated as binary by default.
-###############################################################################
 *.jpg   binary
 *.png   binary
 *.gif   binary
 *.ico   binary
+*.bmp   binary
+*.obj   binary
+*.ttf   binary
+*.otf   binary
+*.mp3   binary
+*.ogg   binary
+*.wav   binary
+*.m4a   binary
+*.fsb   binary
+*.dds   binary
+*.pvr   binary
+*.ktx   binary
 
 ###############################################################################
 # diff behavior for common document formats
