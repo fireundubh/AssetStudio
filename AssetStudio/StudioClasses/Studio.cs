@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -60,8 +60,10 @@ namespace AssetStudio
 
         private static FileType CheckFileType(EndianBinaryReader reader)
         {
-            var signature = reader.ReadStringToNull();
+            string signature = reader.ReadStringToNull();
+
             reader.Position = 0;
+
             switch (signature)
             {
                 case "UnityWeb":
@@ -72,22 +74,27 @@ namespace AssetStudio
                 case "UnityWebData1.0":
                     return FileType.WebFile;
                 default:
+                {
+                    byte[] magic = reader.ReadBytes(2);
+
+                    reader.Position = 0;
+
+                    if (WebFile.gzipMagic.SequenceEqual(magic))
                     {
-                        var magic = reader.ReadBytes(2);
-                        reader.Position = 0;
-                        if (WebFile.gzipMagic.SequenceEqual(magic))
-                        {
-                            return FileType.WebFile;
-                        }
-                        reader.Position = 0x20;
-                        magic = reader.ReadBytes(6);
-                        reader.Position = 0;
-                        if (WebFile.brotliMagic.SequenceEqual(magic))
-                        {
-                            return FileType.WebFile;
-                        }
-                        return FileType.AssetsFile;
+                        return FileType.WebFile;
                     }
+
+                    reader.Position = 0x20;
+                    magic = reader.ReadBytes(6);
+                    reader.Position = 0;
+
+                    if (WebFile.brotliMagic.SequenceEqual(magic))
+                    {
+                        return FileType.WebFile;
+                    }
+
+                    return FileType.AssetsFile;
+                }
             }
         }
 
@@ -95,28 +102,37 @@ namespace AssetStudio
         {
             ThreadPool.QueueUserWorkItem(state =>
             {
-                int extractedCount = 0;
-                foreach (var fileName in fileNames)
+                var extractedCount = 0;
+
+                foreach (string fileName in fileNames)
                 {
-                    var type = CheckFileType(fileName, out var reader);
+                    FileType type = CheckFileType(fileName, out EndianBinaryReader reader);
+
                     if (type == FileType.BundleFile)
+                    {
                         extractedCount += ExtractBundleFile(fileName, reader);
+                    }
                     else if (type == FileType.WebFile)
+                    {
                         extractedCount += ExtractWebDataFile(fileName, reader);
+                    }
                     else
+                    {
                         reader.Dispose();
+                    }
+
                     ProgressBarPerformStep();
                 }
-                StatusStripUpdate($"Finished extracting {extractedCount} files.");
+
+                StatusStripUpdate(string.Format("Finished extracting {0} files.", extractedCount));
             });
         }
 
         private static int ExtractBundleFile(string bundleFileName, EndianBinaryReader reader)
         {
-            StatusStripUpdate($"Decompressing {Path.GetFileName(bundleFileName)} ...");
+            StatusStripUpdate(string.Format("Decompressing {0} ...", Path.GetFileName(bundleFileName)));
 
             var bundleFile = new BundleFile(reader, bundleFileName);
-            reader.Dispose();
 
 	        if (bundleFile.fileList.Count <= 0)
 	        {
@@ -131,10 +147,9 @@ namespace AssetStudio
 
         private static int ExtractWebDataFile(string webFileName, EndianBinaryReader reader)
         {
-            StatusStripUpdate($"Decompressing {Path.GetFileName(webFileName)} ...");
+            StatusStripUpdate(string.Format("Decompressing {0} ...", Path.GetFileName(webFileName)));
 
             var webFile = new WebFile(reader);
-            reader.Dispose();
 
 	        if (webFile.fileList.Count <= 0)
 	        {
@@ -149,21 +164,26 @@ namespace AssetStudio
 
         private static int ExtractStreamFile(string extractPath, List<StreamFile> fileList)
         {
-            int extractedCount = 0;
-            foreach (var file in fileList)
+            var extractedCount = 0;
+
+            foreach (StreamFile file in fileList)
             {
-                var filePath = extractPath + file.fileName;
+                string filePath = extractPath + file.fileName;
+
                 if (!Directory.Exists(extractPath))
                 {
                     Directory.CreateDirectory(extractPath);
                 }
+
                 if (!File.Exists(filePath) && file.stream is MemoryStream stream)
                 {
                     File.WriteAllBytes(filePath, stream.ToArray());
                     extractedCount += 1;
                 }
+
                 file.stream.Dispose();
             }
+
             return extractedCount;
         }
 
@@ -292,6 +312,7 @@ namespace AssetStudio
 						    var m_Script = new MonoScript(asset);
 
 						    asset.Text = m_Script.m_ClassName;
+
 						    if (m_Script.m_Namespace == string.Empty)
 						    {
 							    asset.TypeString = string.Format("{0} ({1})", asset.TypeString, m_Script.m_AssemblyName);
@@ -341,7 +362,7 @@ namespace AssetStudio
 
 				    if (asset.Text == "")
 				    {
-					    asset.Text = asset.TypeString + " #" + asset.uniqueID;
+					    asset.Text = string.Concat(asset.TypeString, " #", asset.uniqueID);
 				    }
 
 				    asset.SubItems.AddRange(new[]
@@ -350,13 +371,13 @@ namespace AssetStudio
 					    asset.FullSize.ToString()
 				    });
 
-				    //处理同名文件
+				    // Process same name case
 				    if (!assetsNameHash.Add((asset.TypeString + asset.Text).ToUpper()))
 				    {
-					    asset.Text += " #" + asset.uniqueID;
+					    asset.Text += string.Concat(" #", asset.uniqueID);
 				    }
 
-				    //处理非法文件名
+				    // Process illegal name case
 				    asset.Text = FixFileName(asset.Text);
 
 				    if (displayAll)
@@ -374,15 +395,21 @@ namespace AssetStudio
 
 			    if (displayOriginalName)
 			    {
-				    assetsFile.exportableAssets.ForEach(x =>
-				                                        {
-					                                        string replacename = ab?.m_Container.Find(y => y.second.asset.m_PathID == x.m_PathID)?.first;
-					                                        if (!string.IsNullOrEmpty(replacename))
-					                                        {
-						                                        string ex = Path.GetExtension(replacename);
-						                                        x.Text = !string.IsNullOrEmpty(ex) ? replacename.Replace(ex, "") : replacename;
-					                                        }
-				                                        });
+			        void GetOriginalName(AssetPreloadData x)
+			        {
+			            string replacename = ab?.m_Container.Find(y => y.second.asset.m_PathID == x.m_PathID)?.first;
+
+			            if (string.IsNullOrEmpty(replacename))
+			            {
+			                return;
+			            }
+
+			            string ex = Path.GetExtension(replacename);
+
+			            x.Text = !string.IsNullOrEmpty(ex) ? replacename.Replace(ex, "") : replacename;
+			        }
+
+			        assetsFile.exportableAssets.ForEach(GetOriginalName);
 			    }
 
 			    exportableAssets.AddRange(assetsFile.exportableAssets);
@@ -542,24 +569,51 @@ namespace AssetStudio
 
 	    public static string FixFileName(string str)
         {
-            if (str.Length >= 260) return Path.GetRandomFileName();
+            if (str.Length >= 260)
+            {
+                return Path.GetRandomFileName();
+            }
+
             return Path.GetInvalidFileNameChars().Aggregate(str, (current, c) => current.Replace(c, '_'));
         }
 
         public static string[] ProcessingSplitFiles(List<string> selectFile)
         {
-            var splitFiles = selectFile.Where(x => x.Contains(".split"))
-                .Select(x => Path.GetDirectoryName(x) + "\\" + Path.GetFileNameWithoutExtension(x))
-                .Distinct()
-                .ToList();
+            var splitFiles = new List<string>();
+            var set = new HashSet<string>();
+
+            foreach (string x in selectFile)
+            {
+                if (!x.Contains(".split"))
+                {
+                    continue;
+                }
+
+                string directoryName = Path.GetDirectoryName(x);
+
+                if (directoryName == null)
+                {
+                    continue;
+                }
+
+                string s = Path.Combine(directoryName, Path.GetFileNameWithoutExtension(x));
+
+                if (set.Add(s))
+                {
+                    splitFiles.Add(s);
+                }
+            }
+
             selectFile.RemoveAll(x => x.Contains(".split"));
-            foreach (var file in splitFiles)
+
+            foreach (string file in splitFiles)
             {
                 if (File.Exists(file))
                 {
                     selectFile.Add(file);
                 }
             }
+
             return selectFile.Distinct().ToArray();
         }
 
@@ -699,46 +753,58 @@ namespace AssetStudio
             {
                 foreach (GameObjectTreeNode node in nodes)
                 {
-                    //遍历一级子节点
+                    // traverse first-level child nodes
                     foreach (GameObjectTreeNode j in node.Nodes)
                     {
                         ProgressBarPerformStep();
-                        //收集所有子节点
+
+                        // collect all child nodes
                         var gameObjects = new List<GameObject>();
                         CollectNode(j, gameObjects);
-                        //跳过一些不需要导出的object
+
+                        // skip objects that do not need to be exported
                         if (gameObjects.All(x => x.m_SkinnedMeshRenderer == null && x.m_MeshFilter == null))
+                        {
                             continue;
-                        //处理非法文件名
-                        var filename = FixFileName(j.Text);
-                        //每个文件存放在单独的文件夹
-                        var targetPath = $"{savePath}{filename}\\";
-                        //重名文件处理
-                        for (int i = 1; ; i++)
+                        }
+
+                        // Handle illegal file names
+                        string filename = FixFileName(j.Text);
+
+                        // store each file in separate folder
+                        string targetPath = string.Format("{0}{1}\\", savePath, filename);
+
+                        // handle existing files
+                        for (var i = 1; ; i++)
                         {
                             if (Directory.Exists(targetPath))
                             {
-                                targetPath = $"{savePath}{filename} ({i})\\";
+                                targetPath = string.Format("{0}{1} ({2})\\", savePath, filename, i);
                             }
                             else
                             {
                                 break;
                             }
                         }
+
                         Directory.CreateDirectory(targetPath);
-                        //导出FBX
+
+                        // Export FBX
                         StatusStripUpdate($"Exporting {filename}.fbx");
+
                         try
                         {
                             ExportGameObject(j.gameObject, targetPath);
                         }
                         catch (Exception ex)
                         {
-                            MessageBox.Show($"{ex.Message}\r\n{ex.StackTrace}");
+                            MessageBox.Show(string.Format("{0}{1}{2}", ex.Message, Environment.NewLine, ex.StackTrace));
                         }
+
                         StatusStripUpdate($"Finished exporting {filename}.fbx");
                     }
                 }
+
                 StatusStripUpdate("Finished");
             });
         }
@@ -776,22 +842,28 @@ namespace AssetStudio
             ThreadPool.QueueUserWorkItem(state =>
             {
                 var gameObjects = new List<GameObject>();
+
                 GetSelectedParentNode(nodes, gameObjects);
+
                 if (gameObjects.Count > 0)
                 {
                     SetProgressBarValue(0);
                     SetProgressBarMaximum(gameObjects.Count);
-                    foreach (var gameObject in gameObjects)
+
+                    foreach (GameObject gameObject in gameObjects)
                     {
-                        StatusStripUpdate($"Exporting {gameObject.m_Name}");
+                        StatusStripUpdate(string.Format("Exporting {0}", gameObject.m_Name));
+
                         try
                         {
                             ExportGameObject(gameObject, exportPath, animationList);
-                            StatusStripUpdate($"Finished exporting {gameObject.m_Name}");
+
+                            StatusStripUpdate(string.Format("Finished exporting {0}", gameObject.m_Name));
                         }
                         catch (Exception ex)
                         {
-                            MessageBox.Show($"{ex.Message}\r\n{ex.StackTrace}");
+                            MessageBox.Show(string.Format("{0}\r\n{1}", ex.Message, ex.StackTrace));
+
                             StatusStripUpdate("Error in export");
                         }
 
@@ -831,7 +903,7 @@ namespace AssetStudio
             float qz = q[2];
             float qw = q[3];
 
-            double[,] M = new double[4, 4];
+            var M = new double[4, 4];
 
             double Nq = qx * qx + qy * qy + qz * qz + qw * qw;
             double s = (Nq > 0.0) ? (2.0 / Nq) : 0.0;
@@ -846,6 +918,7 @@ namespace AssetStudio
             M[3, 0] = M[3, 1] = M[3, 2] = M[0, 3] = M[1, 3] = M[2, 3] = 0.0; M[3, 3] = 1.0;
 
             double test = Math.Sqrt(M[0, 0] * M[0, 0] + M[1, 0] * M[1, 0]);
+
             if (test > 16 * 1.19209290E-07F)//FLT_EPSILON
             {
                 eax = Math.Atan2(M[2, 1], M[2, 2]);
@@ -984,27 +1057,27 @@ namespace AssetStudio
 			    return;
 		    }
 
-			
 		    IEnumerator<TreeNode> nodeEnumerator = NodeReader.DumpNode(typeDef.ToTypeSig(), assetPreloadData.sourceFile, null, null);
+
 		    if (!nodeEnumerator.MoveNext())
 		    {
 			    throw new InvalidOperationException("no nodes");
 		    }
+
 		    TreeNode rootNode = nodeEnumerator.Current;
-		    if (rootNode == null)
+
+	        if (rootNode == null)
 		    {
 			    throw new InvalidOperationException("no root node");
 		    }
-		    previewTree.Nodes.Add(rootNode);
-		    foreach (TreeNode node in nodeEnumerator.AsEnumerable())
-		    {
-			    // visit each node as needed, or just iterate to fill tree
 
-			    // this check is possibly not needed
-			    if (node.Parent == null)
-			    {
-				    previewTree.Nodes.Add(node);
-			    }
+		    previewTree.Nodes.Add(rootNode);
+
+	        // visit each node as needed, or just iterate to fill tree
+	        // node.Parent == null check is possibly not needed
+		    foreach (TreeNode node in nodeEnumerator.AsEnumerable().Where(node => node.Parent == null))
+		    {
+		        previewTree.Nodes.Add(node);
 		    }
 	    }
 
@@ -1065,7 +1138,8 @@ namespace AssetStudio
 
 	        var stringBuilder = new StringBuilder();
 	        stringBuilder.Append(string.Join(Environment.NewLine, strings).Replace(Environment.NewLine + Environment.NewLine, Environment.NewLine));
-	        strings.Clear();
+
+            strings.Clear();
 
 	        try
 	        {
@@ -1092,15 +1166,15 @@ namespace AssetStudio
 
 	    public static bool IsExcludedType(TypeDef typeDef, TypeSig typeSig)
 	    {
-		    if (typeDef.FullName == "UnityEngine.Font") //TODO
-		    {
-			    return true;
-		    }
-
-		    if (typeDef.FullName == "UnityEngine.GUIStyle") //TODO
-		    {
-			    return true;
-		    }
+//		    if (typeDef.FullName == "UnityEngine.Font") //TODO
+//		    {
+//			    return true;
+//		    }
+//
+//		    if (typeDef.FullName == "UnityEngine.GUIStyle") //TODO
+//		    {
+//			    return true;
+//		    }
 
 		    if (typeSig.FullName == "System.Object")
 		    {
