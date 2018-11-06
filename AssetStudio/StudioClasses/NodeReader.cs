@@ -160,10 +160,12 @@ namespace AssetStudio.StudioClasses
             // TypeReader equivalent: ReadRectOffsetName
             if (typeDef.FullName == "UnityEngine.RectOffset")
             {
-                float left = reader.ReadSingle();
-                float right = reader.ReadSingle();
-                float top = reader.ReadSingle();
-                float bottom = reader.ReadSingle();
+                LogWarn($"typeDef.FullName == \"{typeDef.FullName}\"");
+
+                int m_Left = reader.ReadInt32();
+                int m_Right = reader.ReadInt32();
+                int m_Top = reader.ReadInt32();
+                int m_Bottom = reader.ReadInt32();
 
                 CreateKeyNode(rootNode, typeDef, typeSig, name, isRoot, isArray, arrayIndex, out TreeNode node);
 
