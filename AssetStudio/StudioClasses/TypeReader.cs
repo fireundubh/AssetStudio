@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -170,6 +170,8 @@ namespace AssetStudio.StudioClasses
 				case "Char":
 					value = reader.ReadChar();
 					break;
+                default:
+                    throw new NotSupportedException(string.Format("Primitive value not supported: {0}", typeSig.TypeName));
 			}
 
 			reader.AlignStream(4);
