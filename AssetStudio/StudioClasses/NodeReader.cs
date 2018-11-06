@@ -39,6 +39,78 @@ namespace AssetStudio.StudioClasses
                 yield break;
             }
 
+            if (typeDef.FullName == "UnityEngine.Font")
+            {
+                LogWarn($"typeSig.FullName == \"{typeSig.FullName}\"");
+
+                CreateKeyNode(rootNode, typeDef, typeSig, name, isRoot, isArray, arrayIndex, out TreeNode parentNode);
+                yield return parentNode;
+
+                foreach (FieldDef fieldDef in typeDef.Fields)
+                {
+                    TreeNode node = parentNode.Nodes.Add(string.Format("{0} {1}", fieldDef.FieldType, fieldDef.Name));
+                    yield return node;
+                }
+
+                yield break;
+            }
+
+            if (typeDef.FullName == "UnityEngine.GUIStyle")
+            {
+                LogWarn($"typeSig.FullName == \"{typeSig.FullName}\"");
+
+                CreateKeyNode(rootNode, typeDef, typeSig, name, isRoot, isArray, arrayIndex, out TreeNode parentNode);
+                yield return parentNode;
+
+                foreach (FieldDef fieldDef in typeDef.Fields)
+                {
+                    // unsupported primitive
+//                    if (fieldDef.FieldType.FullName == "System.IntPtr")
+//                    {
+//                        continue;
+//                    }
+
+                    // seemingly infinite loop, no stack overflow though
+//                    foreach (TreeNode node in DumpNode(fieldDef.FieldType, assetsFile, null, parentNode, true).AsEnumerable())
+//                    {
+//                        yield return node;
+//                    }
+
+                    TreeNode node;
+
+                    // the field values look very, very wrong
+//                    if (fieldDef.FieldType.FullName == "System.Boolean")
+//                    {
+//                        object value = TypeReader.ReadAlignedPrimitiveValue(reader, fieldDef.FieldType);
+//                        node = parentNode.Nodes.Add(string.Format("{0} {1} = {2}", fieldDef.FieldType, fieldDef.Name, value));
+//                    }
+//                    else if (fieldDef.FieldType.FullName == "UnityEngine.RectOffset")
+//                    {
+//                        int m_Left = reader.ReadInt32();
+//                        int m_Right = reader.ReadInt32();
+//                        int m_Top = reader.ReadInt32();
+//                        int m_Bottom = reader.ReadInt32();
+//
+//                        node = parentNode.Nodes.Add(string.Format("{0} {1}", fieldDef.FieldType, fieldDef.Name));
+//
+//                        node.Nodes.Add(string.Format("int m_Left = {0}", m_Left));
+//                        node.Nodes.Add(string.Format("int m_Right = {0}", m_Right));
+//                        node.Nodes.Add(string.Format("int m_Top = {0}", m_Top));
+//                        node.Nodes.Add(string.Format("int m_Bottom = {0}", m_Bottom));
+//                    }
+//                    else
+//                    {
+//                        node = parentNode.Nodes.Add(string.Format("{0} {1}", fieldDef.FieldType, fieldDef.Name));
+//                    }
+
+                    node = parentNode.Nodes.Add(string.Format("{0} {1}", fieldDef.FieldType, fieldDef.Name));
+
+                    yield return node;
+                }
+
+                yield break;
+            }
+
             // skip
             if (typeSig.FullName == "System.Object")
             {
@@ -248,13 +320,6 @@ namespace AssetStudio.StudioClasses
             yield return arrayNode;
 
             TreeNode arraySizeNode = NodeHelper.AddKeyedChildNode(arrayNode, name, ref size, "int size = {0}");
-
-            if (typeSig.TypeName == "GUIStyle[]")
-            {
-                //TODO
-                LogWarn("typeSig.TypeName == \"GUIStyle[]\"");
-                yield break;
-            }
 
             for (var i = 0; i < size; i++)
             {
