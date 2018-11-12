@@ -18,11 +18,12 @@ namespace AssetStudio
             AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
 
 #if TRACE
-            Trace.Listeners.Add(new ConsoleTraceListener(true)
+            TraceListenerCollection listeners = Trace.Listeners;
+            listeners.Add(new ConsoleTraceListener(true)
             {
                 Name = "Console"
             });
-            Trace.Listeners.Add(new TextWriterTraceListener(new Uri(typeof(Program).Assembly.CodeBase).LocalPath + ".log")
+            listeners.Add(new TextWriterTraceListener(new Uri(typeof(Program).Assembly.CodeBase).LocalPath + ".log")
             {
                 Name = "LogFile"
             });

@@ -178,6 +178,7 @@
     <Compile Include="Classes\MonoScript.cs" />
     <Compile Include="Classes\NamedObject.cs" />
     <Compile Include="Classes\Object.cs" />
+    <Compile Include="ConcurrentDictionaryExtensions.cs" />
     <Compile Include="Extensions\EnumeratorExtensions.cs" />
     <Compile Include="Extensions\WrappedEnumerator.cs" />
     <Compile Include="Logging\LoggingHelper.cs" />
@@ -261,6 +262,8 @@
     <Compile Include="StudioClasses\AssetsFile.cs" />
     <Compile Include="StudioClasses\ModelConverter.cs" />
     <Compile Include="StudioClasses\Texture2DConverter.cs" />
+    <Compile Include="StudioClasses\UnityAssetDeserializer.cs" />
+    <Compile Include="StudioClasses\UnityAssetSerializer.SimpleDeserializers.cs" />
     <Compile Include="StudioClasses\WebFile.cs" />
     <Compile Include="AssetStudioForm.cs">
       <SubType>Form</SubType>
