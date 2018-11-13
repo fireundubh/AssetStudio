@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
@@ -38,79 +38,23 @@ namespace AssetStudio.StudioClasses
             return strings;
         }
 
-        public static TreeNode AddKeyedNode(TreeNode rootNode, ref string nodeText, string nodeTextFormat = null)
+        public static TreeNode AddKeyedNode<T>(TreeNode rootNode, ref T nodeText, string nodeTextFormat = null)
         {
-            if (nodeTextFormat == null)
-            {
-                return rootNode.Nodes.Add(nameof(nodeText), nodeText);
-            }
-            return rootNode.Nodes.Add(nameof(nodeText), string.Format(nodeTextFormat, nodeText));
+            // TODO: confusing var names
+            string text = nodeTextFormat == null ? nodeText.ToString() : string.Format(nodeTextFormat, nodeText);
+            return rootNode.Nodes.Add(nameof(nodeText), text);
         }
 
-        public static TreeNode AddKeyedNode(TreeNode rootNode, ref int nodeText, string nodeTextFormat = null)
-        {
-            if (nodeTextFormat == null)
-            {
-                return rootNode.Nodes.Add(nameof(nodeText), nodeText.ToString());
-            }
-            return rootNode.Nodes.Add(nameof(nodeText), string.Format(nodeTextFormat, nodeText));
-        }
-
-        public static TreeNode AddKeyedNode(TreeNode rootNode, ref long nodeText, string nodeTextFormat = null)
-        {
-            if (nodeTextFormat == null)
-            {
-                return rootNode.Nodes.Add(nameof(nodeText), nodeText.ToString());
-            }
-            return rootNode.Nodes.Add(nameof(nodeText), string.Format(nodeTextFormat, nodeText));
-        }
-
-        public static TreeNode AddKeyedNode(TreeNode rootNode, ref bool nodeText, string nodeTextFormat = null)
-        {
-            if (nodeTextFormat == null)
-            {
-                return rootNode.Nodes.Add(nameof(nodeText), nodeText.ToString());
-            }
-            return rootNode.Nodes.Add(nameof(nodeText), string.Format(nodeTextFormat, nodeText));
-        }
-
-        public static TreeNode AddKeyedNode(TreeNode rootNode, ref byte nodeText, string nodeTextFormat = null)
-        {
-            if (nodeTextFormat == null)
-            {
-                return rootNode.Nodes.Add(nameof(nodeText), nodeText.ToString());
-            }
-            return rootNode.Nodes.Add(nameof(nodeText), string.Format(nodeTextFormat, nodeText));
-        }
-
-        public static TreeNode AddKeyedChildNode(TreeNode rootNode, string parentKey, ref string childText, string childTextFormat)
+        public static TreeNode AddKeyedChildNode<T>(TreeNode rootNode, string parentKey, ref T childText, string childTextFormat)
         {
             TreeNode parentNode = rootNode.Nodes.Find(parentKey, true).FirstOrDefault();
-            return parentNode?.Nodes.Add(string.Concat(parentKey, ".", nameof(childText)), string.Format(childTextFormat, childText));
-        }
 
-        public static TreeNode AddKeyedChildNode(TreeNode rootNode, string parentKey, ref int childText, string childTextFormat)
-        {
-            TreeNode parentNode = rootNode.Nodes.Find(parentKey, true).FirstOrDefault();
-            return parentNode?.Nodes.Add(string.Concat(parentKey, ".", nameof(childText)), string.Format(childTextFormat, childText));
-        }
+            if (parentNode != null)
+            {
+                return parentNode.Nodes.Add(string.Concat(parentKey, ".", nameof(childText)), string.Format(childTextFormat, childText));
+            }
 
-        public static TreeNode AddKeyedChildNode(TreeNode rootNode, string parentKey, ref long childText, string childTextFormat)
-        {
-            TreeNode parentNode = rootNode.Nodes.Find(parentKey, true).FirstOrDefault();
-            return parentNode?.Nodes.Add(string.Concat(parentKey, ".", nameof(childText)), string.Format(childTextFormat, childText));
-        }
-
-        public static TreeNode AddKeyedChildNode(TreeNode rootNode, string parentKey, ref bool childText, string childTextFormat)
-        {
-            TreeNode parentNode = rootNode.Nodes.Find(parentKey, true).FirstOrDefault();
-            return parentNode?.Nodes.Add(string.Concat(parentKey, ".", nameof(childText)), string.Format(childTextFormat, childText));
-        }
-
-        public static TreeNode AddKeyedChildNode(TreeNode rootNode, string parentKey, ref byte childText, string childTextFormat)
-        {
-            TreeNode parentNode = rootNode.Nodes.Find(parentKey, true).FirstOrDefault();
-            return parentNode?.Nodes.Add(string.Concat(parentKey, ".", nameof(childText)), string.Format(childTextFormat, childText));
+            throw new NullReferenceException(string.Format("Call to AddKeyedChildNode could not find parentNode with key {0}", parentKey));
         }
     }
 }
