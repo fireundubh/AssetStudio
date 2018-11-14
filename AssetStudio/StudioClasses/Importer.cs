@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using static AssetStudio.Studio;
 
 namespace AssetStudio
 {
@@ -16,15 +15,15 @@ namespace AssetStudio
 
         public static void LoadFile(string fullName)
         {
-            switch (CheckFileType(fullName, out EndianBinaryReader reader))
+            switch (Studio.CheckFileType(fullName, out EndianBinaryReader reader))
             {
-                case FileType.AssetsFile:
+                case Studio.FileType.AssetsFile:
                     LoadAssetsFile(fullName, reader);
                     break;
-                case FileType.BundleFile:
+                case Studio.FileType.BundleFile:
                     LoadBundleFile(fullName, reader);
                     break;
-                case FileType.WebFile:
+                case Studio.FileType.WebFile:
                     LoadWebFile(fullName, reader);
                     break;
             }
@@ -34,7 +33,7 @@ namespace AssetStudio
         {
             string fileName = Path.GetFileName(fullName);
 
-            StatusStripUpdate("Loading " + fileName);
+            Studio.StatusStripUpdate("Loading " + fileName);
 
             Debug.Assert(fileName != null, nameof(fileName) + " != null");
 
@@ -48,14 +47,14 @@ namespace AssetStudio
             if (assetsFile.valid)
             {
                 assetsFile.parentPath = parentPath;
-                assetsFileList.Add(assetsFile);
+                Studio.assetsFileList.Add(assetsFile);
                 assetsfileListHash.Add(assetsFile.upperFileName);
 
                 #region for 2.6.x find mainData and get string version
 
                 if (assetsFile.header.m_Version == 6 && fileName != "mainData")
                 {
-                    AssetsFile mainDataFile = assetsFileList.Find(aFile => aFile.fileName == "mainData");
+                    AssetsFile mainDataFile = Studio.assetsFileList.Find(aFile => aFile.fileName == "mainData");
 
                     if (mainDataFile != null)
                     {
@@ -108,7 +107,7 @@ namespace AssetStudio
 
                 if (value > 0)
                 {
-                    ProgressBarIncrementMaximum(value);
+                    Studio.ProgressBarIncrementMaximum(value);
                 }
             }
             else
@@ -121,7 +120,7 @@ namespace AssetStudio
         {
             string fileName = Path.GetFileName(fullName);
 
-            StatusStripUpdate("Decompressing " + fileName);
+            Studio.StatusStripUpdate("Decompressing " + fileName);
 
             var bundleFile = new BundleFile(reader, fullName);
             reader.Dispose();
@@ -133,7 +132,7 @@ namespace AssetStudio
                     continue;
                 }
 
-                StatusStripUpdate("Loading " + file.fileName);
+                Studio.StatusStripUpdate("Loading " + file.fileName);
 
                 var assetsFile = new AssetsFile(Path.GetDirectoryName(fullName) + "\\" + file.fileName, new EndianBinaryReader(file.stream));
 
@@ -153,12 +152,12 @@ namespace AssetStudio
                             }, StringSplitOptions.RemoveEmptyEntries);
                     }
 
-                    assetsFileList.Add(assetsFile);
+                    Studio.assetsFileList.Add(assetsFile);
                     assetsfileListHash.Add(assetsFile.upperFileName);
                 }
                 else
                 {
-                    resourceFileReaders.Add(assetsFile.upperFileName, assetsFile.reader);
+                    Studio.resourceFileReaders.Add(assetsFile.upperFileName, assetsFile.reader);
                 }
             }
         }
@@ -167,7 +166,7 @@ namespace AssetStudio
         {
             string fileName = Path.GetFileName(fullName);
 
-            StatusStripUpdate("Loading " + fileName);
+            Studio.StatusStripUpdate("Loading " + fileName);
 
             var webFile = new WebFile(reader);
             reader.Dispose();
@@ -176,20 +175,20 @@ namespace AssetStudio
             {
                 string dummyName = Path.GetDirectoryName(fullName) + "\\" + file.fileName;
 
-                switch (CheckFileType(file.stream, out reader))
+                switch (Studio.CheckFileType(file.stream, out reader))
                 {
-                    case FileType.AssetsFile:
+                    case Studio.FileType.AssetsFile:
                         LoadAssetsFile(dummyName, reader, fullName);
                         break;
-                    case FileType.BundleFile:
+                    case Studio.FileType.BundleFile:
                         LoadBundleFile(dummyName, reader, fullName);
                         break;
-                    case FileType.WebFile:
+                    case Studio.FileType.WebFile:
                         LoadWebFile(dummyName, reader);
                         break;
                 }
 
-                resourceFileReaders.Add(file.fileName.ToUpper(), reader);
+                Studio.resourceFileReaders.Add(file.fileName.ToUpper(), reader);
             }
         }
 
