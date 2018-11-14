@@ -1,11 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Text;
 using SharpDX;
-using static AssetStudio.Studio;
 
 namespace AssetStudio
 {
@@ -208,7 +207,7 @@ namespace AssetStudio
             trans.m_GameObject.TryGetGameObject(out var m_GameObject);
             frame.Name = m_GameObject.m_Name;
             frame.InitChildren(trans.m_Children.Count);
-            var m_EulerRotation = QuatToEuler(new[] { trans.m_LocalRotation[0], -trans.m_LocalRotation[1], -trans.m_LocalRotation[2], trans.m_LocalRotation[3] });
+            var m_EulerRotation = Studio.QuatToEuler(new[] { trans.m_LocalRotation[0], -trans.m_LocalRotation[1], -trans.m_LocalRotation[2], trans.m_LocalRotation[3] });
             frame.LocalRotation = new[] { m_EulerRotation[0], m_EulerRotation[1], m_EulerRotation[2] };
             frame.LocalScale = new[] { trans.m_LocalScale[0], trans.m_LocalScale[1], trans.m_LocalScale[2] };
             frame.LocalPosition = new[] { -trans.m_LocalPosition[0], trans.m_LocalPosition[1], trans.m_LocalPosition[2] };
@@ -223,7 +222,7 @@ namespace AssetStudio
             var m_LocalPosition = new[] { t.X, t.Y, t.Z };
             var m_LocalRotation = new[] { q.X, q.Y, q.Z, q.W };
             var m_LocalScale = new[] { s.X, s.Y, s.Z };
-            var m_EulerRotation = QuatToEuler(new[] { m_LocalRotation[0], -m_LocalRotation[1], -m_LocalRotation[2], m_LocalRotation[3] });
+            var m_EulerRotation = Studio.QuatToEuler(new[] { m_LocalRotation[0], -m_LocalRotation[1], -m_LocalRotation[2], m_LocalRotation[3] });
             frame.LocalRotation = new[] { m_EulerRotation[0], m_EulerRotation[1], m_EulerRotation[2] };
             frame.LocalScale = new[] { m_LocalScale[0], m_LocalScale[1], m_LocalScale[2] };
             frame.LocalPosition = new[] { -m_LocalPosition[0], m_LocalPosition[1], m_LocalPosition[2] };
