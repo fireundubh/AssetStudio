@@ -8,16 +8,15 @@ using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 using AssetStudio.Extensions;
-using dnlib.DotNet;
 using AssetStudio.Properties;
 using AssetStudio.StudioClasses;
-using static AssetStudio.Exporter;
+using dnlib.DotNet;
 
 namespace AssetStudio
 {
     internal static class Studio
     {
-        public static List<AssetsFile> assetsfileList = new List<AssetsFile>(); //loaded files
+        public static List<AssetsFile> assetsFileList = new List<AssetsFile>(); //loaded files
         public static Dictionary<string, int> assetsFileIndexCache = new Dictionary<string, int>();
         public static Dictionary<string, EndianBinaryReader> resourceFileReaders = new Dictionary<string, EndianBinaryReader>(); //use for read res files
         public static List<AssetPreloadData> exportableAssets = new List<AssetPreloadData>(); //used to hold all assets while the ListView is filtered
@@ -33,11 +32,12 @@ namespace AssetStudio
 	    public static ModuleContext moduleContext;
 
         //UI
-        public static Action<int> SetProgressBarValue;
-        public static Action<int> SetProgressBarMaximum;
-        public static Action ProgressBarPerformStep;
         public static Action<string> StatusStripUpdate;
-        public static Action<int> ProgressBarMaximumAdd;
+
+        public static Action<int> ProgressBarIncrementMaximum;
+        public static Action ProgressBarPerformStep;
+        public static Action<int> ProgressBarReset;
+        public static Action<int> ProgressBarSetValue;
 
         public enum FileType
         {
@@ -187,38 +187,14 @@ namespace AssetStudio
             return extractedCount;
         }
 
-        public static void BuildAssetStructures(bool loadAssets, bool displayAll, bool buildHierarchy, bool buildClassStructures, bool displayOriginalName)
-        {
-            // first loop - read asset data & create list
-            if (loadAssets)
-            {
-	            BuildAssetList(displayAll, displayOriginalName);
-            }
-
-            // second loop - build tree structure
-            if (buildHierarchy)
-            {
-	            BuildTreeStructure();
-            }
-
-            // build list of class structures
-            if (buildClassStructures)
-            {
-	            BuildClassStructures();
-            }
-        }
-
-	    private static void BuildAssetList(bool displayAll, bool displayOriginalName)
+        // TODO: decompose, SRP
+	    public static void BuildAssetList(bool displayAll, bool displayOriginalName)
 	    {
-		    SetProgressBarValue(0);
-		    SetProgressBarMaximum(assetsfileList.Sum(x => x.preloadTable.Values.Count));
-		    StatusStripUpdate("Building asset list...");
+		    string fileIDfmt = "D" + assetsFileList.Count.ToString().Length;
 
-		    string fileIDfmt = "D" + assetsfileList.Count.ToString().Length;
-
-		    for (var i = 0; i < assetsfileList.Count; i++)
+		    for (var i = 0; i < assetsFileList.Count; i++)
 		    {
-			    AssetsFile assetsFile = assetsfileList[i];
+			    AssetsFile assetsFile = assetsFileList[i];
 
 			    string fileID = i.ToString(fileIDfmt);
 
@@ -419,20 +395,9 @@ namespace AssetStudio
 		    assetsNameHash.Clear();
 	    }
 
-	    private static void BuildTreeStructure()
+	    public static void BuildTreeStructure()
 	    {
-		    int gameObjectCount = assetsfileList.Sum(x => x.GameObjectList.Values.Count);
-
-		    if (gameObjectCount <= 0)
-		    {
-			    return;
-		    }
-
-		    SetProgressBarValue(0);
-		    SetProgressBarMaximum(gameObjectCount);
-		    StatusStripUpdate("Building tree structure...");
-
-		    foreach (AssetsFile assetsFile in assetsfileList)
+		    foreach (AssetsFile assetsFile in assetsFileList)
 		    {
 			    var fileNode = new GameObjectTreeNode(null); //RootNode
 			    fileNode.Text = assetsFile.fileName;
@@ -528,9 +493,9 @@ namespace AssetStudio
 		    }
 	    }
 
-	    private static void BuildClassStructures()
+	    public static void BuildClassStructures()
 	    {
-		    foreach (AssetsFile assetsFile in assetsfileList)
+		    foreach (AssetsFile assetsFile in assetsFileList)
 		    {
 			    if (AllTypeMap.TryGetValue(assetsFile.unityVersion, out SortedDictionary<int, TypeTreeItem> curVer))
 			    {
@@ -636,8 +601,7 @@ namespace AssetStudio
                 int toExport = toExportAssets.Count;
                 var exportedCount = 0;
 
-                SetProgressBarValue(0);
-                SetProgressBarMaximum(toExport);
+                ProgressBarReset(toExport);
 
                 foreach (AssetPreloadData asset in toExportAssets)
                 {
@@ -660,7 +624,7 @@ namespace AssetStudio
                     {
 	                    if (forceRaw)
 	                    {
-		                    if (ExportRawFile(asset, exportPath))
+		                    if (Exporter.ExportRawFile(asset, exportPath))
 		                    {
 			                    exportedCount++;
 		                    }
@@ -670,43 +634,43 @@ namespace AssetStudio
 		                    switch (asset.Type)
 		                    {
 			                    case ClassIDType.Texture2D:
-				                    if (ExportTexture2D(asset, exportPath, true))
+				                    if (Exporter.ExportTexture2D(asset, exportPath, true))
 				                    {
 					                    exportedCount++;
 				                    }
 				                    break;
 			                    case ClassIDType.AudioClip:
-				                    ExportAsset(asset, exportPath, ExportAudioClip, ref exportedCount);
+				                    ExportAsset(asset, exportPath, Exporter.ExportAudioClip, ref exportedCount);
 				                    break;
 			                    case ClassIDType.Shader:
-				                    ExportAsset(asset, exportPath, ExportShader, ref exportedCount);
+				                    ExportAsset(asset, exportPath, Exporter.ExportShader, ref exportedCount);
 				                    break;
 			                    case ClassIDType.TextAsset:
-				                    ExportAsset(asset, exportPath, ExportTextAsset, ref exportedCount);
+				                    ExportAsset(asset, exportPath, Exporter.ExportTextAsset, ref exportedCount);
 				                    break;
 			                    case ClassIDType.MonoScript:
-				                    ExportAsset(asset, exportPath, ExportMonoScript, ref exportedCount);
+				                    ExportAsset(asset, exportPath, Exporter.ExportMonoScript, ref exportedCount);
 				                    break;
 			                    case ClassIDType.MonoBehaviour:
-				                    ExportAsset(asset, exportPath, ExportMonoBehaviour, ref exportedCount);
+				                    ExportAsset(asset, exportPath, Exporter.ExportMonoBehaviour, ref exportedCount);
 				                    break;
 			                    case ClassIDType.Font:
-				                    ExportAsset(asset, exportPath, ExportFont, ref exportedCount);
+				                    ExportAsset(asset, exportPath, Exporter.ExportFont, ref exportedCount);
 				                    break;
 			                    case ClassIDType.Mesh:
-				                    ExportAsset(asset, exportPath, ExportMesh, ref exportedCount);
+				                    ExportAsset(asset, exportPath, Exporter.ExportMesh, ref exportedCount);
 				                    break;
 			                    case ClassIDType.VideoClip:
-				                    ExportAsset(asset, exportPath, ExportVideoClip, ref exportedCount);
+				                    ExportAsset(asset, exportPath, Exporter.ExportVideoClip, ref exportedCount);
 				                    break;
 			                    case ClassIDType.MovieTexture:
-				                    ExportAsset(asset, exportPath, ExportMovieTexture, ref exportedCount);
+				                    ExportAsset(asset, exportPath, Exporter.ExportMovieTexture, ref exportedCount);
 				                    break;
 			                    case ClassIDType.Sprite:
-				                    ExportAsset(asset, exportPath, ExportSprite, ref exportedCount);
+				                    ExportAsset(asset, exportPath, Exporter.ExportSprite, ref exportedCount);
 				                    break;
 			                    case ClassIDType.Animator:
-				                    if (ExportAnimator(asset, exportPath))
+				                    if (Exporter.ExportAnimator(asset, exportPath))
 				                    {
 					                    exportedCount++;
 				                    }
@@ -714,7 +678,7 @@ namespace AssetStudio
 			                    case ClassIDType.AnimationClip:
 				                    break;
 			                    default:
-				                    if (ExportRawFile(asset, exportPath))
+				                    if (Exporter.ExportRawFile(asset, exportPath))
 				                    {
 					                    exportedCount++;
 				                    }
@@ -794,7 +758,7 @@ namespace AssetStudio
 
                         try
                         {
-                            ExportGameObject(j.gameObject, targetPath);
+                            Exporter.ExportGameObject(j.gameObject, targetPath);
                         }
                         catch (Exception ex)
                         {
@@ -825,7 +789,7 @@ namespace AssetStudio
                 StatusStripUpdate($"Exporting {animator.Text}");
                 try
                 {
-                    ExportAnimator(animator, exportPath, animationList);
+                    Exporter.ExportAnimator(animator, exportPath, animationList);
                     StatusStripUpdate($"Finished exporting {animator.Text}");
                 }
                 catch (Exception ex)
@@ -847,8 +811,7 @@ namespace AssetStudio
 
                 if (gameObjects.Count > 0)
                 {
-                    SetProgressBarValue(0);
-                    SetProgressBarMaximum(gameObjects.Count);
+                    ProgressBarReset(gameObjects.Count);
 
                     foreach (GameObject gameObject in gameObjects)
                     {
@@ -856,7 +819,7 @@ namespace AssetStudio
 
                         try
                         {
-                            ExportGameObject(gameObject, exportPath, animationList);
+                            Exporter.ExportGameObject(gameObject, exportPath, animationList);
 
                             StatusStripUpdate(string.Format("Finished exporting {0}", gameObject.m_Name));
                         }
