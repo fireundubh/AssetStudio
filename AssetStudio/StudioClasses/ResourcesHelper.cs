@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+using System;
+using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 
 namespace AssetStudio
@@ -11,23 +9,29 @@ namespace AssetStudio
     {
         public static byte[] GetData(string path, string sourceFilePath, long offset, int size)
         {
-            var resourceFileName = Path.GetFileName(path);
+            string resourceFileName = Path.GetFileName(path);
 
-            if (Studio.resourceFileReaders.TryGetValue(resourceFileName.ToUpper(), out var reader))
+            Debug.Assert(resourceFileName != null, nameof(resourceFileName) + " != null");
+
+            if (Studio.resourceFileReaders.TryGetValue(resourceFileName.ToUpper(), out EndianBinaryReader reader))
             {
                 reader.Position = offset;
                 return reader.ReadBytes(size);
             }
 
-            var resourceFilePath = Path.GetDirectoryName(sourceFilePath) + "\\" + resourceFileName;
+            string resourceFilePath = Path.GetDirectoryName(sourceFilePath) + "\\" + resourceFileName;
+
             if (!File.Exists(resourceFilePath))
             {
-                var findFiles = Directory.GetFiles(Path.GetDirectoryName(sourceFilePath), resourceFileName, SearchOption.AllDirectories);
+                string sourceDirectoryName = Path.GetDirectoryName(sourceFilePath) ?? throw new InvalidOperationException();
+                string[] findFiles = Directory.GetFiles(sourceDirectoryName, resourceFileName, SearchOption.AllDirectories);
+
                 if (findFiles.Length > 0)
                 {
                     resourceFilePath = findFiles[0];
                 }
             }
+
             if (File.Exists(resourceFilePath))
             {
                 using (var resourceReader = new BinaryReader(File.OpenRead(resourceFilePath)))
@@ -36,11 +40,9 @@ namespace AssetStudio
                     return resourceReader.ReadBytes(size);
                 }
             }
-            else
-            {
-                MessageBox.Show($"can't find the resource file {resourceFileName}");
-                return null;
-            }
+
+            MessageBox.Show(string.Format("Cannot find the resource file: {0}", resourceFileName));
+            return null;
         }
     }
 }
