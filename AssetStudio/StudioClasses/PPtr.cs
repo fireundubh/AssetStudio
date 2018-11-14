@@ -1,5 +1,3 @@
-﻿using static AssetStudio.Studio;
-
 namespace AssetStudio
 {
     public class PPtr
@@ -34,16 +32,16 @@ namespace AssetStudio
                 {
                     var m_External = assetsFile.m_Externals[m_FileID - 1];
                     var name = m_External.fileName.ToUpper();
-                    if (!assetsFileIndexCache.TryGetValue(name, out index))
+                    if (!Studio.assetsFileIndexCache.TryGetValue(name, out index))
                     {
-                        index = assetsfileList.FindIndex(x => x.upperFileName == name);
-                        assetsFileIndexCache.Add(name, index);
+                        index = Studio.assetsFileList.FindIndex(x => x.upperFileName == name);
+                        Studio.assetsFileIndexCache.Add(name, index);
                     }
                 }
 
                 if (index >= 0)
                 {
-                    result = assetsfileList[index];
+                    result = Studio.assetsFileList[index];
                     return true;
                 }
             }
