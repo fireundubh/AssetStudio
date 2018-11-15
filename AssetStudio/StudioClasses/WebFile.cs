@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
+using AssetStudio.Extensions;
 using Org.Brotli.Dec;
 
 namespace AssetStudio

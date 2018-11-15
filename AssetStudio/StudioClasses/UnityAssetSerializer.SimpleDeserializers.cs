@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using AssetStudio.Extensions;
 using SharpDX;
 
 namespace AssetStudio.StudioClasses

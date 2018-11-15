@@ -1,5 +1,6 @@
 ﻿using SharpDX;
 using System.Collections.Generic;
+using AssetStudio.Extensions;
 
 namespace AssetStudio
 {

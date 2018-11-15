@@ -179,7 +179,7 @@
     <Compile Include="Classes\NamedObject.cs" />
     <Compile Include="Classes\Object.cs" />
     <Compile Include="ConcurrentDictionaryExtensions.cs" />
-    <Compile Include="Extensions\CustomProgressBar.cs">
+    <Compile Include="Components\CustomProgressBar.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Extensions\EnumeratorExtensions.cs" />
@@ -212,8 +212,8 @@
     <Compile Include="Classes\AnimatorOverrideController.cs" />
     <Compile Include="Classes\Avatar.cs" />
     <Compile Include="OpenFolderDialog.cs" />
-    <Compile Include="StudioClasses\BinaryReaderExtensions.cs" />
-    <Compile Include="StudioClasses\BinaryWriterExtensions.cs" />
+    <Compile Include="Extensions\BinaryReaderExtensions.cs" />
+    <Compile Include="Extensions\BinaryWriterExtensions.cs" />
     <Compile Include="StudioClasses\BuildTarget.cs" />
     <Compile Include="StudioClasses\ClassIDType.cs" />
     <Compile Include="StudioClasses\TypeReader.cs" />
@@ -233,7 +233,7 @@
     <Compile Include="StudioClasses\SpriteHelper.cs" />
     <Compile Include="StudioClasses\Exporter.cs" />
     <Compile Include="StudioClasses\Importer.cs" />
-    <Compile Include="StudioClasses\StreamExtensions.cs" />
+    <Compile Include="Extensions\StreamExtensions.cs" />
     <Compile Include="StudioClasses\Studio.cs" />
     <Compile Include="StudioClasses\EndianBinaryReader.cs" />
     <Compile Include="ExportOptions.cs">

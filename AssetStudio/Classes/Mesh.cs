@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections;
 using System.Linq;
+using AssetStudio.Extensions;
 using SharpDX;
 
 namespace AssetStudio

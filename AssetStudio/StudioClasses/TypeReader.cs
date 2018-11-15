@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text;
+using AssetStudio.Extensions;
 using dnlib.DotNet;
 
 namespace AssetStudio.StudioClasses

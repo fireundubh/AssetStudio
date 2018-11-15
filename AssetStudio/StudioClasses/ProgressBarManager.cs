@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Threading;
 using System.Windows.Forms;
+using AssetStudio.Components;
 using AssetStudio.Extensions;
 
 namespace AssetStudio.StudioClasses

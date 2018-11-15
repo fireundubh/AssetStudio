@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Windows.Forms;
+using AssetStudio.Extensions;
 using AssetStudio.Properties;
 using AssetStudio.StudioClasses;
 

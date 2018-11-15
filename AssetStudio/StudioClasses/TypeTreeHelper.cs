@@ -4,6 +4,7 @@ using System.Dynamic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using AssetStudio.Extensions;
 
 namespace AssetStudio
 {

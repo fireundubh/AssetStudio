@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 using SharpDX;
 
-namespace AssetStudio
+namespace AssetStudio.Extensions
 {
     public static class BinaryReaderExtensions
     {
