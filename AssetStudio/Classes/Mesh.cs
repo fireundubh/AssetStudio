@@ -95,7 +95,7 @@ namespace AssetStudio
                     this.vertexCount = reader.ReadUInt32();
                     this.hasNormals = reader.ReadBoolean();
                     this.hasTangents = reader.ReadBoolean();
-                    reader.AlignStream(4);
+                    reader.AlignStream();
                 }
             }
 
@@ -265,7 +265,7 @@ namespace AssetStudio
                     {
                         this.m_IndexBuffer[i] = reader.ReadUInt16();
                     }
-                    reader.AlignStream(4);
+                    reader.AlignStream();
                 }
                 else
                 {
@@ -396,7 +396,7 @@ namespace AssetStudio
                         bool m_UsedForStaticMeshColliderOnly = reader.ReadBoolean();
                     }
                 }
-                reader.AlignStream(4);
+                reader.AlignStream();
                 //This is a bug fixed in 2017.3.1p1 and later versions
                 if (this.version[0] > 2017 || this.version[0] == 2017 && this.version[1] >= 4 || //2017.4
                     this.version[0] == 2017 && this.version[1] == 3 && this.version[2] == 1 && this.buildType[0] == "p" || //fixed after 2017.3.1px
@@ -413,7 +413,7 @@ namespace AssetStudio
                     {
                         this.m_IndexBuffer[i] = reader.ReadUInt16();
                     }
-                    reader.AlignStream(4);
+                    reader.AlignStream();
                 }
                 else
                 {
@@ -422,7 +422,7 @@ namespace AssetStudio
                     {
                         this.m_IndexBuffer[i] = reader.ReadUInt32();
                     }
-                    reader.AlignStream(4); //untested
+                    reader.AlignStream(); //untested
                 }
             }
 
@@ -707,7 +707,7 @@ namespace AssetStudio
 
                 //actual Vertex Buffer
                 byte[] m_DataSize = reader.ReadBytes(reader.ReadInt32());
-                reader.AlignStream(4);
+                reader.AlignStream();
 
                 #endregion
 

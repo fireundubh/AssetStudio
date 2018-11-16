@@ -28,7 +28,7 @@ namespace AssetStudio
             //m_AudioChannelCount
             int size = reader.ReadInt32();
             reader.Position += size * 2;
-            reader.AlignStream(4);
+            reader.AlignStream();
             //m_AudioSampleRate
             size = reader.ReadInt32();
             reader.Position += size * 4;

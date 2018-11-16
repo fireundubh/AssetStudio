@@ -90,10 +90,10 @@ namespace AssetStudio
 
             int numData = reader.ReadInt32();
             this.m_Data = reader.ReadBytes(numData);
-            reader.AlignStream(4);
+            reader.AlignStream();
 
             this.m_BitSize = reader.ReadByte();
-            reader.AlignStream(4);
+            reader.AlignStream();
         }
 
         public float[] UnpackFloats(int itemCountInChunk, int chunkStride, int start = 0, int numChunks = -1)
@@ -149,10 +149,10 @@ namespace AssetStudio
 
             int numData = reader.ReadInt32();
             this.m_Data = reader.ReadBytes(numData);
-            reader.AlignStream(4);
+            reader.AlignStream();
 
             this.m_BitSize = reader.ReadByte();
-            reader.AlignStream(4);
+            reader.AlignStream();
         }
 
         public int[] UnpackInts()
@@ -194,7 +194,7 @@ namespace AssetStudio
             int numData = reader.ReadInt32();
             this.m_Data = reader.ReadBytes(numData);
 
-            reader.AlignStream(4);
+            reader.AlignStream();
         }
 
         public Quaternion[] UnpackQuats()
@@ -783,7 +783,7 @@ namespace AssetStudio
             this.m_KeepOriginalPositionXZ = reader.ReadBoolean();
             this.m_HeightFromFeet = reader.ReadBoolean();
 
-            reader.AlignStream(4);
+            reader.AlignStream();
         }
     }
 
@@ -816,7 +816,7 @@ namespace AssetStudio
             this.customType = reader.ReadByte();
             this.isPPtrCurve = reader.ReadByte();
 
-            reader.AlignStream(4);
+            reader.AlignStream();
         }
     }
 
@@ -938,7 +938,7 @@ namespace AssetStudio
                 this.m_UseHighQualityCurve = reader.ReadBoolean();
             }
 
-            reader.AlignStream(4);
+            reader.AlignStream();
 
             int numRCurves = reader.ReadInt32();
             this.m_RotationCurves = new List<QuaternionCurve>(numRCurves);

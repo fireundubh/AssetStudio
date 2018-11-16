@@ -194,6 +194,7 @@
     <Compile Include="Extensions\WrappedEnumerator.cs" />
     <Compile Include="Logging\LoggingHelper.cs" />
     <Compile Include="StudioClasses\AssetItem.cs" />
+    <Compile Include="StudioClasses\Constants.cs" />
     <Compile Include="StudioClasses\FormController.cs" />
     <Compile Include="StudioClasses\ObjectReader.cs" />
     <Compile Include="StudioClasses\ProgressBarManager.cs" />

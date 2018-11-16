@@ -37,7 +37,7 @@ namespace AssetStudio
                 this.m_3D = reader.ReadBoolean();
                 this.m_UseHardware = reader.ReadBoolean();
 
-                reader.AlignStream(4);
+                reader.AlignStream();
 
                 if (this.version[0] >= 4 || this.version[0] == 3 && this.version[1] >= 2) //3.2.0 to 5
                 {
@@ -66,14 +66,14 @@ namespace AssetStudio
                 this.m_Length = reader.ReadSingle();
                 this.m_IsTrackerFormat = reader.ReadBoolean();
 
-                reader.AlignStream(4);
+                reader.AlignStream();
 
                 this.m_SubsoundIndex = reader.ReadInt32();
                 this.m_PreloadAudioData = reader.ReadBoolean();
                 this.m_LoadInBackground = reader.ReadBoolean();
                 this.m_Legacy3D = reader.ReadBoolean();
 
-                reader.AlignStream(4);
+                reader.AlignStream();
 
                 this.m_3D = this.m_Legacy3D;
 

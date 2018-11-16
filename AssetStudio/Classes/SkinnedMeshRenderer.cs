@@ -16,7 +16,7 @@ namespace AssetStudio
             bool m_UpdateWhenOffscreen = reader.ReadBoolean();
             bool m_SkinNormals = reader.ReadBoolean(); //3.1.0 and below
 
-            reader.AlignStream(4);
+            reader.AlignStream();
 
             if (this.version[0] == 2 && this.version[1] < 6) //2.6 down
             {

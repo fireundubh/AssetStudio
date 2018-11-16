@@ -258,7 +258,7 @@ namespace AssetStudio
             this.rtBlend6 = new SerializedShaderRTBlendState(reader);
             this.rtBlend7 = new SerializedShaderRTBlendState(reader);
             this.rtSeparateBlend = reader.ReadBoolean();
-            reader.AlignStream(4);
+            reader.AlignStream();
             if (version[0] > 2017 || version[0] == 2017 && version[1] >= 2) //2017.2 and up
             {
                 this.zClip = new SerializedShaderFloatValue(reader);
@@ -284,7 +284,7 @@ namespace AssetStudio
             this.m_Tags = new SerializedTagMap(reader);
             this.m_LOD = reader.ReadInt32();
             this.lighting = reader.ReadBoolean();
-            reader.AlignStream(4);
+            reader.AlignStream();
         }
     }
 
@@ -313,7 +313,7 @@ namespace AssetStudio
             {
                 this.m_Channels.Add(new ShaderBindChannel(reader));
             }
-            reader.AlignStream(4);
+            reader.AlignStream();
 
             this.m_SourceMap = reader.ReadUInt32();
         }
@@ -334,7 +334,7 @@ namespace AssetStudio
             this.m_ArraySize = reader.ReadInt32();
             this.m_Type = reader.ReadSByte();
             this.m_Dim = reader.ReadSByte();
-            reader.AlignStream(4);
+            reader.AlignStream();
         }
     }
 
@@ -353,7 +353,7 @@ namespace AssetStudio
             this.m_ArraySize = reader.ReadInt32();
             this.m_Type = reader.ReadSByte();
             this.m_RowCount = reader.ReadSByte();
-            reader.AlignStream(4);
+            reader.AlignStream();
         }
     }
 
@@ -376,7 +376,7 @@ namespace AssetStudio
                 bool m_MultiSampled = reader.ReadBoolean();
             }
             this.m_Dim = reader.ReadSByte();
-            reader.AlignStream(4);
+            reader.AlignStream();
         }
     }
 
@@ -508,11 +508,11 @@ namespace AssetStudio
             }
             if (version[0] >= 2017) //2017 and up
             {
-                reader.AlignStream(4);
+                reader.AlignStream();
             }
             this.m_ShaderHardwareTier = reader.ReadSByte();
             this.m_GpuProgramType = (ShaderGpuProgramType) reader.ReadSByte();
-            reader.AlignStream(4);
+            reader.AlignStream();
 
             int numVectorParams = reader.ReadInt32();
             this.m_VectorParams = new List<VectorParameter>(numVectorParams);
@@ -642,7 +642,7 @@ namespace AssetStudio
             {
                 bool m_HasProceduralInstancingVariant = reader.ReadBoolean();
             }
-            reader.AlignStream(4);
+            reader.AlignStream();
             this.m_UseName = reader.ReadAlignedString();
             this.m_Name = reader.ReadAlignedString();
             this.m_TextureName = reader.ReadAlignedString();
@@ -730,7 +730,7 @@ namespace AssetStudio
             }
 
             this.m_DisableNoSubshadersMessage = reader.ReadBoolean();
-            reader.AlignStream(4);
+            reader.AlignStream();
         }
     }
 
@@ -789,7 +789,7 @@ namespace AssetStudio
             else
             {
                 this.m_Script = reader.ReadBytes(reader.ReadInt32());
-                reader.AlignStream(4);
+                reader.AlignStream();
                 string m_PathName = reader.ReadAlignedString();
                 if (this.version[0] == 5 && this.version[1] >= 3) //5.3 - 5.4
                 {

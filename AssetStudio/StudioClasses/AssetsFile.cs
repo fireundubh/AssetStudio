@@ -118,7 +118,7 @@ namespace AssetStudio
                     }
                     else
                     {
-                        reader.AlignStream(4);
+                        reader.AlignStream();
                         objectInfo.m_PathID = reader.ReadInt64();
                     }
                     objectInfo.byteStart = reader.ReadUInt32();
@@ -176,7 +176,7 @@ namespace AssetStudio
                         }
                         else
                         {
-                            reader.AlignStream(4);
+                            reader.AlignStream();
                             m_ScriptType.localIdentifierInFile = reader.ReadInt64();
                         }
                         this.m_ScriptTypes.Add(m_ScriptType);

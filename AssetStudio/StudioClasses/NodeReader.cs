@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
@@ -9,7 +10,7 @@ namespace AssetStudio.StudioClasses
 {
     public static class NodeReader
     {
-        public static IEnumerator<TreeNode> DumpNode(TypeSig typeSig, ObjectReader reader, string name, TreeNode rootNode, bool isArray = false, int arrayIndex = 0)
+        public static IEnumerator<TreeNode> DumpNode(TreeNode rootNode, ObjectReader reader, TypeSig typeSig, string name, bool isArray = false, int arrayIndex = 0)
         {
             bool isRoot = rootNode == null;
             TypeDef typeDef = typeSig.ToTypeDefOrRef().ResolveTypeDefThrow();
@@ -67,7 +68,7 @@ namespace AssetStudio.StudioClasses
             // TypeReader equivalent: ReadArraySigBaseValue
             if (typeSig is ArraySigBase)
             {
-                foreach (TreeNode node in NodeDumpArray(typeDef, typeSig, name, reader, rootNode).AsEnumerable())
+                foreach (TreeNode node in NodeDumpArray(rootNode, reader, typeDef, typeSig, name).AsEnumerable())
                 {
                     yield return node;
                 }
@@ -88,7 +89,7 @@ namespace AssetStudio.StudioClasses
                 TypeSig genTypeSig = genericInstSig.GenericArguments[0];
                 TypeDef type = genTypeSig.ToTypeDefOrRef().ResolveTypeDefThrow();
 
-                foreach (TreeNode node in NodeDumpArray(type, genTypeSig, name, reader, rootNode).AsEnumerable())
+                foreach (TreeNode node in NodeDumpArray(rootNode, reader, type, genTypeSig, name).AsEnumerable())
                 {
                     yield return node;
                 }
@@ -192,22 +193,27 @@ namespace AssetStudio.StudioClasses
                 yield break;
             }
 
-            foreach (TreeNode node in DumpNodeObject(reader, name, typeDef, rootNode).AsEnumerable())
+            foreach (TreeNode node in DumpNodeObject(rootNode, reader, typeDef, name).AsEnumerable())
             {
                 yield return node;
             }
+        }
+
+        private static TreeNode BuildNode(string name, string nodeText, ElementType tag)
+        {
+            return new TreeNode
+            {
+                Name = name,
+                Text = nodeText,
+                Tag = tag
+            };
         }
 
         private static void CreateKeyNode(TreeNode rootNode, TypeDef typeDef, TypeSig typeSig, string name, bool isRoot, bool isArray, int arrayIndex, out TreeNode node)
         {
             string nodeText = !isArray ? string.Format("{0} {1}", typeDef.Name, name) : string.Format("[{0}] {1} {2}", arrayIndex, typeDef.Name, name);
 
-            node = new TreeNode
-            {
-                Name = name,
-                Text = nodeText,
-                Tag = typeSig.ElementType
-            };
+            node = BuildNode(name, nodeText, typeSig.ElementType);
 
             if (!isRoot)
             {
@@ -219,12 +225,7 @@ namespace AssetStudio.StudioClasses
         {
             string nodeText = !isArray ? string.Format("{0} {1} = {2}", typeDef.Name, name, value) : string.Format("[{0}] {1} {2} = {3}", arrayIndex, typeDef.Name, name, value);
 
-            node = new TreeNode
-            {
-                Name = name,
-                Text = nodeText,
-                Tag = typeSig.ElementType
-            };
+            node = BuildNode(name, nodeText, typeSig.ElementType);
 
             if (!isRoot)
             {
@@ -232,7 +233,7 @@ namespace AssetStudio.StudioClasses
             }
         }
 
-        private static IEnumerator<TreeNode> NodeDumpArray(TypeDef type, TypeSig typeSig, string name, ObjectReader reader, TreeNode rootNode)
+        private static IEnumerator<TreeNode> NodeDumpArray(TreeNode rootNode, ObjectReader reader, TypeDef type, TypeSig typeSig, string name)
         {
             bool isRoot = rootNode == null;
             if (!type.IsEnum && !ScriptHelper.IsBaseType(type) && !ScriptHelper.IsAssignFromUnityObject(type) && !ScriptHelper.IsEngineType(type) && !type.IsSerializable)
@@ -242,14 +243,9 @@ namespace AssetStudio.StudioClasses
 
             int size = reader.ReadInt32();
 
-            string nodeText = $"{typeSig.TypeName} {name}";
+            string nodeText = string.Format("{0} {1}", typeSig.TypeName, name);
 
-            var arrayNode = new TreeNode
-            {
-                Name = name,
-                Text = nodeText,
-                Tag = typeSig.ElementType
-            };
+            TreeNode arrayNode = BuildNode(name, nodeText, typeSig.ElementType);
 
             if (!isRoot)
             {
@@ -262,14 +258,14 @@ namespace AssetStudio.StudioClasses
 
             for (var i = 0; i < size; i++)
             {
-                foreach (TreeNode node in DumpNode(typeSig, reader, "data", arraySizeNode, isArray: true, arrayIndex: i).AsEnumerable())
+                foreach (TreeNode node in DumpNode(arraySizeNode, reader, typeSig, "data", isArray: true, arrayIndex: i).AsEnumerable())
                 {
                     yield return node;
                 }
             }
         }
 
-        private static IEnumerator<TreeNode> DumpNodeObject(ObjectReader reader, string name, TypeDef typeDef, TreeNode rootNode)
+        private static IEnumerator<TreeNode> DumpNodeObject(TreeNode rootNode, ObjectReader reader, TypeDef typeDef, string name)
         {
             bool isRoot = rootNode == null;
 
@@ -277,12 +273,7 @@ namespace AssetStudio.StudioClasses
             {
                 string nodeText = $"{typeDef.Name} {name}";
 
-                var node = new TreeNode
-                {
-                    Name = name,
-                    Text = nodeText,
-                    Tag = typeDef.ToTypeSig().ElementType
-                };
+                TreeNode node = BuildNode(name, nodeText, typeDef.ToTypeSig().ElementType);
 
                 if (!isRoot)
                 {
@@ -295,7 +286,7 @@ namespace AssetStudio.StudioClasses
 
             if (isRoot && typeDef.BaseType.FullName != "UnityEngine.Object")
             {
-                foreach (TreeNode node in DumpNode(typeDef.BaseType.ToTypeSig(), reader, null, rootNode, true).AsEnumerable())
+                foreach (TreeNode node in DumpNode(rootNode, reader, typeDef.BaseType.ToTypeSig(), null, true).AsEnumerable())
                 {
                     yield return node;
                 }
@@ -303,19 +294,19 @@ namespace AssetStudio.StudioClasses
 
             if (!isRoot && typeDef.BaseType.FullName != "System.Object")
             {
-                foreach (TreeNode node in DumpNode(typeDef.BaseType.ToTypeSig(), reader, null, rootNode, true).AsEnumerable())
+                foreach (TreeNode node in DumpNode(rootNode, reader, typeDef.BaseType.ToTypeSig(), null, true).AsEnumerable())
                 {
                     yield return node;
                 }
             }
 
-            foreach (TreeNode node in DumpNodeFields(reader, typeDef, rootNode).AsEnumerable())
+            foreach (TreeNode node in DumpNodeFields(rootNode, reader, typeDef).AsEnumerable())
             {
                 yield return node;
             }
         }
 
-        private static IEnumerator<TreeNode> DumpNodeFields(ObjectReader reader, TypeDef typeDef, TreeNode rootNode)
+        private static IEnumerator<TreeNode> DumpNodeFields(TreeNode rootNode, ObjectReader reader, TypeDef typeDef)
         {
             foreach (FieldDef fieldDef in typeDef.Fields)
             {
@@ -328,14 +319,14 @@ namespace AssetStudio.StudioClasses
                         continue;
                     }
 
-                    foreach (TreeNode node in DumpNode(fieldDef.FieldType, reader, fieldDef.Name, rootNode).AsEnumerable())
+                    foreach (TreeNode node in DumpNode(rootNode, reader, fieldDef.FieldType, fieldDef.Name).AsEnumerable())
                     {
                         yield return node;
                     }
                 }
                 else if ((fieldDef.Attributes & FieldAttributes.Static) == 0 && (fieldDef.Attributes & FieldAttributes.InitOnly) == 0 && (fieldDef.Attributes & FieldAttributes.NotSerialized) == 0)
                 {
-                    foreach (TreeNode node in DumpNode(fieldDef.FieldType, reader, fieldDef.Name, rootNode).AsEnumerable())
+                    foreach (TreeNode node in DumpNode(rootNode, reader, fieldDef.FieldType, fieldDef.Name).AsEnumerable())
                     {
                         yield return node;
                     }

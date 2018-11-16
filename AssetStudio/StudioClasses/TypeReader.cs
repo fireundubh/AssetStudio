@@ -173,7 +173,7 @@ namespace AssetStudio.StudioClasses
                     throw new NotSupportedException(string.Format("Primitive value not supported: {0}", typeSig.TypeName));
             }
 
-            reader.AlignStream(4);
+            reader.AlignStream();
 
             return value;
         }

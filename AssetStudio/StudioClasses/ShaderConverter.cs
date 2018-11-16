@@ -108,7 +108,7 @@ namespace AssetStudio
                 this.m_Keywords[i] = reader.ReadAlignedString();
             }
             this.m_ProgramCode = reader.ReadBytes(reader.ReadInt32());
-            reader.AlignStream(4);
+            reader.AlignStream();
 
             //TODO
         }

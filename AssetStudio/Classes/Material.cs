@@ -58,7 +58,7 @@ namespace AssetStudio
                 {
                     bool m_EnableInstancingVariants = reader.ReadBoolean();
                     //var m_DoubleSidedGI = a_Stream.ReadBoolean();//2017.x
-                    reader.AlignStream(4);
+                    reader.AlignStream();
                 }
             }
 

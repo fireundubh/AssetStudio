@@ -152,7 +152,7 @@ namespace AssetStudio
             if (append)
                 sb.AppendFormat("{0}{1} {2} = {3}\r\n", (new string('\t', level)), varTypeStr, varNameStr, value);
             if (align)
-                reader.AlignStream(4);
+                reader.AlignStream();
         }
 
         public static ExpandoObject ReadDynamicType(List<TypeTreeNode> members, EndianBinaryReader reader)
@@ -288,7 +288,7 @@ namespace AssetStudio
                 }
             }
             if (align)
-                reader.AlignStream(4);
+                reader.AlignStream();
             return value;
         }
 
@@ -444,7 +444,7 @@ namespace AssetStudio
                 }
             }
             if (align)
-                write.AlignStream(4);
+                write.AlignStream();
         }
     }
 }

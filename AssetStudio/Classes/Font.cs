@@ -87,7 +87,7 @@ namespace AssetStudio
                     if (this.version[0] >= 4)
                     {
                         bool flipped = reader.ReadBoolean();
-                        reader.AlignStream(4);
+                        reader.AlignStream();
                     }
                 }
 
@@ -104,7 +104,7 @@ namespace AssetStudio
                 if (this.version[0] <= 3)
                 {
                     bool m_GridFont = reader.ReadBoolean();
-                    reader.AlignStream(4);
+                    reader.AlignStream();
                 }
                 else
                 {

@@ -1,14 +1,16 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using AssetStudio.StudioClasses;
 
 namespace AssetStudio.Extensions
 {
     public static class BinaryWriterExtensions
     {
-        private static void WriteArray<T>(Action<T> del, T[] array)
+        private static void WriteArray<T>(Action<T> del, IEnumerable<T> array)
         {
-            foreach (var item in array)
+            foreach (T item in array)
             {
                 del(item);
             }
@@ -19,22 +21,24 @@ namespace AssetStudio.Extensions
             WriteArray(writer.Write, array);
         }
 
-        public static void AlignStream(this BinaryWriter writer, int alignment)
+        public static void AlignStream(this BinaryWriter writer)
         {
-            var pos = writer.BaseStream.Position;
-            var mod = pos % alignment;
+            long pos = writer.BaseStream.Position;
+            long mod = pos % Constants.ByteAlignment;
+
             if (mod != 0)
             {
-                writer.Write(new byte[alignment - mod]);
+                writer.Write(new byte[Constants.ByteAlignment - mod]);
             }
         }
 
         public static void WriteAlignedString(this BinaryWriter writer, string str)
         {
-            var bytes = Encoding.UTF8.GetBytes(str);
+            byte[] bytes = Encoding.UTF8.GetBytes(str);
+
             writer.Write(bytes.Length);
             writer.Write(bytes);
-            writer.AlignStream(4);
+            writer.AlignStream();
         }
     }
 }

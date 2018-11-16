@@ -28,12 +28,12 @@ namespace AssetStudio
             {
                 bool m_Enabled = reader.ReadBoolean();
 
-                reader.AlignStream(4);
+                reader.AlignStream();
 
                 byte m_CastShadows = reader.ReadByte();
                 bool m_ReceiveShadows = reader.ReadBoolean();
 
-                reader.AlignStream(4);
+                reader.AlignStream();
 
                 if (this.version[0] >= 2018) //2018 and up
                 {
@@ -92,7 +92,7 @@ namespace AssetStudio
                 {
                     bool m_UseLightProbes = reader.ReadBoolean();
 
-                    reader.AlignStream(4);
+                    reader.AlignStream();
 
                     if (this.version[0] == 5) //5.0 and up
                     {
@@ -116,7 +116,7 @@ namespace AssetStudio
 
                     int m_SortingOrder = reader.ReadInt16();
 
-                    reader.AlignStream(4);
+                    reader.AlignStream();
                 }
             }
         }

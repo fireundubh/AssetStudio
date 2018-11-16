@@ -75,7 +75,7 @@ namespace AssetStudio
             this.m_DefaultWeight = reader.ReadSingle();
             this.m_IKPass = reader.ReadBoolean();
             this.m_SyncedLayerAffectsTiming = reader.ReadBoolean();
-            reader.AlignStream(4);
+            reader.AlignStream();
         }
     }
 
@@ -137,7 +137,7 @@ namespace AssetStudio
                 this.m_ExitTime = reader.ReadSingle();
                 this.m_HasExitTime = reader.ReadBoolean();
                 this.m_HasFixedDuration = reader.ReadBoolean();
-                reader.AlignStream(4);
+                reader.AlignStream();
                 this.m_InterruptionSource = reader.ReadInt32();
                 this.m_OrderedInterruption = reader.ReadBoolean();
             }
@@ -147,7 +147,7 @@ namespace AssetStudio
             }
 
             this.m_CanTransitionToSelf = reader.ReadBoolean();
-            reader.AlignStream(4);
+            reader.AlignStream();
         }
     }
 
@@ -216,7 +216,7 @@ namespace AssetStudio
         {
             this.m_ChildBlendEventIDArray = reader.ReadUInt32Array(reader.ReadInt32());
             this.m_NormalizedBlendValues = reader.ReadBoolean();
-            reader.AlignStream(4);
+            reader.AlignStream();
         }
     }
 
@@ -258,7 +258,7 @@ namespace AssetStudio
             this.m_Duration = reader.ReadSingle();
             this.m_CycleOffset = reader.ReadSingle();
             this.m_Mirror = reader.ReadBoolean();
-            reader.AlignStream(4);
+            reader.AlignStream();
         }
     }
 
@@ -361,7 +361,7 @@ namespace AssetStudio
 
             this.m_Loop = reader.ReadBoolean();
             this.m_Mirror = reader.ReadBoolean();
-            reader.AlignStream(4);
+            reader.AlignStream();
         }
     }
 
@@ -400,7 +400,7 @@ namespace AssetStudio
 
             this.m_FullPathID = reader.ReadUInt32();
             this.m_isEntry = reader.ReadBoolean();
-            reader.AlignStream(4);
+            reader.AlignStream();
         }
     }
 
@@ -465,7 +465,7 @@ namespace AssetStudio
                     this.m_BoolValues[i] = reader.ReadBoolean();
                 }
 
-                reader.AlignStream(4);
+                reader.AlignStream();
 
                 this.m_IntValues = reader.ReadInt32Array(reader.ReadInt32());
                 this.m_FloatValues = reader.ReadSingleArray(reader.ReadInt32());
@@ -499,7 +499,7 @@ namespace AssetStudio
                     this.m_BoolValues[i] = reader.ReadBoolean();
                 }
 
-                reader.AlignStream(4);
+                reader.AlignStream();
             }
         }
     }

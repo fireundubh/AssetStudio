@@ -55,7 +55,7 @@ namespace AssetStudio
             this.m_IsReadable = reader.ReadBoolean(); //2.6.0 and up
             this.m_ReadAllowed = reader.ReadBoolean(); //3.0.0 - 5.4
             //m_StreamingMipmaps 2018.2 and up
-            reader.AlignStream(4);
+            reader.AlignStream();
             if (this.version[0] > 2018 || this.version[0] == 2018 && this.version[1] >= 2) //2018.2 and up
             {
                 int m_StreamingMipmapsPriority = reader.ReadInt32();

@@ -24,13 +24,13 @@ namespace AssetStudio
 
             if (this.version[0] == 4 && this.version[1] >= 5) //4.5 and up - 5.0 down
             {
-                reader.AlignStream(4);
+                reader.AlignStream();
             }
 
             if (this.version[0] >= 5) //5.0 and up
             {
                 bool m_LinearVelocityBlending = reader.ReadBoolean();
-                reader.AlignStream(4);
+                reader.AlignStream();
             }
 
             if (this.version[0] < 4 || this.version[0] == 4 && this.version[1] < 5) //4.5 down
@@ -50,13 +50,13 @@ namespace AssetStudio
 
             if (this.version[0] >= 5 && this.version[0] < 2018) //5.0 and up - 2018 down
             {
-                reader.AlignStream(4);
+                reader.AlignStream();
             }
 
             if (this.version[0] >= 2018) //2018 and up
             {
                 bool m_KeepAnimatorControllerStateOnDisable = reader.ReadBoolean();
-                reader.AlignStream(4);
+                reader.AlignStream();
             }
         }
     }

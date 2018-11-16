@@ -2,20 +2,21 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using AssetStudio.StudioClasses;
 using SharpDX;
 
 namespace AssetStudio.Extensions
 {
     public static class BinaryReaderExtensions
     {
-        public static void AlignStream(this BinaryReader reader, int alignment)
+        public static void AlignStream(this BinaryReader reader)
         {
             long pos = reader.BaseStream.Position;
-            long mod = pos % alignment;
+            long mod = pos % Constants.ByteAlignment;
 
             if (mod != 0)
             {
-                reader.BaseStream.Position += alignment - mod;
+                reader.BaseStream.Position += Constants.ByteAlignment - mod;
             }
         }
 
@@ -28,7 +29,7 @@ namespace AssetStudio.Extensions
                 byte[] stringData = reader.ReadBytes(length);
                 string result = Encoding.UTF8.GetString(stringData);
 
-                reader.AlignStream(4);
+                reader.AlignStream();
 
                 return result;
             }

@@ -257,7 +257,7 @@ namespace AssetStudio
             this.m_HasLeftHand = reader.ReadBoolean();
             this.m_HasRightHand = reader.ReadBoolean();
             this.m_HasTDoF = reader.ReadBoolean();
-            reader.AlignStream(4);
+            reader.AlignStream();
         }
     }
 

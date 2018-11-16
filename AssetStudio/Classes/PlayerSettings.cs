@@ -20,7 +20,7 @@ namespace AssetStudio
             //bool AndroidFilterTouchesWhenObscured 2017.2 and up
             //bool AndroidEnableSustainedPerformanceMode 2018 and up
 
-            this.reader.AlignStream(4);
+            this.reader.AlignStream();
 
             int defaultScreenOrientation = this.reader.ReadInt32();
             int targetDevice = this.reader.ReadInt32();
@@ -41,7 +41,7 @@ namespace AssetStudio
             else
             {
                 bool useOnDemandResources = this.reader.ReadBoolean();
-                this.reader.AlignStream(4);
+                this.reader.AlignStream();
             }
 
             if (this.version[0] > 3 || this.version[0] == 3 && this.version[1] >= 5) //3.5 and up

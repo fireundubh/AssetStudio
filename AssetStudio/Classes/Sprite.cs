@@ -81,7 +81,7 @@ namespace AssetStudio
             if (this.version[0] > 5 || this.version[0] == 5 && this.version[1] >= 3) //5.3 and up
             {
                 bool m_IsPolygon = reader.ReadBoolean();
-                reader.AlignStream(4);
+                reader.AlignStream();
             }
 
             if (this.version[0] >= 2017) //2017 and up
@@ -130,7 +130,7 @@ namespace AssetStudio
                 //  vector m_IndexBuffer
                 size = reader.ReadInt32();
                 reader.Position += size; //UInt8 data
-                reader.AlignStream(4);
+                reader.AlignStream();
 
                 //  VertexData m_VertexData
                 if (this.version[0] < 2018) //2018 down
@@ -146,7 +146,7 @@ namespace AssetStudio
                 //      TypelessData m_DataSize
                 size = reader.ReadInt32();
                 reader.Position += size; //UInt8 data
-                reader.AlignStream(4);
+                reader.AlignStream();
 
                 if (this.version[0] >= 2018) //2018 and up
                 {
@@ -183,7 +183,7 @@ namespace AssetStudio
                 //  vector indices
                 size = reader.ReadInt32();
                 reader.Position += 2 * size; //UInt16 data
-                reader.AlignStream(4);
+                reader.AlignStream();
             }
 
             //  Rectf textureRect

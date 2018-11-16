@@ -142,7 +142,7 @@ namespace AssetStudio.StudioClasses
                 return;
             }
 
-            IEnumerator<TreeNode> nodeEnumerator = NodeReader.DumpNode(typeDef.ToTypeSig(), reader, null, null);
+            IEnumerator<TreeNode> nodeEnumerator = NodeReader.DumpNode(null, reader, typeDef.ToTypeSig(), null);
 
             if (!nodeEnumerator.MoveNext())
             {
