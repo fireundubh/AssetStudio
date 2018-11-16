@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
-using System.Linq;
-using System.Text;
+using AssetStudio.StudioClasses;
 
 namespace AssetStudio
 {
@@ -12,87 +9,109 @@ namespace AssetStudio
     {
         public static Bitmap GetImageFromSprite(Sprite m_Sprite)
         {
-            if (m_Sprite.m_SpriteAtlas != null && m_Sprite.m_SpriteAtlas.TryGetPD(out var assetPreloadData))
+            if (m_Sprite.m_SpriteAtlas != null && m_Sprite.m_SpriteAtlas.TryGet(out ObjectReader objectReader))
             {
-                var m_SpriteAtlas = new SpriteAtlas(assetPreloadData);
-                var index = m_SpriteAtlas.guids.FindIndex(x => x == m_Sprite.first);
-
-                if (index >= 0 && m_SpriteAtlas.textures[index].TryGetPD(out assetPreloadData))
+                var m_SpriteAtlas = new SpriteAtlas(objectReader);
+                if (m_SpriteAtlas.m_RenderDataMap.TryGetValue(m_Sprite.m_RenderDataKey, out SpriteAtlasData spriteAtlasData) && spriteAtlasData.texture.TryGet(out objectReader))
                 {
-                    try
-                    {
-                        if (m_Sprite.m_PhysicsShape.Length > 0)
-                        {
-                            return CutImage(assetPreloadData, m_SpriteAtlas.textureRects[index], m_Sprite);
-                        }
-                        return CutImage(assetPreloadData, m_SpriteAtlas.textureRects[index]);
-                    }
-                    catch
-                    {
-                        return CutImage(assetPreloadData, m_SpriteAtlas.textureRects[index]);
-                    }
+                    return CutImage(objectReader, spriteAtlasData.textureRect, m_Sprite, spriteAtlasData.settingsRaw);
                 }
             }
             else
             {
-                if (m_Sprite.texture.TryGetPD(out assetPreloadData))
+                if (m_Sprite.texture.TryGet(out objectReader))
                 {
-                    return CutImage(assetPreloadData, m_Sprite.textureRect);
+                    return CutImage(objectReader, m_Sprite.textureRect, m_Sprite, m_Sprite.settingsRaw);
                 }
             }
-
             return null;
         }
 
-        private static Bitmap CutImage(AssetPreloadData texture2DAsset, RectangleF textureRect)
+        private static Bitmap CutImage(ObjectReader texture2DAsset, RectangleF textureRect, Sprite m_Sprite, SpriteSettings settingsRaw)
         {
             var texture2D = new Texture2DConverter(new Texture2D(texture2DAsset, true));
-            using (var originalImage = texture2D.ConvertToBitmap(false))
+            Bitmap originalImage = texture2D.ConvertToBitmap(false);
+
+            if (originalImage == null)
             {
-                if (originalImage != null)
-                {
-                    var spriteImage = originalImage.Clone(textureRect, PixelFormat.Format32bppArgb);
-                    spriteImage.RotateFlip(RotateFlipType.RotateNoneFlipY);
-                    return spriteImage;
-                }
+                return null;
             }
 
-            return null;
-        }
-
-        private static Bitmap CutImage(AssetPreloadData texture2DAsset, RectangleF textureRect, Sprite sprite)
-        {
-            var texture2D = new Texture2DConverter(new Texture2D(texture2DAsset, true));
-            using (var originalImage = texture2D.ConvertToBitmap(false))
+            using (originalImage)
             {
-                if (originalImage != null)
+                Bitmap spriteImage = originalImage.Clone(textureRect, PixelFormat.Format32bppArgb);
+
+                //RotateAndFlip
+                var flipType = RotateFlipType.RotateNoneFlipNone;
+
+                switch (settingsRaw.packingRotation)
                 {
-                    var spriteImage = originalImage.Clone(textureRect, PixelFormat.Format32bppArgb);
-                    using (var brush = new TextureBrush(spriteImage))
+                    case SpritePackingRotation.kSPRFlipHorizontal:
+                        flipType = RotateFlipType.RotateNoneFlipX;
+                        break;
+                    case SpritePackingRotation.kSPRFlipVertical:
+                        flipType = RotateFlipType.RotateNoneFlipY;
+                        break;
+                    case SpritePackingRotation.kSPRRotate180:
+                        flipType = RotateFlipType.Rotate180FlipNone;
+                        break;
+                    case SpritePackingRotation.kSPRRotate90:
+                        flipType = RotateFlipType.Rotate270FlipNone;
+                        break;
+                }
+
+                spriteImage.RotateFlip(flipType);
+
+                // TODO Tight
+                // * 2017之前没有PhysicsShape
+                // * 5.6之前使用vertices
+                // * 5.6需要使用VertexData
+                if (settingsRaw.packingMode == SpritePackingMode.kSPMTight && m_Sprite.m_PhysicsShape?.Length > 0) //Tight
+                {
+                    try
                     {
-                        using (var path = new GraphicsPath())
+                        using (var brush = new TextureBrush(spriteImage))
                         {
-                            foreach (var p in sprite.m_PhysicsShape)
-                                path.AddPolygon(p);
-                            using (var matr = new Matrix())
+                            using (var path = new GraphicsPath())
                             {
-                                matr.Translate(sprite.m_Rect.Width * sprite.m_Pivot.X, sprite.m_Rect.Height * sprite.m_Pivot.Y);
-                                matr.Scale(sprite.m_PixelsToUnits, sprite.m_PixelsToUnits);
-                                path.Transform(matr);
-                                var bitmap = new Bitmap((int)textureRect.Width, (int)textureRect.Height);
-                                using (var graphic = Graphics.FromImage(bitmap))
+                                foreach (PointF[] p in m_Sprite.m_PhysicsShape)
                                 {
-                                    graphic.FillPath(brush, path);
-                                    bitmap.RotateFlip(RotateFlipType.RotateNoneFlipY);
-                                    return bitmap;
+                                    path.AddPolygon(p);
+                                }
+
+                                using (var matr = new Matrix())
+                                {
+                                    matr.Translate(m_Sprite.m_Rect.Width * m_Sprite.m_Pivot.X, m_Sprite.m_Rect.Height * m_Sprite.m_Pivot.Y);
+                                    matr.Scale(m_Sprite.m_PixelsToUnits, m_Sprite.m_PixelsToUnits);
+                                    path.Transform(matr);
+
+                                    var bitmap = new Bitmap((int) textureRect.Width, (int) textureRect.Height);
+
+                                    using (Graphics graphic = Graphics.FromImage(bitmap))
+                                    {
+                                        graphic.FillPath(brush, path);
+                                        bitmap.RotateFlip(RotateFlipType.RotateNoneFlipY);
+
+                                        return bitmap;
+                                    }
                                 }
                             }
                         }
                     }
-                }
-            }
+                    catch
+                    {
+                        spriteImage = originalImage.Clone(textureRect, PixelFormat.Format32bppArgb);
+                        spriteImage.RotateFlip(RotateFlipType.RotateNoneFlipY);
 
-            return null;
+                        return spriteImage;
+                    }
+                }
+
+                //Rectangle
+                spriteImage.RotateFlip(RotateFlipType.RotateNoneFlipY);
+
+                return spriteImage;
+            }
         }
     }
 }

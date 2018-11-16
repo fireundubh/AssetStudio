@@ -1,18 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using AssetStudio.StudioClasses;
 
 namespace AssetStudio
 {
     public abstract class EditorExtension : Object
     {
-        protected EditorExtension(AssetPreloadData preloadData) : base(preloadData)
+        protected EditorExtension(ObjectReader reader) : base(reader)
         {
-            if (platform == BuildTarget.NoTarget)
+            if (this.platform == BuildTarget.NoTarget)
             {
-                var m_PrefabParentObject = sourceFile.ReadPPtr();
-                var m_PrefabInternal = sourceFile.ReadPPtr();
+                PPtr m_PrefabParentObject = reader.ReadPPtr();
+                PPtr m_PrefabInternal = reader.ReadPPtr();
             }
         }
     }

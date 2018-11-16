@@ -1,31 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using AssetStudio.StudioClasses;
 
 namespace AssetStudio
 {
     public abstract class Object
     {
-        public AssetPreloadData preloadData;
-        public AssetsFile sourceFile;
-        protected EndianBinaryReader reader;
+        protected AssetsFile sourceFile;
+        public ObjectReader reader;
         public int[] version;
         protected string[] buildType;
-        protected BuildTarget platform;
+        public BuildTarget platform;
 
-        protected Object(AssetPreloadData preloadData)
+        protected Object(ObjectReader reader)
         {
-            this.preloadData = preloadData;
-            sourceFile = preloadData.sourceFile;
-            reader = preloadData.InitReader();
-            version = sourceFile.version;
-            buildType = sourceFile.buildType;
-            platform = sourceFile.m_TargetPlatform;
+            this.reader = reader;
+            reader.Reset();
 
-            if (platform == BuildTarget.NoTarget)
+            this.sourceFile = reader.assetsFile;
+            this.version = this.sourceFile.version;
+            this.buildType = this.sourceFile.buildType;
+            this.platform = this.sourceFile.m_TargetPlatform;
+
+            if (this.platform == BuildTarget.NoTarget)
             {
-                var m_ObjectHideFlags = reader.ReadUInt32();
+                uint m_ObjectHideFlags = reader.ReadUInt32();
             }
         }
     }

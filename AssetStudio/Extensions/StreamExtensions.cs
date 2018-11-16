@@ -11,7 +11,7 @@ namespace AssetStudio.Extensions
             var buffer = new byte[BufferSize];
             for (var left = size; left > 0; left -= BufferSize)
             {
-                int toRead = BufferSize < left ? BufferSize : (int)left;
+                int toRead = BufferSize < left ? BufferSize : (int) left;
                 int read = source.Read(buffer, 0, toRead);
                 destination.Write(buffer, 0, read);
                 if (read != toRead)

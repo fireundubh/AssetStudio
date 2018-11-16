@@ -1,12 +1,9 @@
-﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using AssetStudio.Extensions;
+using AssetStudio.StudioClasses;
 
 namespace AssetStudio
 {
-
     public sealed class AssetBundle : NamedObject
     {
         public class AssetInfo
@@ -24,23 +21,32 @@ namespace AssetStudio
 
         public List<ContainerData> m_Container = new List<ContainerData>();
 
-        public AssetBundle(AssetPreloadData preloadData) : base(preloadData)
+        public AssetBundle(ObjectReader reader) : base(reader)
         {
-            var size = reader.ReadInt32();
-            for (int i = 0; i < size; i++)
+            int size = reader.ReadInt32();
+
+            for (var i = 0; i < size; i++)
             {
-                sourceFile.ReadPPtr();
+                reader.ReadPPtr();
             }
+
             size = reader.ReadInt32();
-            for (int i = 0; i < size; i++)
+
+            for (var i = 0; i < size; i++)
             {
-                var temp = new ContainerData();
-                temp.first = reader.ReadAlignedString();
-                temp.second = new AssetInfo();
-                temp.second.preloadIndex = reader.ReadInt32();
-                temp.second.preloadSize = reader.ReadInt32();
-                temp.second.asset = sourceFile.ReadPPtr();
-                m_Container.Add(temp);
+                var temp = new ContainerData
+                {
+                    first = reader.ReadAlignedString(),
+
+                    second = new AssetInfo
+                    {
+                        preloadIndex = reader.ReadInt32(),
+                        preloadSize = reader.ReadInt32(),
+                        asset = reader.ReadPPtr()
+                    }
+                };
+
+                this.m_Container.Add(temp);
             }
         }
     }

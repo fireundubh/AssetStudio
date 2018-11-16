@@ -29,8 +29,8 @@ namespace AssetStudio
 
         public ProgressBarManager progressBarManager;
 
-        private AssetPreloadData lastSelectedItem;
-        private AssetPreloadData lastLoadedAsset;
+        private AssetItem lastSelectedItem;
+        private AssetItem lastLoadedAsset;
 
         private FMOD.System system;
         private Sound sound;
@@ -86,21 +86,21 @@ namespace AssetStudio
         {
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
 
-            InitializeComponent();
+            this.InitializeComponent();
 
-            displayOriginalName.Checked = (bool) Settings.Default["displayOriginalName"];
-            displayAll.Checked = (bool) Settings.Default["displayAll"];
-            displayInfo.Checked = (bool) Settings.Default["displayInfo"];
-            enableLiveSearch.Checked = (bool) Settings.Default["enableLiveSearch"];
-            enablePreview.Checked = (bool) Settings.Default["enablePreview"];
-            openAfterExport.Checked = (bool) Settings.Default["openAfterExport"];
-            assetGroupOptions.SelectedIndex = (int) Settings.Default["assetGroupOption"];
+            this.displayOriginalName.Checked = (bool) Settings.Default["displayOriginalName"];
+            this.displayAll.Checked = (bool) Settings.Default["displayAll"];
+            this.displayInfo.Checked = (bool) Settings.Default["displayInfo"];
+            this.enableLiveSearch.Checked = (bool) Settings.Default["enableLiveSearch"];
+            this.enablePreview.Checked = (bool) Settings.Default["enablePreview"];
+            this.openAfterExport.Checked = (bool) Settings.Default["openAfterExport"];
+            this.assetGroupOptions.SelectedIndex = (int) Settings.Default["assetGroupOption"];
 
-            FMODinit();
+            this.FMODinit();
 
             // UI
-            formController = new FormController();
-            progressBarManager = new ProgressBarManager();
+            this.formController = new FormController();
+            this.progressBarManager = new ProgressBarManager();
 
             // programmatically replace ProgressBar with CustomProgressBar because the VS designer is still dumb
             this.progressBarPanel.Controls.Clear();
@@ -172,7 +172,7 @@ namespace AssetStudio
                 this.AsyncInvokeIfRequired(() => FormController.SetUpAssetControls(this, this.assetListView, this.classesListView, this.sceneTreeView, fileDataParams));
                 this.AsyncInvokeIfRequired(() => FormController.SetUpDropDownMenu(this.filterTypeToolStripMenuItem.DropDownItems, this.typeToolStripMenuItem_Click));
 
-                StatusStripUpdate(string.Format("Finished loading {0} files with {1} exportable assets.", Studio.assetsFileList.Count, this.assetListView.Items.Count));
+                this.StatusStripUpdate(string.Format("Finished loading {0} files with {1} exportable assets.", Studio.assetsFileList.Count, this.assetListView.Items.Count));
             });
         }
 
@@ -294,25 +294,25 @@ namespace AssetStudio
                 this.allToolStripMenuItem.Checked = true;
             }
 
-            FilterAssetList();
+            this.FilterAssetList();
         }
 
         private void AssetStudioForm_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Control && e.Alt && e.KeyCode == Keys.D)
             {
-                debugMenuItem.Visible = !debugMenuItem.Visible;
-                buildClassStructuresMenuItem.Checked = debugMenuItem.Visible;
-                dontLoadAssetsMenuItem.Checked = debugMenuItem.Visible;
-                dontBuildHierarchyMenuItem.Checked = debugMenuItem.Visible;
+                this.debugMenuItem.Visible = !this.debugMenuItem.Visible;
+                this.buildClassStructuresMenuItem.Checked = this.debugMenuItem.Visible;
+                this.dontLoadAssetsMenuItem.Checked = this.debugMenuItem.Visible;
+                this.dontBuildHierarchyMenuItem.Checked = this.debugMenuItem.Visible;
 
-                if (tabControl1.TabPages.Contains(tabPage3))
+                if (this.tabControl1.TabPages.Contains(this.tabPage3))
                 {
-                    tabControl1.TabPages.Remove(tabPage3);
+                    this.tabControl1.TabPages.Remove(this.tabPage3);
                 }
                 else
                 {
-                    tabControl1.TabPages.Add(tabPage3);
+                    this.tabControl1.TabPages.Add(this.tabPage3);
                 }
             }
 
@@ -355,14 +355,14 @@ namespace AssetStudio
 
         private void dontLoadAssetsMenuItem_CheckedChanged(object sender, EventArgs e)
         {
-            if (dontLoadAssetsMenuItem.Checked)
+            if (this.dontLoadAssetsMenuItem.Checked)
             {
-                dontBuildHierarchyMenuItem.Checked = true;
-                dontBuildHierarchyMenuItem.Enabled = false;
+                this.dontBuildHierarchyMenuItem.Checked = true;
+                this.dontBuildHierarchyMenuItem.Enabled = false;
             }
             else
             {
-                dontBuildHierarchyMenuItem.Enabled = true;
+                this.dontBuildHierarchyMenuItem.Enabled = true;
             }
         }
 
@@ -394,11 +394,9 @@ namespace AssetStudio
 
                     foreach (KeyValuePair<int, TypeTreeItem> uclass in version.Value)
                     {
-                        string saveFile = $"{versionPath}\\{uclass.Key} {uclass.Value.Text}.txt";
+                        string saveFile = string.Format("{0}\\{1} {2}.txt", versionPath, uclass.Key, uclass.Value.Text);
                         using (var TXTwriter = new StreamWriter(saveFile))
-                        {
                             TXTwriter.Write(uclass.Value.ToString());
-                        }
                     }
                 }
 
@@ -412,71 +410,71 @@ namespace AssetStudio
 
         private void enablePreview_Check(object sender, EventArgs e)
         {
-            if (lastLoadedAsset != null)
+            if (this.lastLoadedAsset != null)
             {
-                switch (lastLoadedAsset.Type)
+                switch (this.lastLoadedAsset.Type)
                 {
                     case ClassIDType.Texture2D:
                     case ClassIDType.Sprite:
-                        if (enablePreview.Checked && imageTexture != null)
+                        if (this.enablePreview.Checked && this.imageTexture != null)
                         {
-                            previewPanel.BackgroundImage = imageTexture;
+                            this.previewPanel.BackgroundImage = this.imageTexture;
                         }
                         else
                         {
-                            previewPanel.BackgroundImage = Resources.preview;
-                            previewPanel.BackgroundImageLayout = ImageLayout.Center;
+                            this.previewPanel.BackgroundImage = Resources.preview;
+                            this.previewPanel.BackgroundImageLayout = ImageLayout.Center;
                         }
                         break;
                     case ClassIDType.Shader:
                     case ClassIDType.TextAsset:
                     case ClassIDType.MonoBehaviour:
-                        textPreviewBox.Visible = !textPreviewBox.Visible;
+                        this.textPreviewBox.Visible = !this.textPreviewBox.Visible;
                         break;
                     case ClassIDType.Font:
-                        fontPreviewBox.Visible = !fontPreviewBox.Visible;
+                        this.fontPreviewBox.Visible = !this.fontPreviewBox.Visible;
                         break;
                     case ClassIDType.AudioClip:
-                        FMODpanel.Visible = !FMODpanel.Visible;
+                        this.FMODpanel.Visible = !this.FMODpanel.Visible;
 
-                        if (sound != null && channel != null)
+                        if (this.sound != null && this.channel != null)
                         {
-                            RESULT result = channel.isPlaying(out bool playing);
+                            RESULT result = this.channel.isPlaying(out bool playing);
                             if (result == RESULT.OK && playing)
                             {
-                                result = channel.stop();
-                                FMODreset();
+                                result = this.channel.stop();
+                                this.FMODreset();
                             }
                         }
-                        else if (FMODpanel.Visible)
+                        else if (this.FMODpanel.Visible)
                         {
-                            PreviewAsset(lastLoadedAsset);
+                            this.PreviewAsset(this.lastLoadedAsset);
                         }
                         break;
                 }
             }
-            else if (lastSelectedItem != null && enablePreview.Checked)
+            else if (this.lastSelectedItem != null && this.enablePreview.Checked)
             {
-                lastLoadedAsset = lastSelectedItem;
-                PreviewAsset(lastLoadedAsset);
+                this.lastLoadedAsset = this.lastSelectedItem;
+                this.PreviewAsset(this.lastLoadedAsset);
             }
 
-            Settings.Default["enablePreview"] = enablePreview.Checked;
+            Settings.Default["enablePreview"] = this.enablePreview.Checked;
             Settings.Default.Save();
         }
 
         private void displayAssetInfo_Check(object sender, EventArgs e)
         {
-            if (displayInfo.Checked && assetInfoLabel.Text != null)
+            if (this.displayInfo.Checked && this.assetInfoLabel.Text != null)
             {
-                assetInfoLabel.Visible = true;
+                this.assetInfoLabel.Visible = true;
             }
             else
             {
-                assetInfoLabel.Visible = false;
+                this.assetInfoLabel.Visible = false;
             }
 
-            Settings.Default["displayInfo"] = displayInfo.Checked;
+            Settings.Default["displayInfo"] = this.displayInfo.Checked;
             Settings.Default.Save();
         }
 
@@ -495,9 +493,7 @@ namespace AssetStudio
         private void showExpOpt_Click(object sender, EventArgs e)
         {
             using (var exportOpt = new ExportOptions())
-            {
                 exportOpt.ShowDialog();
-            }
         }
 
         private void assetListView_RetrieveVirtualItem(object sender, RetrieveVirtualItemEventArgs e)
@@ -510,17 +506,17 @@ namespace AssetStudio
             switch (e.TabPageIndex)
             {
                 case 0:
-                    treeSearch.Select();
+                    this.treeSearch.Select();
                     break;
                 case 1:
                     this.ResizeAssetListColumns(); //required because the ListView is not visible on app launch
-                    classPreviewPanel.Visible = false;
-                    previewPanel.Visible = true;
-                    listSearch.Select();
+                    this.classPreviewPanel.Visible = false;
+                    this.previewPanel.Visible = true;
+                    this.listSearch.Select();
                     break;
                 case 2:
-                    previewPanel.Visible = false;
-                    classPreviewPanel.Visible = true;
+                    this.previewPanel.Visible = false;
+                    this.classPreviewPanel.Visible = true;
                     break;
             }
         }
@@ -549,8 +545,8 @@ namespace AssetStudio
 
         private void treeSearch_TextChanged(object sender, EventArgs e)
         {
-            treeSrcResults.Clear();
-            nextGObject = 0;
+            this.treeSrcResults.Clear();
+            this.nextGObject = 0;
         }
 
         private void treeSearch_KeyDown(object sender, KeyEventArgs e)
@@ -595,7 +591,7 @@ namespace AssetStudio
         private void ResizeAssetListColumns()
         {
             // TODO: defer to user preferences for column widths
-            assetListView.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
+            this.assetListView.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
         }
 
         private void tabPage2_Resize(object sender, EventArgs e)
@@ -629,105 +625,105 @@ namespace AssetStudio
 
         private void ListSearchTextChanged(object sender, EventArgs e)
         {
-            if (enableFiltering && enableLiveSearch.Checked)
+            if (this.enableFiltering && this.enableLiveSearch.Checked)
             {
-                FilterAssetList();
+                this.FilterAssetList();
             }
         }
 
         [SuppressMessage("ReSharper", "StringCompareToIsCultureSpecific")]
         private void assetListView_ColumnClick(object sender, ColumnClickEventArgs e)
         {
-            if (firstSortColumn != e.Column)
+            if (this.firstSortColumn != e.Column)
             {
                 //sorting column has been changed
-                reverseSort = false;
-                secondSortColumn = firstSortColumn;
+                this.reverseSort = false;
+                this.secondSortColumn = this.firstSortColumn;
             }
             else
             {
-                reverseSort = !reverseSort;
+                this.reverseSort = !this.reverseSort;
             }
 
-            firstSortColumn = e.Column;
+            this.firstSortColumn = e.Column;
 
-            assetListView.BeginUpdate();
-            assetListView.SelectedIndices.Clear();
+            this.assetListView.BeginUpdate();
+            this.assetListView.SelectedIndices.Clear();
 
             switch (e.Column)
             {
                 case 0:
-                    Studio.visibleAssets.Sort(delegate(AssetPreloadData a, AssetPreloadData b)
+                    Studio.visibleAssets.Sort(delegate(AssetItem a, AssetItem b)
                     {
-                        int xdiff = reverseSort ? b.Text.CompareTo(a.Text) : a.Text.CompareTo(b.Text);
+                        int xdiff = this.reverseSort ? b.Text.CompareTo(a.Text) : a.Text.CompareTo(b.Text);
                         if (xdiff != 0)
                         {
                             return xdiff;
                         }
-                        return secondSortColumn == 1 ? a.TypeString.CompareTo(b.TypeString) : a.FullSize.CompareTo(b.FullSize);
+                        return this.secondSortColumn == 1 ? a.TypeString.CompareTo(b.TypeString) : a.FullSize.CompareTo(b.FullSize);
                     });
                     break;
                 case 1:
-                    Studio.visibleAssets.Sort(delegate(AssetPreloadData a, AssetPreloadData b)
+                    Studio.visibleAssets.Sort(delegate(AssetItem a, AssetItem b)
                     {
-                        int xdiff = reverseSort ? b.TypeString.CompareTo(a.TypeString) : a.TypeString.CompareTo(b.TypeString);
+                        int xdiff = this.reverseSort ? b.TypeString.CompareTo(a.TypeString) : a.TypeString.CompareTo(b.TypeString);
                         if (xdiff != 0)
                         {
                             return xdiff;
                         }
-                        return secondSortColumn == 2 ? a.FullSize.CompareTo(b.FullSize) : a.Text.CompareTo(b.Text);
+                        return this.secondSortColumn == 2 ? a.FullSize.CompareTo(b.FullSize) : a.Text.CompareTo(b.Text);
                     });
                     break;
                 case 2:
-                    Studio.visibleAssets.Sort(delegate(AssetPreloadData a, AssetPreloadData b)
+                    Studio.visibleAssets.Sort(delegate(AssetItem a, AssetItem b)
                     {
-                        int xdiff = reverseSort ? b.FullSize.CompareTo(a.FullSize) : a.FullSize.CompareTo(b.FullSize);
+                        int xdiff = this.reverseSort ? b.FullSize.CompareTo(a.FullSize) : a.FullSize.CompareTo(b.FullSize);
                         if (xdiff != 0)
                         {
                             return xdiff;
                         }
-                        return secondSortColumn == 1 ? a.TypeString.CompareTo(b.TypeString) : a.Text.CompareTo(b.Text);
+                        return this.secondSortColumn == 1 ? a.TypeString.CompareTo(b.TypeString) : a.Text.CompareTo(b.Text);
                     });
                     break;
             }
 
-            assetListView.EndUpdate();
+            this.assetListView.EndUpdate();
 
             this.ResizeAssetListColumns();
         }
 
         private static void UnloadModules()
         {
-            foreach (string key in Studio.LoadedModuleDic.Keys)
+            foreach (string key in ScriptHelper.LoadedModuleDic.Keys)
             {
-                ModuleDef module = Studio.LoadedModuleDic[key];
+                ModuleDef module = ScriptHelper.LoadedModuleDic[key];
                 module.Dispose();
             }
 
-            Studio.LoadedModuleDic.Clear();
+            ScriptHelper.LoadedModuleDic.Clear();
 
-            Studio.moduleContext = null;
+            ScriptHelper.moduleContext = null;
         }
 
         private void selectAsset(object sender, ListViewItemSelectionChangedEventArgs e)
         {
             UnloadModules();
 
-            previewPanel.BackgroundImage = Resources.preview;
-            previewPanel.BackgroundImageLayout = ImageLayout.Center;
-            assetInfoLabel.Visible = false;
-            assetInfoLabel.Text = null;
-            textPreviewBox.Visible = false;
-            monoPreviewBox.Visible = false;
-            fontPreviewBox.Visible = false;
-            FMODpanel.Visible = false;
-            glControl1.Visible = false;
-            lastLoadedAsset = null;
-            StatusStripUpdate("");
+            this.previewPanel.BackgroundImage = Resources.preview;
+            this.previewPanel.BackgroundImageLayout = ImageLayout.Center;
+            this.assetInfoLabel.Visible = false;
+            this.assetInfoLabel.Text = null;
+            this.textPreviewBox.Visible = false;
+            this.monoPreviewBox.Visible = false;
+            this.fontPreviewBox.Visible = false;
+            this.FMODpanel.Visible = false;
+            this.glControl1.Visible = false;
+            this.lastLoadedAsset = null;
+            this.StatusStripUpdate("");
 
-            FMODreset();
+            this.FMODreset();
 
-            lastSelectedItem = (AssetPreloadData) e.Item;
+            this.lastSelectedItem = (AssetItem) e.Item;
 
             if (!e.IsSelected)
             {
@@ -751,12 +747,14 @@ namespace AssetStudio
         {
             if (e.IsSelected)
             {
-                classTextBox.Text = ((TypeTreeItem) classesListView.SelectedItems[0]).ToString();
+                this.classTextBox.Text = ((TypeTreeItem) this.classesListView.SelectedItems[0]).ToString();
             }
         }
 
-        private void PreviewAsset(AssetPreloadData asset)
+        private void PreviewAsset(AssetItem asset)
         {
+            ObjectReader reader = asset.reader;
+
             switch (asset.Type)
             {
                 case ClassIDType.Texture2D:
@@ -780,37 +778,37 @@ namespace AssetStudio
                     break;
                 }
                 case ClassIDType.MonoScript:
-                    Studio.AddNodes(this.monoPreviewBox, asset, false);
+                    ScriptHelper.AddNodes(this.monoPreviewBox, reader, false);
                     break;
                 case ClassIDType.MonoBehaviour:
-                    Studio.AddNodes(this.monoPreviewBox, asset, true);
+                    ScriptHelper.AddNodes(this.monoPreviewBox, reader, true);
                     break;
                 case ClassIDType.Font:
                 {
-                    this.PreviewAsset_Font(asset);
+                    this.PreviewAsset_Font(reader);
                     break;
                 }
                 case ClassIDType.Mesh:
-                    if (this.PreviewAsset_Mesh(asset))
+                    if (this.PreviewAsset_Mesh(reader))
                     {
                         return;
                     }
                     break;
                 case ClassIDType.VideoClip:
                 case ClassIDType.MovieTexture:
-                    StatusStripUpdate("Only supported export.");
+                    this.StatusStripUpdate("Only supported export.");
                     break;
                 case ClassIDType.Sprite:
                     this.PreviewAsset_Sprite(asset);
                     break;
                 case ClassIDType.Animator:
-                    StatusStripUpdate("Can be exported to FBX file.");
+                    this.StatusStripUpdate("Can be exported to FBX file.");
                     break;
                 case ClassIDType.AnimationClip:
-                    StatusStripUpdate("Can be exported with Animator or objects");
+                    this.StatusStripUpdate("Can be exported with Animator or objects");
                     break;
                 default:
-                    this.PreviewAsset_Default(asset);
+                    this.PreviewAsset_Default(reader);
                     break;
             }
 
@@ -828,7 +826,7 @@ namespace AssetStudio
             }
         }
 
-        private void PreviewAsset_Default(AssetPreloadData asset)
+        private void PreviewAsset_Default(ObjectReader asset)
         {
             string str = asset.Dump();
 
@@ -843,9 +841,9 @@ namespace AssetStudio
             }
         }
 
-        private void PreviewAsset_AudioClip(AssetPreloadData asset)
+        private void PreviewAsset_AudioClip(AssetItem asset)
         {
-            var m_AudioClip = new AudioClip(asset, true);
+            var m_AudioClip = new AudioClip(asset.reader, true);
 
             //Info
             asset.InfoText = "Compression format: ";
@@ -980,7 +978,7 @@ namespace AssetStudio
             this.FMODtimerLabel.Text = $"0:0.0 / {this.FMODlenms / 1000 / 60}:{this.FMODlenms / 1000 % 60}.{this.FMODlenms / 10 % 100}";
         }
 
-        private void PreviewAsset_Font(AssetPreloadData asset)
+        private void PreviewAsset_Font(ObjectReader asset)
         {
             var m_Font = new Font(asset);
 
@@ -1040,7 +1038,7 @@ namespace AssetStudio
             this.StatusStripUpdate("Unsupported font for preview. Try to export.");
         }
 
-        private bool PreviewAsset_Mesh(AssetPreloadData asset)
+        private bool PreviewAsset_Mesh(ObjectReader asset)
         {
             var m_Mesh = new Mesh(asset);
 
@@ -1234,23 +1232,19 @@ namespace AssetStudio
             }
         }
 
-        private void PreviewAsset_Shader(AssetPreloadData asset)
+        private void PreviewAsset_Shader(AssetItem asset)
         {
-            var m_TextAsset = new Shader(asset);
-
-            string m_Script_Text = Encoding.UTF8.GetString(m_TextAsset.m_Script);
-
-            m_Script_Text = Regex.Replace(m_Script_Text, "(?<!\r)\n", "\r\n");
-            m_Script_Text = m_Script_Text.Replace("\0", "\\0");
-
-            this.textPreviewBox.Text = m_Script_Text;
+            ObjectReader reader = asset.reader;
+            var m_Shader = new Shader(reader);
+            string str = ShaderConverter.Convert(m_Shader);
+            this.textPreviewBox.Text = str?.Replace("\n", "\r\n") ?? "Serialized Shader can't be read";
             this.textPreviewBox.Visible = true;
         }
 
-        private void PreviewAsset_Sprite(AssetPreloadData asset)
+        private void PreviewAsset_Sprite(AssetItem asset)
         {
             this.imageTexture?.Dispose();
-            this.imageTexture = SpriteHelper.GetImageFromSprite(new Sprite(asset));
+            this.imageTexture = SpriteHelper.GetImageFromSprite(new Sprite(asset.reader));
 
             if (this.imageTexture != null)
             {
@@ -1273,9 +1267,9 @@ namespace AssetStudio
             }
         }
 
-        private void PreviewAsset_TextAsset(AssetPreloadData asset)
+        private void PreviewAsset_TextAsset(AssetItem asset)
         {
-            var m_TextAsset = new TextAsset(asset);
+            var m_TextAsset = new TextAsset(asset.reader);
 
             string m_Script_Text = Encoding.UTF8.GetString(m_TextAsset.m_Script);
             m_Script_Text = Regex.Replace(m_Script_Text, "(?<!\r)\n", "\r\n");
@@ -1284,10 +1278,10 @@ namespace AssetStudio
             this.textPreviewBox.Visible = true;
         }
 
-        private void PreviewAsset_Texture2D(AssetPreloadData asset)
+        private void PreviewAsset_Texture2D(AssetItem asset)
         {
             this.imageTexture?.Dispose();
-            var m_Texture2D = new Texture2D(asset, true);
+            var m_Texture2D = new Texture2D(asset.reader, true);
 
             //Info
             asset.InfoText = $"Width: {m_Texture2D.m_Width}\nHeight: {m_Texture2D.m_Height}\nFormat: {m_Texture2D.m_TextureFormat}";
@@ -1340,36 +1334,36 @@ namespace AssetStudio
 
         private void FMODinit()
         {
-            FMODreset();
+            this.FMODreset();
 
-            RESULT result = Factory.System_Create(out system);
-            if (ERRCHECK(result))
+            RESULT result = Factory.System_Create(out this.system);
+            if (this.ERRCHECK(result))
             {
                 return;
             }
 
-            result = system.getVersion(out uint version);
-            ERRCHECK(result);
+            result = this.system.getVersion(out uint version);
+            this.ERRCHECK(result);
             if (version < VERSION.number)
             {
                 MessageBox.Show($"Error!  You are using an old version of FMOD {version:X}.  This program requires {VERSION.number:X}.");
                 Application.Exit();
             }
 
-            result = system.init(1, INITFLAGS.NORMAL, IntPtr.Zero);
-            if (ERRCHECK(result))
+            result = this.system.init(1, INITFLAGS.NORMAL, IntPtr.Zero);
+            if (this.ERRCHECK(result))
             {
                 return;
             }
 
-            result = system.getMasterSoundGroup(out masterSoundGroup);
-            if (ERRCHECK(result))
+            result = this.system.getMasterSoundGroup(out this.masterSoundGroup);
+            if (this.ERRCHECK(result))
             {
                 return;
             }
 
-            result = masterSoundGroup.setVolume(FMODVolume);
-            if (ERRCHECK(result))
+            result = this.masterSoundGroup.setVolume(this.FMODVolume);
+            if (this.ERRCHECK(result))
             {
                 return;
             }
@@ -1377,11 +1371,11 @@ namespace AssetStudio
 
         private void FMODreset()
         {
-            timer.Stop();
-            FMODprogressBar.Value = 0;
-            FMODtimerLabel.Text = "0:00.0 / 0:00.0";
-            FMODstatusLabel.Text = "Stopped";
-            FMODinfoLabel.Text = "";
+            this.timer.Stop();
+            this.FMODprogressBar.Value = 0;
+            this.FMODtimerLabel.Text = "0:00.0 / 0:00.0";
+            this.FMODstatusLabel.Text = "Stopped";
+            this.FMODinfoLabel.Text = "";
 
             if (this.sound == null || !this.sound.isValid())
             {
@@ -1542,12 +1536,12 @@ namespace AssetStudio
         {
             RESULT result;
 
-            loopMode = FMODloopButton.Checked ? MODE.LOOP_NORMAL : MODE.LOOP_OFF;
+            this.loopMode = this.FMODloopButton.Checked ? MODE.LOOP_NORMAL : MODE.LOOP_OFF;
 
-            if (sound != null)
+            if (this.sound != null)
             {
-                result = sound.setMode(loopMode);
-                if (ERRCHECK(result))
+                result = this.sound.setMode(this.loopMode);
+                if (this.ERRCHECK(result))
                 {
                     return;
                 }
@@ -1590,10 +1584,10 @@ namespace AssetStudio
 
         private void FMODvolumeBar_ValueChanged(object sender, EventArgs e)
         {
-            FMODVolume = Convert.ToSingle(FMODvolumeBar.Value) / 10;
+            this.FMODVolume = Convert.ToSingle(this.FMODvolumeBar.Value) / 10;
 
-            RESULT result = masterSoundGroup.setVolume(FMODVolume);
-            if (ERRCHECK(result))
+            RESULT result = this.masterSoundGroup.setVolume(this.FMODVolume);
+            if (this.ERRCHECK(result))
             {
                 return;
             }
@@ -1612,7 +1606,7 @@ namespace AssetStudio
 
         private void FMODprogressBar_MouseDown(object sender, MouseEventArgs e)
         {
-            timer.Stop();
+            this.timer.Stop();
         }
 
         private void FMODprogressBar_MouseUp(object sender, MouseEventArgs e)
@@ -1654,34 +1648,34 @@ namespace AssetStudio
             var playing = false;
             var paused = false;
 
-            if (channel != null)
+            if (this.channel != null)
             {
-                RESULT result = channel.getPosition(out ms, TIMEUNIT.MS);
+                RESULT result = this.channel.getPosition(out ms, TIMEUNIT.MS);
                 if (result != RESULT.OK && result != RESULT.ERR_INVALID_HANDLE)
                 {
-                    ERRCHECK(result);
+                    this.ERRCHECK(result);
                 }
 
-                result = channel.isPlaying(out playing);
+                result = this.channel.isPlaying(out playing);
                 if (result != RESULT.OK && result != RESULT.ERR_INVALID_HANDLE)
                 {
-                    ERRCHECK(result);
+                    this.ERRCHECK(result);
                 }
 
-                result = channel.getPaused(out paused);
+                result = this.channel.getPaused(out paused);
                 if (result != RESULT.OK && result != RESULT.ERR_INVALID_HANDLE)
                 {
-                    ERRCHECK(result);
+                    this.ERRCHECK(result);
                 }
             }
 
-            FMODtimerLabel.Text = $"{ms / 1000 / 60}:{ms / 1000 % 60}.{ms / 10 % 100} / {FMODlenms / 1000 / 60}:{FMODlenms / 1000 % 60}.{FMODlenms / 10 % 100}";
-            FMODprogressBar.Value = (int) (ms * 1000 / FMODlenms);
-            FMODstatusLabel.Text = paused ? "Paused " : playing ? "Playing" : "Stopped";
+            this.FMODtimerLabel.Text = $"{ms / 1000 / 60}:{ms / 1000 % 60}.{ms / 10 % 100} / {this.FMODlenms / 1000 / 60}:{this.FMODlenms / 1000 % 60}.{this.FMODlenms / 10 % 100}";
+            this.FMODprogressBar.Value = (int) (ms * 1000 / this.FMODlenms);
+            this.FMODstatusLabel.Text = paused ? "Paused " : playing ? "Playing" : "Stopped";
 
-            if (system != null && channel != null)
+            if (this.system != null && this.channel != null)
             {
-                system.update();
+                this.system.update();
             }
         }
 
@@ -1710,7 +1704,7 @@ namespace AssetStudio
 
                 this.timer.Stop();
 
-                List<AssetPreloadData> toExportAssets = null;
+                List<AssetItem> toExportAssets = null;
 
                 switch (((ToolStripItem) sender).Name)
                 {
@@ -1721,10 +1715,10 @@ namespace AssetStudio
                         toExportAssets = Studio.visibleAssets;
                         break;
                     case "exportSelectedAssetsMenuItem":
-                        toExportAssets = new List<AssetPreloadData>(this.assetListView.SelectedIndices.Count);
+                        toExportAssets = new List<AssetItem>(this.assetListView.SelectedIndices.Count);
                         foreach (int i in this.assetListView.SelectedIndices)
                         {
-                            toExportAssets.Add((AssetPreloadData) this.assetListView.Items[i]);
+                            toExportAssets.Add((AssetItem) this.assetListView.Items[i]);
                         }
                         break;
                 }
@@ -1733,48 +1727,48 @@ namespace AssetStudio
             }
             else
             {
-                StatusStripUpdate("No exportable assets loaded");
+                this.StatusStripUpdate("No exportable assets loaded");
             }
         }
 
         private void StatusStripUpdate(string statusText)
         {
-            if (InvokeRequired)
+            if (this.InvokeRequired)
             {
-                BeginInvoke(new Action(() => this.toolStripStatusLabel1.Text = statusText));
+                this.BeginInvoke(new Action(() => this.toolStripStatusLabel1.Text = statusText));
             }
             else
             {
-                toolStripStatusLabel1.Text = statusText;
+                this.toolStripStatusLabel1.Text = statusText;
             }
         }
 
         private void initOpenTK()
         {
-            changeGLSize(glControl1.Size);
+            this.changeGLSize(this.glControl1.Size);
             GL.ClearColor(Color.CadetBlue);
 
-            pgmID = GL.CreateProgram();
-            loadShader("vs", ShaderType.VertexShader, pgmID, out int vsID);
-            loadShader("fs", ShaderType.FragmentShader, pgmID, out int fsID);
-            GL.LinkProgram(pgmID);
+            this.pgmID = GL.CreateProgram();
+            this.loadShader("vs", ShaderType.VertexShader, this.pgmID, out int vsID);
+            this.loadShader("fs", ShaderType.FragmentShader, this.pgmID, out int fsID);
+            GL.LinkProgram(this.pgmID);
 
-            pgmColorID = GL.CreateProgram();
-            loadShader("vs", ShaderType.VertexShader, pgmColorID, out vsID);
-            loadShader("fsColor", ShaderType.FragmentShader, pgmColorID, out fsID);
-            GL.LinkProgram(pgmColorID);
+            this.pgmColorID = GL.CreateProgram();
+            this.loadShader("vs", ShaderType.VertexShader, this.pgmColorID, out vsID);
+            this.loadShader("fsColor", ShaderType.FragmentShader, this.pgmColorID, out fsID);
+            GL.LinkProgram(this.pgmColorID);
 
-            pgmBlackID = GL.CreateProgram();
-            loadShader("vs", ShaderType.VertexShader, pgmBlackID, out vsID);
-            loadShader("fsBlack", ShaderType.FragmentShader, pgmBlackID, out fsID);
-            GL.LinkProgram(pgmBlackID);
+            this.pgmBlackID = GL.CreateProgram();
+            this.loadShader("vs", ShaderType.VertexShader, this.pgmBlackID, out vsID);
+            this.loadShader("fsBlack", ShaderType.FragmentShader, this.pgmBlackID, out fsID);
+            GL.LinkProgram(this.pgmBlackID);
 
-            attributeVertexPosition = GL.GetAttribLocation(pgmID, "vertexPosition");
-            attributeNormalDirection = GL.GetAttribLocation(pgmID, "normalDirection");
-            attributeVertexColor = GL.GetAttribLocation(pgmColorID, "vertexColor");
-            uniformModelMatrix = GL.GetUniformLocation(pgmID, "modelMatrix");
-            uniformViewMatrix = GL.GetUniformLocation(pgmID, "viewMatrix");
-            uniformProjMatrix = GL.GetUniformLocation(pgmID, "projMatrix");
+            this.attributeVertexPosition = GL.GetAttribLocation(this.pgmID, "vertexPosition");
+            this.attributeNormalDirection = GL.GetAttribLocation(this.pgmID, "normalDirection");
+            this.attributeVertexColor = GL.GetAttribLocation(this.pgmColorID, "vertexColor");
+            this.uniformModelMatrix = GL.GetUniformLocation(this.pgmID, "modelMatrix");
+            this.uniformViewMatrix = GL.GetUniformLocation(this.pgmID, "viewMatrix");
+            this.uniformProjMatrix = GL.GetUniformLocation(this.pgmID, "projMatrix");
         }
 
         private void loadShader(string filename, ShaderType type, int program, out int address)
@@ -1820,29 +1814,29 @@ namespace AssetStudio
 
         private void createVAO()
         {
-            GL.DeleteVertexArray(vao);
-            GL.GenVertexArrays(1, out vao);
-            GL.BindVertexArray(vao);
+            GL.DeleteVertexArray(this.vao);
+            GL.GenVertexArrays(1, out this.vao);
+            GL.BindVertexArray(this.vao);
 
-            createVBO(out int vboPositions, vertexData, attributeVertexPosition);
+            this.createVBO(out int vboPositions, this.vertexData, this.attributeVertexPosition);
 
-            if (normalMode == 0)
+            if (this.normalMode == 0)
             {
-                createVBO(out int vboNormals, normal2Data, attributeNormalDirection);
+                this.createVBO(out int vboNormals, this.normal2Data, this.attributeNormalDirection);
             }
             else
             {
-                if (normalData != null)
+                if (this.normalData != null)
                 {
                     this.createVBO(out int vboNormals, this.normalData, this.attributeNormalDirection);
                 }
             }
 
-            createVBO(out int vboColors, colorData, attributeVertexColor);
-            createVBO(out int vboModelMatrix, modelMatrixData, uniformModelMatrix);
-            createVBO(out int vboViewMatrix, viewMatrixData, uniformViewMatrix);
-            createVBO(out int vboProjMatrix, projMatrixData, uniformProjMatrix);
-            createEBO(out int eboElements, indiceData);
+            this.createVBO(out int vboColors, this.colorData, this.attributeVertexColor);
+            this.createVBO(out int vboModelMatrix, this.modelMatrixData, this.uniformModelMatrix);
+            this.createVBO(out int vboViewMatrix, this.viewMatrixData, this.uniformViewMatrix);
+            this.createVBO(out int vboProjMatrix, this.projMatrixData, this.uniformProjMatrix);
+            this.createEBO(out int eboElements, this.indiceData);
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
             GL.BindVertexArray(0);
@@ -1855,12 +1849,12 @@ namespace AssetStudio
             if (size.Width <= size.Height)
             {
                 float k = 1.0f * size.Width / size.Height;
-                projMatrixData = Matrix4.CreateScale(1, k, 1);
+                this.projMatrixData = Matrix4.CreateScale(1, k, 1);
             }
             else
             {
                 float k = 1.0f * size.Height / size.Width;
-                projMatrixData = Matrix4.CreateScale(k, 1, 1);
+                this.projMatrixData = Matrix4.CreateScale(k, 1, 1);
             }
         }
 
@@ -1877,45 +1871,45 @@ namespace AssetStudio
 
         private void glControl1_Load(object sender, EventArgs e)
         {
-            initOpenTK();
-            glControlLoaded = true;
+            this.initOpenTK();
+            this.glControlLoaded = true;
         }
 
         private void glControl1_Paint(object sender, PaintEventArgs e)
         {
-            glControl1.MakeCurrent();
+            this.glControl1.MakeCurrent();
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             GL.Enable(EnableCap.DepthTest);
             GL.DepthFunc(DepthFunction.Lequal);
-            GL.BindVertexArray(vao);
+            GL.BindVertexArray(this.vao);
 
-            if (wireFrameMode == 0 || wireFrameMode == 2)
+            if (this.wireFrameMode == 0 || this.wireFrameMode == 2)
             {
-                GL.UseProgram(shadeMode == 0 ? pgmID : pgmColorID);
-                GL.UniformMatrix4(uniformModelMatrix, false, ref modelMatrixData);
-                GL.UniformMatrix4(uniformViewMatrix, false, ref viewMatrixData);
-                GL.UniformMatrix4(uniformProjMatrix, false, ref projMatrixData);
+                GL.UseProgram(this.shadeMode == 0 ? this.pgmID : this.pgmColorID);
+                GL.UniformMatrix4(this.uniformModelMatrix, false, ref this.modelMatrixData);
+                GL.UniformMatrix4(this.uniformViewMatrix, false, ref this.viewMatrixData);
+                GL.UniformMatrix4(this.uniformProjMatrix, false, ref this.projMatrixData);
                 GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
-                GL.DrawElements(BeginMode.Triangles, indiceData.Length, DrawElementsType.UnsignedInt, 0);
+                GL.DrawElements(BeginMode.Triangles, this.indiceData.Length, DrawElementsType.UnsignedInt, 0);
             }
 
             //Wireframe
-            if (wireFrameMode == 1 || wireFrameMode == 2)
+            if (this.wireFrameMode == 1 || this.wireFrameMode == 2)
             {
                 GL.Enable(EnableCap.PolygonOffsetLine);
                 GL.PolygonOffset(-1, -1);
-                GL.UseProgram(pgmBlackID);
-                GL.UniformMatrix4(uniformModelMatrix, false, ref modelMatrixData);
-                GL.UniformMatrix4(uniformViewMatrix, false, ref viewMatrixData);
-                GL.UniformMatrix4(uniformProjMatrix, false, ref projMatrixData);
+                GL.UseProgram(this.pgmBlackID);
+                GL.UniformMatrix4(this.uniformModelMatrix, false, ref this.modelMatrixData);
+                GL.UniformMatrix4(this.uniformViewMatrix, false, ref this.viewMatrixData);
+                GL.UniformMatrix4(this.uniformProjMatrix, false, ref this.projMatrixData);
                 GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
-                GL.DrawElements(BeginMode.Triangles, indiceData.Length, DrawElementsType.UnsignedInt, 0);
+                GL.DrawElements(BeginMode.Triangles, this.indiceData.Length, DrawElementsType.UnsignedInt, 0);
                 GL.Disable(EnableCap.PolygonOffsetLine);
             }
 
             GL.BindVertexArray(0);
             GL.Flush();
-            glControl1.SwapBuffers();
+            this.glControl1.SwapBuffers();
         }
 
         private void glControl1_MouseWheel(object sender, MouseEventArgs e)
@@ -1931,17 +1925,17 @@ namespace AssetStudio
 
         private void glControl1_MouseDown(object sender, MouseEventArgs e)
         {
-            mdx = e.X;
-            mdy = e.Y;
+            this.mdx = e.X;
+            this.mdy = e.Y;
 
             if (e.Button == MouseButtons.Left)
             {
-                lmdown = true;
+                this.lmdown = true;
             }
 
             if (e.Button == MouseButtons.Right)
             {
-                rmdown = true;
+                this.rmdown = true;
             }
         }
 
@@ -1979,26 +1973,26 @@ namespace AssetStudio
         {
             if (e.Button == MouseButtons.Left)
             {
-                lmdown = false;
+                this.lmdown = false;
             }
 
             if (e.Button == MouseButtons.Right)
             {
-                rmdown = false;
+                this.rmdown = false;
             }
         }
 
         private void ResetForm()
         {
-            Text = "AssetStudio";
+            this.Text = "AssetStudio";
 
             Importer.importFiles.Clear();
 
             // reset progress bar
-            this.progressBarManager.Reset(0);
+            this.progressBarManager.Reset();
 
             // release assets files
-            StatusStripUpdate("Releasing assets from memory...");
+            this.StatusStripUpdate("Releasing assets from memory...");
 
             foreach (AssetsFile assetsFile in Studio.assetsFileList)
             {
@@ -2010,52 +2004,53 @@ namespace AssetStudio
             Studio.visibleAssets.Clear();
 
             // release binary readers
-            StatusStripUpdate("Releasing binary readers from memory...");
+            this.StatusStripUpdate("Releasing binary readers from memory...");
 
             foreach (KeyValuePair<string, EndianBinaryReader> resourceFileReader in Studio.resourceFileReaders)
             {
                 resourceFileReader.Value.Dispose();
             }
 
-            StatusStripUpdate("Resetting collections and defaults...");
+            this.StatusStripUpdate("Resetting collections and defaults...");
 
             Studio.resourceFileReaders.Clear();
             Studio.assetsFileIndexCache.Clear();
-            Studio.productName = "";
+            Studio.productName = string.Empty;
 
-            sceneTreeView?.Nodes.Clear();
+            this.sceneTreeView?.Nodes.Clear();
 
-            assetListView.VirtualListSize = 0;
-            assetListView.Items.Clear();
+            this.assetListView.VirtualListSize = 0;
+            this.assetListView.Items.Clear();
 
-            classesListView.Items.Clear();
-            classesListView.Groups.Clear();
+            this.classesListView.Items.Clear();
+            this.classesListView.Groups.Clear();
 
-            previewPanel.BackgroundImage = Resources.preview;
-            previewPanel.BackgroundImageLayout = ImageLayout.Center;
-            assetInfoLabel.Visible = false;
-            assetInfoLabel.Text = null;
-            textPreviewBox.Visible = false;
-            fontPreviewBox.Visible = false;
-            glControl1.Visible = false;
-            lastSelectedItem = null;
-            lastLoadedAsset = null;
-            firstSortColumn = -1;
-            secondSortColumn = 0;
-            reverseSort = false;
-            enableFiltering = false;
-            listSearch.Text = " Filter ";
+            this.previewPanel.BackgroundImage = Resources.preview;
+            this.previewPanel.BackgroundImageLayout = ImageLayout.Center;
+            this.assetInfoLabel.Visible = false;
+            this.assetInfoLabel.Text = null;
+            this.textPreviewBox.Visible = false;
+            this.fontPreviewBox.Visible = false;
+            this.glControl1.Visible = false;
+            this.lastSelectedItem = null;
+            this.lastLoadedAsset = null;
+            this.firstSortColumn = -1;
+            this.secondSortColumn = 0;
+            this.reverseSort = false;
+            this.enableFiltering = false;
+            this.listSearch.Text = " Filter ";
 
-            int count = filterTypeToolStripMenuItem.DropDownItems.Count;
+            int count = this.filterTypeToolStripMenuItem.DropDownItems.Count;
 
             for (var i = 1; i < count; i++)
             {
-                filterTypeToolStripMenuItem.DropDownItems.RemoveAt(1);
+                this.filterTypeToolStripMenuItem.DropDownItems.RemoveAt(1);
             }
 
-            FMODreset();
+            this.FMODreset();
 
-            Studio.LoadedModuleDic.Clear();
+            ScriptHelper.moduleLoaded = false;
+            ScriptHelper.LoadedModuleDic.Clear();
             Studio.treeNodeCollection.Clear();
             Studio.treeNodeDictionary.Clear();
         }
@@ -2080,7 +2075,7 @@ namespace AssetStudio
 
             if (this.assetListView.SelectedIndices.Count >= 1)
             {
-                List<AssetPreloadData> selectedAssets = this.GetSelectedAssets();
+                List<AssetItem> selectedAssets = this.GetSelectedAssets();
                 if (selectedAssets.Any(x => x.Type == ClassIDType.Animator) && selectedAssets.Any(x => x.Type == ClassIDType.AnimationClip))
                 {
                     this.exportAnimatorWithSelectedAnimationClipMenuItem.Visible = true;
@@ -2124,8 +2119,8 @@ namespace AssetStudio
 
         private void showOriginalFileToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var selectasset = (AssetPreloadData) assetListView.Items[assetListView.SelectedIndices[0]];
-            string args = $"/select, \"{selectasset.sourceFile.parentPath ?? selectasset.sourceFile.filePath}\"";
+            var selectasset = (AssetItem) this.assetListView.Items[this.assetListView.SelectedIndices[0]];
+            string args = string.Format("/select, \"{0}\"", selectasset.sourceFile.parentPath ?? selectasset.sourceFile.filePath);
             var pfi = new ProcessStartInfo("explorer.exe", args);
             Process process = Process.Start(pfi);
             process?.Dispose();
@@ -2133,13 +2128,13 @@ namespace AssetStudio
 
         private void exportAnimatorwithAnimationClipMenuItem_Click(object sender, EventArgs e)
         {
-            AssetPreloadData animator = null;
+            AssetItem animator = null;
 
-            var animationList = new List<AssetPreloadData>();
+            var animationList = new List<AssetItem>();
 
-            List<AssetPreloadData> selectedAssets = GetSelectedAssets();
+            List<AssetItem> selectedAssets = this.GetSelectedAssets();
 
-            foreach (AssetPreloadData assetPreloadData in selectedAssets)
+            foreach (AssetItem assetPreloadData in selectedAssets)
             {
                 if (assetPreloadData.Type == ClassIDType.Animator)
                 {
@@ -2171,7 +2166,7 @@ namespace AssetStudio
 
         private void exportSelectedObjectsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (sceneTreeView.Nodes.Count > 0)
+            if (this.sceneTreeView.Nodes.Count > 0)
             {
                 var saveFolderDialog1 = new OpenFolderDialog();
 
@@ -2186,13 +2181,13 @@ namespace AssetStudio
             }
             else
             {
-                StatusStripUpdate("No Objects available for export");
+                this.StatusStripUpdate("No Objects available for export");
             }
         }
 
         private void exportObjectswithAnimationClipMenuItem_Click(object sender, EventArgs e)
         {
-            if (sceneTreeView.Nodes.Count > 0)
+            if (this.sceneTreeView.Nodes.Count > 0)
             {
                 var saveFolderDialog1 = new OpenFolderDialog();
 
@@ -2203,13 +2198,13 @@ namespace AssetStudio
 
                 string exportPath = saveFolderDialog1.Folder + "\\GameObject\\";
 
-                List<AssetPreloadData> animationList = this.GetSelectedAssets().Where(x => x.Type == ClassIDType.AnimationClip).ToList();
+                List<AssetItem> animationList = this.GetSelectedAssets().Where(x => x.Type == ClassIDType.AnimationClip).ToList();
 
                 Studio.ExportObjectsWithAnimationClip(exportPath, this.sceneTreeView.Nodes, animationList.Count == 0 ? null : animationList);
             }
             else
             {
-                StatusStripUpdate("No Objects available for export");
+                this.StatusStripUpdate("No Objects available for export");
             }
         }
 
@@ -2223,18 +2218,18 @@ namespace AssetStudio
 
         private void liveSearch_CheckedChanged(object sender, EventArgs e)
         {
-            if (enableLiveSearch.Checked)
+            if (this.enableLiveSearch.Checked)
             {
-                FilterAssetList();
+                this.FilterAssetList();
             }
 
-            Settings.Default["enableLiveSearch"] = enableLiveSearch.Checked;
+            Settings.Default["enableLiveSearch"] = this.enableLiveSearch.Checked;
             Settings.Default.Save();
         }
 
         private void jumpToSceneHierarchyToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var selectasset = (AssetPreloadData) assetListView.Items[assetListView.SelectedIndices[0]];
+            var selectasset = (AssetItem) this.assetListView.Items[this.assetListView.SelectedIndices[0]];
 
             if (selectasset.gameObject == null)
             {
@@ -2276,7 +2271,7 @@ namespace AssetStudio
                 return;
             }
 
-            int selectedCount = assetListView.SelectedIndices.Count;
+            int selectedCount = this.assetListView.SelectedIndices.Count;
 
             this.exportSelectedAssetsToolStripMenuItem.Enabled = selectedCount > 0;
             this.exportSelectedAssetsToRawToolStripMenuItem.Enabled = selectedCount > 0;
@@ -2291,7 +2286,7 @@ namespace AssetStudio
 
         private void exportAllObjectsSplitToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            if (sceneTreeView.Nodes.Count > 0)
+            if (this.sceneTreeView.Nodes.Count > 0)
             {
                 var saveFolderDialog1 = new OpenFolderDialog();
 
@@ -2310,22 +2305,22 @@ namespace AssetStudio
             }
             else
             {
-                StatusStripUpdate("No Objects available for export");
+                this.StatusStripUpdate("No Objects available for export");
             }
         }
 
-        private List<AssetPreloadData> GetSelectedAssets()
+        private List<AssetItem> GetSelectedAssets()
         {
-            var selectedAssets = new List<AssetPreloadData>();
-            foreach (int index in assetListView.SelectedIndices)
+            var selectedAssets = new List<AssetItem>();
+            foreach (int index in this.assetListView.SelectedIndices)
             {
-                selectedAssets.Add((AssetPreloadData) assetListView.Items[index]);
+                selectedAssets.Add((AssetItem) this.assetListView.Items[index]);
             }
 
             return selectedAssets;
         }
 
-        private static List<AssetPreloadData> ExecuteFilterQuery(string query)
+        private static List<AssetItem> ExecuteFilterQuery(string query)
         {
             // ReSharper disable once InvertIf
             if (query.ToLowerInvariant().StartsWith("type:"))
@@ -2343,16 +2338,16 @@ namespace AssetStudio
 
         private void FilterAssetList()
         {
-            assetListView.BeginUpdate();
-            assetListView.SelectedIndices.Clear();
+            this.assetListView.BeginUpdate();
+            this.assetListView.SelectedIndices.Clear();
 
             var show = new List<ClassIDType>();
 
-            if (!allToolStripMenuItem.Checked)
+            if (!this.allToolStripMenuItem.Checked)
             {
-                for (var i = 1; i < filterTypeToolStripMenuItem.DropDownItems.Count; i++)
+                for (var i = 1; i < this.filterTypeToolStripMenuItem.DropDownItems.Count; i++)
                 {
-                    var item = (ToolStripMenuItem) filterTypeToolStripMenuItem.DropDownItems[i];
+                    var item = (ToolStripMenuItem) this.filterTypeToolStripMenuItem.DropDownItems[i];
 
                     if (item.Checked)
                     {
@@ -2367,13 +2362,13 @@ namespace AssetStudio
                 Studio.visibleAssets = Studio.exportableAssets;
             }
 
-            if (listSearch.Text != " Filter ")
+            if (this.listSearch.Text != " Filter ")
             {
-                Studio.visibleAssets = ExecuteFilterQuery(listSearch.Text);
+                Studio.visibleAssets = ExecuteFilterQuery(this.listSearch.Text);
             }
 
-            assetListView.VirtualListSize = Studio.visibleAssets.Count;
-            assetListView.EndUpdate();
+            this.assetListView.VirtualListSize = Studio.visibleAssets.Count;
+            this.assetListView.EndUpdate();
         }
 
         private void fontPreviewBox_VisibleChanged(object sender, EventArgs e)

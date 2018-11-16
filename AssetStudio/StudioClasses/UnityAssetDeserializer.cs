@@ -13,17 +13,11 @@ namespace AssetStudio.StudioClasses
 
         //public static readonly TypeRef MonoBehaviourTypeDef = new TypeRefUser(UnityEngineModuleDef, "UnityEngine", "MonoBehaviour");
 
-        public delegate object Deserializer(EndianBinaryReader reader, AssetsFile assetsFile);
+        public delegate object Deserializer(ObjectReader reader, AssetsFile assetsFile);
 
-        public TypeDef TypeDef
-        {
-            get;
-        }
+        public TypeDef TypeDef { get; }
 
-        public IEnumerable<FieldDef> SerializedFields
-        {
-            get;
-        }
+        public IEnumerable<FieldDef> SerializedFields { get; }
 
         public UnityAssetSerializer(TypeSig typeSig) : this(typeSig.TryGetTypeDef())
         {
@@ -76,8 +70,7 @@ namespace AssetStudio.StudioClasses
                 || IsScriptableObjectOrMonoBehaviour(typeSig.ToTypeDefOrRef());
         // @formatter:on
 
-        private static TypeSig Resolve(TypeSig typeSig)
-            => typeSig.ToTypeDefOrRef().ResolveTypeDef().ToTypeSig();
+        private static TypeSig Resolve(TypeSig typeSig) => typeSig.ToTypeDefOrRef().ResolveTypeDef().ToTypeSig();
 
         public static IEnumerable<FieldDef> GetSerializedFields(TypeDef typeDef)
         {
@@ -175,7 +168,7 @@ namespace AssetStudio.StudioClasses
                 {
                     if (IsScriptableObjectOrMonoBehaviour(typeSig.ToTypeDefOrRef()))
                     {
-                        func = (reader, assets) => assets.ReadPPtr();
+                        func = (reader, assets) => reader.ReadPPtr();
                     }
                 }
 

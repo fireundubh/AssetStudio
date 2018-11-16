@@ -33,7 +33,7 @@ namespace AssetStudio.StudioClasses
                 }
             }
 
-			strings.Add(Environment.NewLine);
+            strings.Add(Environment.NewLine);
 
             return strings;
         }

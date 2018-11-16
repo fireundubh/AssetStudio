@@ -92,6 +92,13 @@
       <HintPath>Libraries\OpenTK.GLControl.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="SharpDX, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Libraries\SharpDX.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpDX.D3DCompiler">
+      <HintPath>Libraries\SharpDX.D3DCompiler.dll</HintPath>
+    </Reference>
     <Reference Include="SharpDX.Mathematics">
       <HintPath>Libraries\SharpDX.Mathematics.dll</HintPath>
       <Private>False</Private>
@@ -186,7 +193,9 @@
     <Compile Include="Extensions\UIExtensions.cs" />
     <Compile Include="Extensions\WrappedEnumerator.cs" />
     <Compile Include="Logging\LoggingHelper.cs" />
+    <Compile Include="StudioClasses\AssetItem.cs" />
     <Compile Include="StudioClasses\FormController.cs" />
+    <Compile Include="StudioClasses\ObjectReader.cs" />
     <Compile Include="StudioClasses\ProgressBarManager.cs" />
     <Compile Include="StudioClasses\NativeMethods.cs" />
     <Compile Include="StudioClasses\NodeHelper.cs" />
@@ -200,6 +209,7 @@
     <Compile Include="StudioClasses\GameObjectTreeNode.cs" />
     <Compile Include="StudioClasses\LocalSerializedObjectIdentifier.cs" />
     <Compile Include="StudioClasses\ObjectInfo.cs" />
+    <Compile Include="StudioClasses\ScriptHelper.cs" />
     <Compile Include="StudioClasses\SerializedFileHeader.cs" />
     <Compile Include="StudioClasses\SerializedType.cs" />
     <Compile Include="StudioClasses\SevenZipHelper.cs">
@@ -216,6 +226,7 @@
     <Compile Include="Extensions\BinaryWriterExtensions.cs" />
     <Compile Include="StudioClasses\BuildTarget.cs" />
     <Compile Include="StudioClasses\ClassIDType.cs" />
+    <Compile Include="StudioClasses\ShaderConverter.cs" />
     <Compile Include="StudioClasses\TypeReader.cs" />
     <Compile Include="StudioClasses\TypeTreeNode.cs" />
     <Compile Include="StudioClasses\TypeTreeHelper.cs" />
@@ -225,7 +236,6 @@
     <Compile Include="Classes\Sprite.cs" />
     <Compile Include="Classes\SpriteAtlas.cs" />
     <Compile Include="Classes\VideoClip.cs" />
-    <Compile Include="StudioClasses\AssetPreloadData.cs" />
     <Compile Include="Classes\AudioClip.cs" />
     <Compile Include="Classes\BuildSettings.cs" />
     <Compile Include="StudioClasses\BundleFile.cs" />

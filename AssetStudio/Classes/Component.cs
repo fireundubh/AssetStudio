@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using AssetStudio.StudioClasses;
 
 namespace AssetStudio
 {
@@ -9,9 +6,9 @@ namespace AssetStudio
     {
         public PPtr m_GameObject;
 
-        protected Component(AssetPreloadData preloadData) : base(preloadData)
+        protected Component(ObjectReader reader) : base(reader)
         {
-            m_GameObject = sourceFile.ReadPPtr();
+            this.m_GameObject = reader.ReadPPtr();
         }
     }
 }

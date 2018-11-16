@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using AssetStudio.Extensions;
+using AssetStudio.StudioClasses;
 
 namespace AssetStudio
 {
@@ -10,20 +7,21 @@ namespace AssetStudio
     {
         public string m_Version;
 
-        public BuildSettings(AssetPreloadData preloadData) : base(preloadData)
+        public BuildSettings(ObjectReader reader) : base(reader)
         {
-            int levelsNum = reader.ReadInt32();
-            for (int i = 0; i < levelsNum; i++)
+            int levelsNum = this.reader.ReadInt32();
+
+            for (var i = 0; i < levelsNum; i++)
             {
-                var level = reader.ReadAlignedString();
+                string level = this.reader.ReadAlignedString();
             }
 
-            var hasRenderTexture = reader.ReadBoolean();
-            var hasPROVersion = reader.ReadBoolean();
-            var hasPublishingRights = reader.ReadBoolean();
-            var hasShadows = reader.ReadBoolean();
+            bool hasRenderTexture = this.reader.ReadBoolean();
+            bool hasPROVersion = this.reader.ReadBoolean();
+            bool hasPublishingRights = this.reader.ReadBoolean();
+            bool hasShadows = this.reader.ReadBoolean();
 
-            m_Version = reader.ReadAlignedString();
+            this.m_Version = this.reader.ReadAlignedString();
         }
     }
 }

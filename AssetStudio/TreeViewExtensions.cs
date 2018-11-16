@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+using System;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Windows.Forms;
 
 namespace AssetStudio
@@ -21,8 +18,10 @@ namespace AssetStudio
             public IntPtr hItem;
             public int state;
             public int stateMask;
+
             [MarshalAs(UnmanagedType.LPTStr)]
             public string lpszText;
+
             public int cchTextMax;
             public int iImage;
             public int iSelectedImage;

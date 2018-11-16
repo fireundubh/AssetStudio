@@ -1,7 +1,5 @@
-﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using AssetStudio.StudioClasses;
 
 namespace AssetStudio
 {
@@ -9,14 +7,16 @@ namespace AssetStudio
     {
         public List<PPtr> m_Animations;
 
-        public Animation(AssetPreloadData preloadData) : base(preloadData)
+        public Animation(ObjectReader reader) : base(reader)
         {
-            var m_Animation = sourceFile.ReadPPtr();
+            PPtr m_Animation = reader.ReadPPtr();
             int numAnimations = reader.ReadInt32();
-            m_Animations = new List<PPtr>(numAnimations);
-            for (int i = 0; i < numAnimations; i++)
+
+            this.m_Animations = new List<PPtr>(numAnimations);
+
+            for (var i = 0; i < numAnimations; i++)
             {
-                m_Animations.Add(sourceFile.ReadPPtr());
+                this.m_Animations.Add(reader.ReadPPtr());
             }
         }
     }

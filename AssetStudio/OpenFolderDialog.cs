@@ -25,7 +25,7 @@ namespace AssetStudio
 
         private DialogResult ShowVistaDialog(IWin32Window owner)
         {
-            var frm = (NativeMethods.IFileDialog)(new NativeMethods.FileOpenDialogRCW());
+            var frm = (NativeMethods.IFileDialog) (new NativeMethods.FileOpenDialogRCW());
             frm.GetOptions(out var options);
             options |= NativeMethods.FOS_PICKFOLDERS | NativeMethods.FOS_FORCEFILESYSTEM | NativeMethods.FOS_NOVALIDATE | NativeMethods.FOS_NOTESTFILECREATE | NativeMethods.FOS_DONTADDTORECENT;
             frm.SetOptions(options);
@@ -93,7 +93,6 @@ namespace AssetStudio
 
     internal static class NativeMethods
     {
-
         #region Constants  
 
         public const uint FOS_PICKFOLDERS = 0x00000020;
@@ -108,12 +107,12 @@ namespace AssetStudio
 
         #endregion
 
-
         #region COM  
 
         [ComImport, ClassInterface(ClassInterfaceType.None), TypeLibType(TypeLibTypeFlags.FCanCreate), Guid("DC1C5A9C-E88A-4DDE-A5A1-60F82A20AEF7")]
-        internal class FileOpenDialogRCW { }
-
+        internal class FileOpenDialogRCW
+        {
+        }
 
         [ComImport(), Guid("42F85136-DB7E-439C-85F1-E4075D135FC8"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
         internal interface IFileDialog
@@ -121,7 +120,6 @@ namespace AssetStudio
             [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
             [PreserveSig()]
             uint Show([In, Optional] IntPtr hwndOwner); //IModalWindow   
-
 
             [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
             uint SetFileTypes([In] uint cFileTypes, [In, MarshalAs(UnmanagedType.LPArray)] IntPtr rgFilterSpec);
@@ -133,7 +131,8 @@ namespace AssetStudio
             uint GetFileTypeIndex(out uint piFileType);
 
             [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
-            uint Advise([In, MarshalAs(UnmanagedType.Interface)] IntPtr pfde, out uint pdwCookie);
+            uint Advise([In, MarshalAs(UnmanagedType.Interface)]
+                IntPtr pfde, out uint pdwCookie);
 
             [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
             uint Unadvise([In] uint dwCookie);
@@ -145,10 +144,12 @@ namespace AssetStudio
             uint GetOptions(out uint fos);
 
             [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
-            void SetDefaultFolder([In, MarshalAs(UnmanagedType.Interface)] IShellItem psi);
+            void SetDefaultFolder([In, MarshalAs(UnmanagedType.Interface)]
+                IShellItem psi);
 
             [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
-            uint SetFolder([In, MarshalAs(UnmanagedType.Interface)] IShellItem psi);
+            uint SetFolder([In, MarshalAs(UnmanagedType.Interface)]
+                IShellItem psi);
 
             [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
             uint GetFolder([MarshalAs(UnmanagedType.Interface)] out IShellItem ppsi);
@@ -175,7 +176,8 @@ namespace AssetStudio
             uint GetResult([MarshalAs(UnmanagedType.Interface)] out IShellItem ppsi);
 
             [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
-            uint AddPlace([In, MarshalAs(UnmanagedType.Interface)] IShellItem psi, uint fdap);
+            uint AddPlace([In, MarshalAs(UnmanagedType.Interface)]
+                IShellItem psi, uint fdap);
 
             [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
             uint SetDefaultExtension([In, MarshalAs(UnmanagedType.LPWStr)] string pszDefaultExtension);
@@ -193,12 +195,12 @@ namespace AssetStudio
             uint SetFilter([MarshalAs(UnmanagedType.Interface)] IntPtr pFilter);
         }
 
-
         [ComImport, Guid("43826D1E-E718-42EE-BC55-A1E261C37BFE"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
         internal interface IShellItem
         {
             [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
-            uint BindToHandler([In] IntPtr pbc, [In] ref Guid rbhid, [In] ref Guid riid, [Out, MarshalAs(UnmanagedType.Interface)] out IntPtr ppvOut);
+            uint BindToHandler([In] IntPtr pbc, [In] ref Guid rbhid, [In] ref Guid riid, [Out, MarshalAs(UnmanagedType.Interface)]
+                out IntPtr ppvOut);
 
             [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
             uint GetParent([MarshalAs(UnmanagedType.Interface)] out IShellItem ppsi);
@@ -210,11 +212,11 @@ namespace AssetStudio
             uint GetAttributes([In] uint sfgaoMask, out uint psfgaoAttribs);
 
             [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
-            uint Compare([In, MarshalAs(UnmanagedType.Interface)] IShellItem psi, [In] uint hint, out int piOrder);
+            uint Compare([In, MarshalAs(UnmanagedType.Interface)]
+                IShellItem psi, [In] uint hint, out int piOrder);
         }
 
         #endregion
-
 
         [DllImport("shell32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         internal static extern int SHCreateItemFromParsingName([MarshalAs(UnmanagedType.LPWStr)] string pszPath, IntPtr pbc, ref Guid riid, [MarshalAs(UnmanagedType.Interface)] out IShellItem ppv);

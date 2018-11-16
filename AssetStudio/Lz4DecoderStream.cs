@@ -379,8 +379,7 @@ namespace Lz4
 
             if (inBufPos == inBufEnd)
             {
-                int nRead = input.Read(buf, DecBufLen,
-                    InBufLen < inputLength ? InBufLen : (int)inputLength);
+                int nRead = input.Read(buf, DecBufLen, InBufLen < inputLength ? InBufLen : (int) inputLength);
 
 #if CHECK_EOF
                 if (nRead == 0)
@@ -402,8 +401,7 @@ namespace Lz4
 
             if (inBufPos == inBufEnd)
             {
-                int nRead = input.Read(buf, DecBufLen,
-                    InBufLen < inputLength ? InBufLen : (int)inputLength);
+                int nRead = input.Read(buf, DecBufLen, InBufLen < inputLength ? InBufLen : (int) inputLength);
 
 #if CHECK_EOF
                 if (nRead == 0)
@@ -420,8 +418,7 @@ namespace Lz4
             {
                 buf[DecBufLen] = buf[inBufPos];
 
-                int nRead = input.Read(buf, DecBufLen + 1,
-                    InBufLen - 1 < inputLength ? InBufLen - 1 : (int)inputLength);
+                int nRead = input.Read(buf, DecBufLen + 1, InBufLen - 1 < inputLength ? InBufLen - 1 : (int) inputLength);
 
 #if CHECK_EOF
                 if (nRead == 0)
@@ -470,14 +467,12 @@ namespace Lz4
 
                 if (nToRead >= InBufLen)
                 {
-                    nRead = input.Read(buffer, offset,
-                        nToRead < inputLength ? nToRead : (int)inputLength);
+                    nRead = input.Read(buffer, offset, nToRead < inputLength ? nToRead : (int) inputLength);
                     nToRead -= nRead;
                 }
                 else
                 {
-                    nRead = input.Read(buf, DecBufLen,
-                        InBufLen < inputLength ? InBufLen : (int)inputLength);
+                    nRead = input.Read(buf, DecBufLen, InBufLen < inputLength ? InBufLen : (int) inputLength);
 
                     inBufPos = DecBufLen;
                     inBufEnd = DecBufLen + nRead;

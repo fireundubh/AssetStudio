@@ -130,7 +130,7 @@ namespace AssetStudio
 
         public ImportedAnimationKeyframedTrack FindTrack(string name)
         {
-            var track = TrackList.Find(x => x.Name == name);
+            ImportedAnimationKeyframedTrack track = TrackList.Find(x => x.Name == name);
             if (track == null)
             {
                 track = new ImportedAnimationKeyframedTrack { Name = name };
@@ -189,9 +189,9 @@ namespace AssetStudio
             {
                 return root;
             }
-            foreach (var child in root)
+            foreach (ImportedFrame child in root)
             {
-                var frame = FindFrame(name, child);
+                ImportedFrame frame = FindFrame(name, child);
                 if (frame != null)
                 {
                     return frame;
@@ -200,15 +200,20 @@ namespace AssetStudio
             return null;
         }
 
-        public static ImportedFrame FindChild(string name, ImportedFrame root)
+        public static ImportedFrame FindChildOrRoot(string name, ImportedFrame root)
         {
-            foreach (var child in root)
+            foreach (ImportedFrame child in root)
             {
-                var frame = FindFrame(name, child);
+                ImportedFrame frame = FindFrame(name, child);
                 if (frame != null)
                 {
                     return frame;
                 }
+            }
+
+            if (root.Name == name)
+            {
+                return root;
             }
 
             return null;

@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using AssetStudio.StudioClasses;
 
 namespace AssetStudio
 {
     public sealed class MeshRenderer : Renderer
     {
-        public MeshRenderer(AssetPreloadData preloadData) : base(preloadData)
+        public MeshRenderer(ObjectReader reader) : base(reader)
         {
-
         }
     }
 }

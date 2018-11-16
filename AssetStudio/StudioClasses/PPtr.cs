@@ -1,3 +1,5 @@
+using AssetStudio.StudioClasses;
+
 namespace AssetStudio
 {
     public class PPtr
@@ -9,39 +11,39 @@ namespace AssetStudio
         public AssetsFile assetsFile;
         public int index = -2; //-2 - Prepare, -1 - Missing
 
-	    public string ID
-	    {
-		    get
-		    {
-			    return string.Format("{{m_FileID: {0}, m_PathID: {1}}}", this.m_FileID, this.m_PathID);
-		    }
-	    }
+        public string ID
+        {
+            get
+            {
+                return string.Format("{{m_FileID: {0}, m_PathID: {1}}}", this.m_FileID, this.m_PathID);
+            }
+        }
 
-        private bool TryGet(out AssetsFile result)
+        private bool TryGetAssetsFile(out AssetsFile result)
         {
             result = null;
-            if (m_FileID == 0)
+            if (this.m_FileID == 0)
             {
-                result = assetsFile;
+                result = this.assetsFile;
                 return true;
             }
 
-            if (m_FileID > 0 && m_FileID - 1 < assetsFile.m_Externals.Count)
+            if (this.m_FileID > 0 && this.m_FileID - 1 < this.assetsFile.m_Externals.Count)
             {
-                if (index == -2)
+                if (this.index == -2)
                 {
-                    var m_External = assetsFile.m_Externals[m_FileID - 1];
-                    var name = m_External.fileName.ToUpper();
-                    if (!Studio.assetsFileIndexCache.TryGetValue(name, out index))
+                    FileIdentifier m_External = this.assetsFile.m_Externals[this.m_FileID - 1];
+                    string name = m_External.fileName.ToUpper();
+                    if (!Studio.assetsFileIndexCache.TryGetValue(name, out this.index))
                     {
-                        index = Studio.assetsFileList.FindIndex(x => x.upperFileName == name);
-                        Studio.assetsFileIndexCache.Add(name, index);
+                        this.index = Studio.assetsFileList.FindIndex(x => x.upperFileName == name);
+                        Studio.assetsFileIndexCache.Add(name, this.index);
                     }
                 }
 
-                if (index >= 0)
+                if (this.index >= 0)
                 {
-                    result = Studio.assetsFileList[index];
+                    result = Studio.assetsFileList[this.index];
                     return true;
                 }
             }
@@ -49,12 +51,12 @@ namespace AssetStudio
             return false;
         }
 
-        public bool TryGetPD(out AssetPreloadData result)
+        public bool TryGet(out ObjectReader result)
         {
             result = null;
-            if (TryGet(out var sourceFile))
+            if (this.TryGetAssetsFile(out AssetsFile sourceFile))
             {
-                if (sourceFile.preloadTable.TryGetValue(m_PathID, out result))
+                if (sourceFile.ObjectReaders.TryGetValue(this.m_PathID, out result))
                 {
                     return true;
                 }
@@ -65,9 +67,9 @@ namespace AssetStudio
 
         public bool TryGetTransform(out Transform m_Transform)
         {
-            if (TryGet(out var sourceFile))
+            if (this.TryGetAssetsFile(out AssetsFile sourceFile))
             {
-                if (sourceFile.TransformList.TryGetValue(m_PathID, out m_Transform))
+                if (sourceFile.Transforms.TryGetValue(this.m_PathID, out m_Transform))
                 {
                     return true;
                 }
@@ -79,9 +81,9 @@ namespace AssetStudio
 
         public bool TryGetGameObject(out GameObject m_GameObject)
         {
-            if (TryGet(out var sourceFile))
+            if (this.TryGetAssetsFile(out AssetsFile sourceFile))
             {
-                if (sourceFile.GameObjectList.TryGetValue(m_PathID, out m_GameObject))
+                if (sourceFile.GameObjects.TryGetValue(this.m_PathID, out m_GameObject))
                 {
                     return true;
                 }

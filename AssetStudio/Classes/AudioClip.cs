@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
 using AssetStudio.Extensions;
+using AssetStudio.StudioClasses;
 
 namespace AssetStudio
 {
@@ -32,64 +28,75 @@ namespace AssetStudio
         public long m_Size;
         public byte[] m_AudioData;
 
-        public AudioClip(AssetPreloadData preloadData, bool readData) : base(preloadData)
+        public AudioClip(ObjectReader reader, bool readData) : base(reader)
         {
-            if (version[0] < 5)
+            if (this.version[0] < 5)
             {
-                m_Format = reader.ReadInt32();
-                m_Type = (AudioType)reader.ReadInt32();
-                m_3D = reader.ReadBoolean();
-                m_UseHardware = reader.ReadBoolean();
+                this.m_Format = reader.ReadInt32();
+                this.m_Type = (AudioType) reader.ReadInt32();
+                this.m_3D = reader.ReadBoolean();
+                this.m_UseHardware = reader.ReadBoolean();
+
                 reader.AlignStream(4);
 
-                if (version[0] >= 4 || (version[0] == 3 && version[1] >= 2)) //3.2.0 to 5
+                if (this.version[0] >= 4 || this.version[0] == 3 && this.version[1] >= 2) //3.2.0 to 5
                 {
                     int m_Stream = reader.ReadInt32();
-                    m_Size = reader.ReadInt32();
-                    var tsize = m_Size % 4 != 0 ? m_Size + 4 - m_Size % 4 : m_Size;
-                    if (preloadData.Size + preloadData.Offset - reader.Position != tsize)
+                    this.m_Size = reader.ReadInt32();
+
+                    long tsize = this.m_Size % 4 != 0 ? this.m_Size + 4 - this.m_Size % 4 : this.m_Size;
+
+                    if (reader.byteSize + reader.byteStart - reader.Position != tsize)
                     {
-                        m_Offset = reader.ReadInt32();
-                        m_Source = sourceFile.filePath + ".resS";
+                        this.m_Offset = reader.ReadInt32();
+                        this.m_Source = this.sourceFile.filePath + ".resS";
                     }
                 }
                 else
                 {
-                    m_Size = reader.ReadInt32();
+                    this.m_Size = reader.ReadInt32();
                 }
             }
             else
             {
-                m_LoadType = reader.ReadInt32();
-                m_Channels = reader.ReadInt32();
-                m_Frequency = reader.ReadInt32();
-                m_BitsPerSample = reader.ReadInt32();
-                m_Length = reader.ReadSingle();
-                m_IsTrackerFormat = reader.ReadBoolean();
-                reader.AlignStream(4);
-                m_SubsoundIndex = reader.ReadInt32();
-                m_PreloadAudioData = reader.ReadBoolean();
-                m_LoadInBackground = reader.ReadBoolean();
-                m_Legacy3D = reader.ReadBoolean();
-                reader.AlignStream(4);
-                m_3D = m_Legacy3D;
+                this.m_LoadType = reader.ReadInt32();
+                this.m_Channels = reader.ReadInt32();
+                this.m_Frequency = reader.ReadInt32();
+                this.m_BitsPerSample = reader.ReadInt32();
+                this.m_Length = reader.ReadSingle();
+                this.m_IsTrackerFormat = reader.ReadBoolean();
 
-                m_Source = reader.ReadAlignedString();
-                m_Offset = reader.ReadInt64();
-                m_Size = reader.ReadInt64();
-                m_CompressionFormat = (AudioCompressionFormat)reader.ReadInt32();
+                reader.AlignStream(4);
+
+                this.m_SubsoundIndex = reader.ReadInt32();
+                this.m_PreloadAudioData = reader.ReadBoolean();
+                this.m_LoadInBackground = reader.ReadBoolean();
+                this.m_Legacy3D = reader.ReadBoolean();
+
+                reader.AlignStream(4);
+
+                this.m_3D = this.m_Legacy3D;
+
+                this.m_Source = reader.ReadAlignedString();
+                this.m_Offset = reader.ReadInt64();
+                this.m_Size = reader.ReadInt64();
+                this.m_CompressionFormat = (AudioCompressionFormat) reader.ReadInt32();
             }
 
-            if (readData)
+            if (!readData)
             {
-                if (!string.IsNullOrEmpty(m_Source))
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(this.m_Source))
+            {
+                this.m_AudioData = ResourcesHelper.GetData(this.m_Source, this.sourceFile.filePath, this.m_Offset, (int) this.m_Size);
+            }
+            else
+            {
+                if (this.m_Size > 0)
                 {
-                    m_AudioData = ResourcesHelper.GetData(m_Source, sourceFile.filePath, m_Offset, (int)m_Size);
-                }
-                else
-                {
-                    if (m_Size > 0)
-                        m_AudioData = reader.ReadBytes((int)m_Size);
+                    this.m_AudioData = reader.ReadBytes((int) this.m_Size);
                 }
             }
         }

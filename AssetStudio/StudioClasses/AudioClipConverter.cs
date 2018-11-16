@@ -1,8 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+using System;
 using System.Runtime.InteropServices;
 using System.Text;
+using FMOD;
 
 namespace AssetStudio
 {
@@ -12,57 +11,84 @@ namespace AssetStudio
 
         public AudioClipConverter(AudioClip audioClip)
         {
-            m_AudioClip = audioClip;
+            this.m_AudioClip = audioClip;
         }
 
         public byte[] ConvertToWav()
         {
-            var exinfo = new FMOD.CREATESOUNDEXINFO();
-            var result = FMOD.Factory.System_Create(out var system);
-            if (result != FMOD.RESULT.OK)
+            var exinfo = new CREATESOUNDEXINFO();
+            RESULT result = Factory.System_Create(out FMOD.System system);
+            if (result != RESULT.OK)
+            {
                 return null;
-            result = system.init(1, FMOD.INITFLAGS.NORMAL, IntPtr.Zero);
-            if (result != FMOD.RESULT.OK)
+            }
+
+            result = system.init(1, INITFLAGS.NORMAL, IntPtr.Zero);
+            if (result != RESULT.OK)
+            {
                 return null;
+            }
+
             exinfo.cbsize = Marshal.SizeOf(exinfo);
-            exinfo.length = (uint)m_AudioClip.m_Size;
-            result = system.createSound(m_AudioClip.m_AudioData, FMOD.MODE.OPENMEMORY, ref exinfo, out var sound);
-            if (result != FMOD.RESULT.OK)
+            exinfo.length = (uint) this.m_AudioClip.m_Size;
+            result = system.createSound(this.m_AudioClip.m_AudioData, MODE.OPENMEMORY, ref exinfo, out Sound sound);
+            if (result != RESULT.OK)
+            {
                 return null;
-            result = sound.getSubSound(0, out var subsound);
-            if (result != FMOD.RESULT.OK)
+            }
+
+            result = sound.getSubSound(0, out Sound subsound);
+            if (result != RESULT.OK)
+            {
                 return null;
-            result = subsound.getFormat(out var type, out var format, out int NumChannels, out int BitsPerSample);
-            if (result != FMOD.RESULT.OK)
+            }
+
+            result = subsound.getFormat(out SOUND_TYPE type, out SOUND_FORMAT format, out int NumChannels, out int BitsPerSample);
+            if (result != RESULT.OK)
+            {
                 return null;
-            result = subsound.getDefaults(out var frequency, out int priority);
-            if (result != FMOD.RESULT.OK)
+            }
+            result = subsound.getDefaults(out float frequency, out int priority);
+            if (result != RESULT.OK)
+            {
                 return null;
-            var SampleRate = (int)frequency;
-            result = subsound.getLength(out var length, FMOD.TIMEUNIT.PCMBYTES);
-            if (result != FMOD.RESULT.OK)
+            }
+
+            var SampleRate = (int) frequency;
+            result = subsound.getLength(out uint length, TIMEUNIT.PCMBYTES);
+            if (result != RESULT.OK)
+            {
                 return null;
-            result = subsound.@lock(0, length, out var ptr1, out var ptr2, out var len1, out var len2);
-            if (result != FMOD.RESULT.OK)
+            }
+
+            result = subsound.@lock(0, length, out IntPtr ptr1, out IntPtr ptr2, out uint len1, out uint len2);
+            if (result != RESULT.OK)
+            {
                 return null;
-            byte[] buffer = new byte[len1 + 44];
+            }
+
+            var buffer = new byte[len1 + 44];
             //添加wav头
             Encoding.UTF8.GetBytes("RIFF").CopyTo(buffer, 0);
             BitConverter.GetBytes(len1 + 36).CopyTo(buffer, 4);
             Encoding.UTF8.GetBytes("WAVEfmt ").CopyTo(buffer, 8);
             BitConverter.GetBytes(16).CopyTo(buffer, 16);
-            BitConverter.GetBytes((short)1).CopyTo(buffer, 20);
-            BitConverter.GetBytes((short)NumChannels).CopyTo(buffer, 22);
+            BitConverter.GetBytes((short) 1).CopyTo(buffer, 20);
+            BitConverter.GetBytes((short) NumChannels).CopyTo(buffer, 22);
             BitConverter.GetBytes(SampleRate).CopyTo(buffer, 24);
             BitConverter.GetBytes(SampleRate * NumChannels * BitsPerSample / 8).CopyTo(buffer, 28);
-            BitConverter.GetBytes((short)(NumChannels * BitsPerSample / 8)).CopyTo(buffer, 32);
-            BitConverter.GetBytes((short)BitsPerSample).CopyTo(buffer, 34);
+            BitConverter.GetBytes((short) (NumChannels * BitsPerSample / 8)).CopyTo(buffer, 32);
+            BitConverter.GetBytes((short) BitsPerSample).CopyTo(buffer, 34);
             Encoding.UTF8.GetBytes("data").CopyTo(buffer, 36);
             BitConverter.GetBytes(len1).CopyTo(buffer, 40);
-            Marshal.Copy(ptr1, buffer, 44, (int)len1);
+            Marshal.Copy(ptr1, buffer, 44, (int) len1);
+
             result = subsound.unlock(ptr1, ptr2, len1, len2);
-            if (result != FMOD.RESULT.OK)
+            if (result != RESULT.OK)
+            {
                 return null;
+            }
+
             subsound.release();
             sound.release();
             system.release();
@@ -71,9 +97,9 @@ namespace AssetStudio
 
         public string GetExtensionName()
         {
-            if (m_AudioClip.sourceFile.version[0] < 5)
+            if (this.m_AudioClip.version[0] < 5)
             {
-                switch (m_AudioClip.m_Type)
+                switch (this.m_AudioClip.m_Type)
                 {
                     case AudioType.ACC:
                         return ".m4a";
@@ -100,11 +126,10 @@ namespace AssetStudio
                     case AudioType.AUDIOQUEUE:
                         return ".fsb";
                 }
-
             }
             else
             {
-                switch (m_AudioClip.m_CompressionFormat)
+                switch (this.m_AudioClip.m_CompressionFormat)
                 {
                     case AudioCompressionFormat.PCM:
                         return ".fsb";
@@ -136,9 +161,9 @@ namespace AssetStudio
         {
             get
             {
-                if (m_AudioClip.sourceFile.version[0] < 5)
+                if (this.m_AudioClip.version[0] < 5)
                 {
-                    switch (m_AudioClip.m_Type)
+                    switch (this.m_AudioClip.m_Type)
                     {
                         case AudioType.AIFF:
                         case AudioType.IT:
@@ -153,23 +178,21 @@ namespace AssetStudio
                             return false;
                     }
                 }
-                else
+
+                switch (this.m_AudioClip.m_CompressionFormat)
                 {
-                    switch (m_AudioClip.m_CompressionFormat)
-                    {
-                        case AudioCompressionFormat.PCM:
-                        case AudioCompressionFormat.Vorbis:
-                        case AudioCompressionFormat.ADPCM:
-                        case AudioCompressionFormat.MP3:
-                        case AudioCompressionFormat.VAG:
-                        case AudioCompressionFormat.HEVAG:
-                        case AudioCompressionFormat.XMA:
-                        case AudioCompressionFormat.GCADPCM:
-                        case AudioCompressionFormat.ATRAC9:
-                            return true;
-                        default:
-                            return false;
-                    }
+                    case AudioCompressionFormat.PCM:
+                    case AudioCompressionFormat.Vorbis:
+                    case AudioCompressionFormat.ADPCM:
+                    case AudioCompressionFormat.MP3:
+                    case AudioCompressionFormat.VAG:
+                    case AudioCompressionFormat.HEVAG:
+                    case AudioCompressionFormat.XMA:
+                    case AudioCompressionFormat.GCADPCM:
+                    case AudioCompressionFormat.ATRAC9:
+                        return true;
+                    default:
+                        return false;
                 }
             }
         }

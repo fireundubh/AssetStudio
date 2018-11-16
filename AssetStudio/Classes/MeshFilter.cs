@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using AssetStudio.StudioClasses;
 
 namespace AssetStudio
 {
@@ -10,9 +7,9 @@ namespace AssetStudio
         public long preloadIndex;
         public PPtr m_Mesh;
 
-        public MeshFilter(AssetPreloadData preloadData) : base(preloadData)
+        public MeshFilter(ObjectReader reader) : base(reader)
         {
-            m_Mesh = sourceFile.ReadPPtr();
+            this.m_Mesh = reader.ReadPPtr();
         }
     }
 }

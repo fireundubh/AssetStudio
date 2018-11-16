@@ -219,6 +219,7 @@
         VideoPlayer = 328,
         VideoClip = 329,
         OcclusionCullingData = 363,
+
         //kLargestRuntimeClassID = 364
         SmallestEditorClassID = 1000,
         Prefab = 1001,
@@ -274,6 +275,7 @@
         PackedAssets = 1126,
         VideoClipImporter = 1127,
         ActivationLogComponent = 2000,
+
         //kLargestEditorClassID = 2001
         //kClassIdOutOfHierarchy = 100000
         SubDerived = 367388927,

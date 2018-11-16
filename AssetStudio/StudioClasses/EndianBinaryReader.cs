@@ -18,9 +18,10 @@ namespace AssetStudio
         private byte[] a32 = new byte[4];
         private byte[] a64 = new byte[8];
 
-        public EndianBinaryReader(Stream stream, EndianType endian = EndianType.BigEndian)
-            : base(stream)
-        { this.endian = endian; }
+        public EndianBinaryReader(Stream stream, EndianType endian = EndianType.BigEndian) : base(stream)
+        {
+            this.endian = endian;
+        }
 
         public long Position
         {

@@ -1,10 +1,5 @@
-﻿using System;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices;
 using AssetStudio.Extensions;
+using AssetStudio.StudioClasses;
 
 namespace AssetStudio
 {
@@ -19,61 +14,67 @@ namespace AssetStudio
         public bool m_IsReadable;
         public bool m_ReadAllowed;
         public int m_ImageCount;
+
         public int m_TextureDimension;
+
         //m_TextureSettings
         public int m_FilterMode;
         public int m_Aniso;
         public float m_MipBias;
         public int m_WrapMode;
         public int m_LightmapFormat;
+
         public int m_ColorSpace;
+
         //image dataa
         public int image_data_size;
+
         public byte[] image_data;
+
         //m_StreamData
         public uint offset;
         public uint size;
         public string path;
 
-        public Texture2D(AssetPreloadData preloadData, bool readData) : base(preloadData)
+        public Texture2D(ObjectReader reader, bool readData) : base(reader)
         {
-            m_Width = reader.ReadInt32();
-            m_Height = reader.ReadInt32();
-            m_CompleteImageSize = reader.ReadInt32();
-            m_TextureFormat = (TextureFormat)reader.ReadInt32();
+            this.m_Width = reader.ReadInt32();
+            this.m_Height = reader.ReadInt32();
+            this.m_CompleteImageSize = reader.ReadInt32();
+            this.m_TextureFormat = (TextureFormat) reader.ReadInt32();
 
-            if (version[0] < 5 || (version[0] == 5 && version[1] < 2))
+            if (this.version[0] < 5 || this.version[0] == 5 && this.version[1] < 2)
             {
-                m_MipMap = reader.ReadBoolean();
+                this.m_MipMap = reader.ReadBoolean();
             }
             else
             {
-                m_MipCount = reader.ReadInt32();
+                this.m_MipCount = reader.ReadInt32();
             }
 
-            m_IsReadable = reader.ReadBoolean(); //2.6.0 and up
-            m_ReadAllowed = reader.ReadBoolean(); //3.0.0 - 5.4
+            this.m_IsReadable = reader.ReadBoolean(); //2.6.0 and up
+            this.m_ReadAllowed = reader.ReadBoolean(); //3.0.0 - 5.4
             //m_StreamingMipmaps 2018.2 and up
             reader.AlignStream(4);
-            if (version[0] > 2018 || (version[0] == 2018 && version[1] >= 2)) //2018.2 and up
+            if (this.version[0] > 2018 || this.version[0] == 2018 && this.version[1] >= 2) //2018.2 and up
             {
-                var m_StreamingMipmapsPriority = reader.ReadInt32();
+                int m_StreamingMipmapsPriority = reader.ReadInt32();
             }
-            else if (preloadData.HasStructMember("m_StreamingMipmapsPriority")) //will fix in some patch version bundle
+            else if (reader.HasStructMember("m_StreamingMipmapsPriority")) //will fix in some patch version bundle
             {
-                var m_StreamingMipmapsPriority = reader.ReadInt32();
+                int m_StreamingMipmapsPriority = reader.ReadInt32();
             }
-            if (preloadData.HasStructMember("m_StreamingGroupID")) //What the hell is this?
+            if (reader.HasStructMember("m_StreamingGroupID")) //What the hell is this?
             {
-                var m_StreamingGroupID = reader.ReadUInt32();
+                uint m_StreamingGroupID = reader.ReadUInt32();
             }
-            m_ImageCount = reader.ReadInt32();
-            m_TextureDimension = reader.ReadInt32();
+            this.m_ImageCount = reader.ReadInt32();
+            this.m_TextureDimension = reader.ReadInt32();
             //m_TextureSettings
-            m_FilterMode = reader.ReadInt32();
-            m_Aniso = reader.ReadInt32();
-            m_MipBias = reader.ReadSingle();
-            if (version[0] >= 2017)//2017.x and up
+            this.m_FilterMode = reader.ReadInt32();
+            this.m_Aniso = reader.ReadInt32();
+            this.m_MipBias = reader.ReadSingle();
+            if (this.version[0] >= 2017) //2017.x and up
             {
                 int m_WrapU = reader.ReadInt32();
                 int m_WrapV = reader.ReadInt32();
@@ -81,36 +82,36 @@ namespace AssetStudio
             }
             else
             {
-                m_WrapMode = reader.ReadInt32();
+                this.m_WrapMode = reader.ReadInt32();
             }
-            if (version[0] >= 3)
+            if (this.version[0] >= 3)
             {
-                m_LightmapFormat = reader.ReadInt32();
-                if (version[0] >= 4 || version[1] >= 5)//3.5.0 and up
+                this.m_LightmapFormat = reader.ReadInt32();
+                if (this.version[0] >= 4 || this.version[1] >= 5) //3.5.0 and up
                 {
-                    m_ColorSpace = reader.ReadInt32();
+                    this.m_ColorSpace = reader.ReadInt32();
                 }
             }
 
-            image_data_size = reader.ReadInt32();
+            this.image_data_size = reader.ReadInt32();
 
-            if (image_data_size == 0 && ((version[0] == 5 && version[1] >= 3) || version[0] > 5))//5.3.0 and up
+            if (this.image_data_size == 0 && (this.version[0] == 5 && this.version[1] >= 3 || this.version[0] > 5)) //5.3.0 and up
             {
-                offset = reader.ReadUInt32();
-                size = reader.ReadUInt32();
-                image_data_size = (int)size;
-                path = reader.ReadAlignedString();
+                this.offset = reader.ReadUInt32();
+                this.size = reader.ReadUInt32();
+                this.image_data_size = (int) this.size;
+                this.path = reader.ReadAlignedString();
             }
 
             if (readData)
             {
-                if (!string.IsNullOrEmpty(path))
+                if (!string.IsNullOrEmpty(this.path))
                 {
-                    image_data = ResourcesHelper.GetData(path, sourceFile.filePath, offset, image_data_size);
+                    this.image_data = ResourcesHelper.GetData(this.path, this.sourceFile.filePath, this.offset, this.image_data_size);
                 }
                 else
                 {
-                    image_data = reader.ReadBytes(image_data_size);
+                    this.image_data = reader.ReadBytes(this.image_data_size);
                 }
             }
         }

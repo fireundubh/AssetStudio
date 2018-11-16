@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
 using AssetStudio.Extensions;
+using AssetStudio.StudioClasses;
 
 namespace AssetStudio
 {
@@ -14,23 +10,23 @@ namespace AssetStudio
         public string m_Source;
         public ulong m_Size;
 
-        public VideoClip(AssetPreloadData preloadData, bool readData) : base(preloadData)
+        public VideoClip(ObjectReader reader, bool readData) : base(reader)
         {
-            m_OriginalPath = reader.ReadAlignedString();
-            var m_ProxyWidth = reader.ReadUInt32();
-            var m_ProxyHeight = reader.ReadUInt32();
-            var Width = reader.ReadUInt32();
-            var Height = reader.ReadUInt32();
-            if (sourceFile.version[0] >= 2017)//2017.x and up
+            this.m_OriginalPath = reader.ReadAlignedString();
+            uint m_ProxyWidth = reader.ReadUInt32();
+            uint m_ProxyHeight = reader.ReadUInt32();
+            uint Width = reader.ReadUInt32();
+            uint Height = reader.ReadUInt32();
+            if (this.sourceFile.version[0] >= 2017) //2017.x and up
             {
-                var m_PixelAspecRatioNum = reader.ReadUInt32();
-                var m_PixelAspecRatioDen = reader.ReadUInt32();
+                uint m_PixelAspecRatioNum = reader.ReadUInt32();
+                uint m_PixelAspecRatioDen = reader.ReadUInt32();
             }
-            var m_FrameRate = reader.ReadDouble();
-            var m_FrameCount = reader.ReadUInt64();
-            var m_Format = reader.ReadInt32();
+            double m_FrameRate = reader.ReadDouble();
+            ulong m_FrameCount = reader.ReadUInt64();
+            int m_Format = reader.ReadInt32();
             //m_AudioChannelCount
-            var size = reader.ReadInt32();
+            int size = reader.ReadInt32();
             reader.Position += size * 2;
             reader.AlignStream(4);
             //m_AudioSampleRate
@@ -43,21 +39,25 @@ namespace AssetStudio
                 reader.ReadAlignedString();
             }
             //StreamedResource m_ExternalResources
-            m_Source = reader.ReadAlignedString();
-            var m_Offset = reader.ReadUInt64();
-            m_Size = reader.ReadUInt64();
-            var m_HasSplitAlpha = reader.ReadBoolean();
+            this.m_Source = reader.ReadAlignedString();
+            ulong m_Offset = reader.ReadUInt64();
+            this.m_Size = reader.ReadUInt64();
+            bool m_HasSplitAlpha = reader.ReadBoolean();
 
-            if (readData)
+            if (!readData)
             {
-                if (!string.IsNullOrEmpty(m_Source))
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(this.m_Source))
+            {
+                this.m_VideoData = ResourcesHelper.GetData(this.m_Source, this.sourceFile.filePath, (long) m_Offset, (int) this.m_Size);
+            }
+            else
+            {
+                if (this.m_Size > 0)
                 {
-                    m_VideoData = ResourcesHelper.GetData(m_Source, sourceFile.filePath, (long)m_Offset, (int)m_Size);
-                }
-                else
-                {
-                    if (m_Size > 0)
-                        m_VideoData = reader.ReadBytes((int)m_Size);
+                    this.m_VideoData = reader.ReadBytes((int) this.m_Size);
                 }
             }
         }

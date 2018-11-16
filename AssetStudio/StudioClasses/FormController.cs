@@ -3,14 +3,15 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using AssetStudio.StudioClasses;
 
 namespace AssetStudio
 {
     public class FormController
     {
-        public static Action<bool, bool> BuildAssetList;
-        public static Action BuildTreeStructure;
-        public static Action BuildClassStructures;
+        public static Action<Dictionary<ObjectReader, AssetItem>, bool, bool> BuildAssetList;
+        public static Action<Dictionary<ObjectReader, AssetItem>> BuildTreeStructure;
+        public static Action<Dictionary<ObjectReader, AssetItem>> BuildClassStructures;
 
         public static Action<string> StatusStripUpdate;
 
@@ -30,22 +31,24 @@ namespace AssetStudio
 
         public static void GenerateAssetData(params bool[] parameters)
         {
+            var tempDic = new Dictionary<ObjectReader, AssetItem>();
+
             // first loop - read asset data & create list
             if (parameters[0])
             {
-                int assetsFileCount = Studio.assetsFileList.Sum(x => x.preloadTable.Values.Count);
+                int assetsFileCount = Studio.assetsFileList.Sum(x => x.ObjectReaders.Values.Count);
 
                 ProgressBarReset(assetsFileCount);
 
                 StatusStripUpdate("Building asset list...");
 
-                BuildAssetList(parameters[1], parameters[4]);
+                BuildAssetList(tempDic, parameters[1], parameters[4]);
             }
 
             // second loop - build tree structure
             if (parameters[2])
             {
-                int gameObjectCount = Studio.assetsFileList.Sum(x => x.GameObjectList.Values.Count);
+                int gameObjectCount = Studio.assetsFileList.Sum(x => x.GameObjects.Values.Count);
 
                 ProgressBarReset(gameObjectCount);
 
@@ -53,16 +56,18 @@ namespace AssetStudio
                 {
                     StatusStripUpdate("Building tree structure...");
 
-                    BuildTreeStructure();
+                    BuildTreeStructure(tempDic);
                 }
             }
+
+            tempDic.Clear();
 
             // third loop - build list of class structures
             if (parameters[3])
             {
                 StatusStripUpdate("Building class structures...");
 
-                BuildClassStructures();
+                BuildClassStructures(tempDic);
             }
         }
 
@@ -126,7 +131,7 @@ namespace AssetStudio
             treeView.EndUpdate();
         }
 
-        private static void PopulateDropDownMenu(ToolStripItemCollection toolStripItemCollection, IEnumerable<AssetPreloadData> exportableAssets, EventHandler menuItemClickEventHandler)
+        private static void PopulateDropDownMenu(ToolStripItemCollection toolStripItemCollection, List<AssetItem> exportableAssets, EventHandler menuItemClickEventHandler)
         {
             List<ClassIDType> classTypes = exportableAssets.Select(x => x.Type).Distinct().OrderBy(x => x.ToString()).ToList();
 

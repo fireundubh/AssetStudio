@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections;
 using System.Linq;
 using AssetStudio.Extensions;
+using AssetStudio.StudioClasses;
 using SharpDX;
 
 namespace AssetStudio
@@ -67,94 +68,97 @@ namespace AssetStudio
         {
             public class BlendShapeVertex
             {
-                public Vector3 vertex { get; set; }
-                public Vector3 normal { get; set; }
-                public Vector3 tangent { get; set; }
-                public uint index { get; set; }
+                public Vector3 vertex;
+                public Vector3 normal;
+                public Vector3 tangent;
+                public uint index;
 
-                public BlendShapeVertex(EndianBinaryReader reader)
+                public BlendShapeVertex(ObjectReader reader)
                 {
-                    vertex = reader.ReadVector3();
-                    normal = reader.ReadVector3();
-                    tangent = reader.ReadVector3();
-                    index = reader.ReadUInt32();
+                    this.vertex = reader.ReadVector3();
+                    this.normal = reader.ReadVector3();
+                    this.tangent = reader.ReadVector3();
+                    this.index = reader.ReadUInt32();
                 }
             }
 
             public class MeshBlendShape
             {
-                public uint firstVertex { get; set; }
-                public uint vertexCount { get; set; }
-                public bool hasNormals { get; set; }
-                public bool hasTangents { get; set; }
+                public uint firstVertex;
+                public uint vertexCount;
+                public bool hasNormals;
+                public bool hasTangents;
 
-                public MeshBlendShape(EndianBinaryReader reader)
+                public MeshBlendShape(ObjectReader reader)
                 {
-                    firstVertex = reader.ReadUInt32();
-                    vertexCount = reader.ReadUInt32();
-                    hasNormals = reader.ReadBoolean();
-                    hasTangents = reader.ReadBoolean();
+                    this.firstVertex = reader.ReadUInt32();
+                    this.vertexCount = reader.ReadUInt32();
+                    this.hasNormals = reader.ReadBoolean();
+                    this.hasTangents = reader.ReadBoolean();
                     reader.AlignStream(4);
                 }
             }
 
             public class MeshBlendShapeChannel
             {
-                public string name { get; set; }
-                public uint nameHash { get; set; }
-                public int frameIndex { get; set; }
-                public int frameCount { get; set; }
+                public string name;
+                public uint nameHash;
+                public int frameIndex;
+                public int frameCount;
 
-                public MeshBlendShapeChannel(EndianBinaryReader reader)
+                public MeshBlendShapeChannel(ObjectReader reader)
                 {
-                    name = reader.ReadAlignedString();
-                    nameHash = reader.ReadUInt32();
-                    frameIndex = reader.ReadInt32();
-                    frameCount = reader.ReadInt32();
+                    this.name = reader.ReadAlignedString();
+                    this.nameHash = reader.ReadUInt32();
+                    this.frameIndex = reader.ReadInt32();
+                    this.frameCount = reader.ReadInt32();
                 }
             }
 
-            public List<BlendShapeVertex> vertices { get; set; }
-            public List<MeshBlendShape> shapes { get; set; }
-            public List<MeshBlendShapeChannel> channels { get; set; }
-            public List<float> fullWeights { get; set; }
+            public List<BlendShapeVertex> vertices;
+            public List<MeshBlendShape> shapes;
+            public List<MeshBlendShapeChannel> channels;
+            public List<float> fullWeights;
 
-            public BlendShapeData(EndianBinaryReader reader)
+            public BlendShapeData(ObjectReader reader)
             {
                 int numVerts = reader.ReadInt32();
-                vertices = new List<BlendShapeVertex>(numVerts);
-                for (int i = 0; i < numVerts; i++)
+                this.vertices = new List<BlendShapeVertex>(numVerts);
+                for (var i = 0; i < numVerts; i++)
                 {
-                    vertices.Add(new BlendShapeVertex(reader));
+                    this.vertices.Add(new BlendShapeVertex(reader));
                 }
 
                 int numShapes = reader.ReadInt32();
-                shapes = new List<MeshBlendShape>(numShapes);
-                for (int i = 0; i < numShapes; i++)
+                this.shapes = new List<MeshBlendShape>(numShapes);
+                for (var i = 0; i < numShapes; i++)
                 {
-                    shapes.Add(new MeshBlendShape(reader));
+                    this.shapes.Add(new MeshBlendShape(reader));
                 }
 
                 int numChannels = reader.ReadInt32();
-                channels = new List<MeshBlendShapeChannel>(numChannels);
-                for (int i = 0; i < numChannels; i++)
+                this.channels = new List<MeshBlendShapeChannel>(numChannels);
+                for (var i = 0; i < numChannels; i++)
                 {
-                    channels.Add(new MeshBlendShapeChannel(reader));
+                    this.channels.Add(new MeshBlendShapeChannel(reader));
                 }
 
                 int numWeights = reader.ReadInt32();
-                fullWeights = new List<float>(numWeights);
-                for (int i = 0; i < numWeights; i++)
+                this.fullWeights = new List<float>(numWeights);
+                for (var i = 0; i < numWeights; i++)
                 {
-                    fullWeights.Add(reader.ReadSingle());
+                    this.fullWeights.Add(reader.ReadSingle());
                 }
             }
         }
 
-        private float BytesToFloat(byte[] inputBytes)
+        private float BytesToFloat(byte[] inputBytes, EndianType endian)
         {
             float result = 0;
-            if (reader.endian == EndianType.BigEndian) { Array.Reverse(inputBytes); }
+            if (endian == EndianType.BigEndian)
+            {
+                Array.Reverse(inputBytes);
+            }
 
             switch (inputBytes.Length)
             {
@@ -194,9 +198,9 @@ namespace AssetStudio
         private static float[] BytesToFloatArray(byte[] inputBytes, int size)
         {
             var result = new float[inputBytes.Length / size];
-            for (int i = 0; i < inputBytes.Length / size; i++)
+            for (var i = 0; i < inputBytes.Length / size; i++)
             {
-                float value = 0f;
+                var value = 0f;
                 switch (size)
                 {
                     case 1:
@@ -217,7 +221,7 @@ namespace AssetStudio
         private static int[] BytesToIntArray(byte[] inputBytes)
         {
             var result = new int[inputBytes.Length / 4];
-            for (int i = 0; i < inputBytes.Length / 4; i++)
+            for (var i = 0; i < inputBytes.Length / 4; i++)
             {
                 result[i] = BitConverter.ToInt32(inputBytes, i * 4);
             }
@@ -226,81 +230,92 @@ namespace AssetStudio
 
         private void InitMSkin()
         {
-            m_Skin = new List<BoneInfluence>[m_VertexCount];
-            for (int i = 0; i < m_VertexCount; i++)
+            this.m_Skin = new List<BoneInfluence>[this.m_VertexCount];
+            for (var i = 0; i < this.m_VertexCount; i++)
             {
-                m_Skin[i] = new List<BoneInfluence>(4);
-                for (int j = 0; j < 4; j++)
+                this.m_Skin[i] = new List<BoneInfluence>(4);
+                for (var j = 0; j < 4; j++)
                 {
-                    m_Skin[i].Add(new BoneInfluence());
+                    this.m_Skin[i].Add(new BoneInfluence());
                 }
             }
         }
 
-        public Mesh(AssetPreloadData preloadData) : base(preloadData)
+        public Mesh(ObjectReader reader) : base(reader)
         {
-            bool m_Use16BitIndices = true; //3.5.0 and newer always uses 16bit indices
+            var m_Use16BitIndices = true; //3.5.0 and newer always uses 16bit indices
             uint m_MeshCompression = 0;
 
-            if (version[0] < 3 || (version[0] == 3 && version[1] < 5))
+            if (this.version[0] < 3 || this.version[0] == 3 && this.version[1] < 5)
             {
                 m_Use16BitIndices = reader.ReadBoolean();
                 reader.Position += 3;
             }
 
             #region Index Buffer for 2.5.1 and earlier
-            if (version[0] == 2 && version[1] <= 5)
+
+            if (this.version[0] == 2 && this.version[1] <= 5)
             {
                 int m_IndexBuffer_size = reader.ReadInt32();
 
                 if (m_Use16BitIndices)
                 {
-                    m_IndexBuffer = new uint[m_IndexBuffer_size / 2];
-                    for (int i = 0; i < m_IndexBuffer_size / 2; i++) { m_IndexBuffer[i] = reader.ReadUInt16(); }
+                    this.m_IndexBuffer = new uint[m_IndexBuffer_size / 2];
+                    for (var i = 0; i < m_IndexBuffer_size / 2; i++)
+                    {
+                        this.m_IndexBuffer[i] = reader.ReadUInt16();
+                    }
                     reader.AlignStream(4);
                 }
                 else
                 {
-                    m_IndexBuffer = new uint[m_IndexBuffer_size / 4];
-                    for (int i = 0; i < m_IndexBuffer_size / 4; i++) { m_IndexBuffer[i] = reader.ReadUInt32(); }
+                    this.m_IndexBuffer = new uint[m_IndexBuffer_size / 4];
+                    for (var i = 0; i < m_IndexBuffer_size / 4; i++)
+                    {
+                        this.m_IndexBuffer[i] = reader.ReadUInt32();
+                    }
                 }
             }
+
             #endregion
 
             #region subMeshes
+
             int m_SubMeshes_size = reader.ReadInt32();
-            for (int s = 0; s < m_SubMeshes_size; s++)
+            for (var s = 0; s < m_SubMeshes_size; s++)
             {
-                m_SubMeshes.Add(new SubMesh());
-                m_SubMeshes[s].firstByte = reader.ReadUInt32();
-                m_SubMeshes[s].indexCount = reader.ReadUInt32(); //what is this in case of triangle strips?
-                m_SubMeshes[s].topology = reader.ReadInt32(); //isTriStrip
-                if (version[0] < 4)
+                this.m_SubMeshes.Add(new SubMesh());
+                this.m_SubMeshes[s].firstByte = reader.ReadUInt32();
+                this.m_SubMeshes[s].indexCount = reader.ReadUInt32(); //what is this in case of triangle strips?
+                this.m_SubMeshes[s].topology = reader.ReadInt32(); //isTriStrip
+                if (this.version[0] < 4)
                 {
-                    m_SubMeshes[s].triangleCount = reader.ReadUInt32();
+                    this.m_SubMeshes[s].triangleCount = reader.ReadUInt32();
                 }
-                if (version[0] >= 3)
+                if (this.version[0] >= 3)
                 {
-                    if (version[0] > 2017 || (version[0] == 2017 && version[1] >= 3))//2017.3 and up
+                    if (this.version[0] > 2017 || this.version[0] == 2017 && this.version[1] >= 3) //2017.3 and up
                     {
-                        var baseVertex = reader.ReadUInt32();
+                        uint baseVertex = reader.ReadUInt32();
                     }
-                    m_SubMeshes[s].firstVertex = reader.ReadUInt32();
-                    m_SubMeshes[s].vertexCount = reader.ReadUInt32();
+                    this.m_SubMeshes[s].firstVertex = reader.ReadUInt32();
+                    this.m_SubMeshes[s].vertexCount = reader.ReadUInt32();
                     reader.Position += 24; //Axis-Aligned Bounding Box
                 }
             }
+
             #endregion
 
             #region BlendShapeData for 4.1.0 to 4.2.x, excluding 4.1.0 alpha
-            if (version[0] == 4 && ((version[1] == 1 && preloadData.sourceFile.buildType[0] != "a") || (version[1] > 1 && version[1] <= 2)))
+
+            if (this.version[0] == 4 && (this.version[1] == 1 && this.buildType[0] != "a" || this.version[1] > 1 && this.version[1] <= 2))
             {
                 int m_Shapes_size = reader.ReadInt32();
                 if (m_Shapes_size > 0)
                 {
                     //bool stop = true;
                 }
-                for (int s = 0; s < m_Shapes_size; s++) //untested
+                for (var s = 0; s < m_Shapes_size; s++) //untested
                 {
                     string shape_name = reader.ReadAlignedString();
                     reader.Position += 36; //uint firstVertex, vertexCount; Vector3f aabbMinDelta, aabbMaxDelta; bool hasNormals, hasTangents
@@ -309,119 +324,195 @@ namespace AssetStudio
                 int m_ShapeVertices_size = reader.ReadInt32();
                 reader.Position += m_ShapeVertices_size * 40; //vertex positions, normals, tangents & uint index
             }
-            #endregion
-            #region BlendShapeData and BindPose for 4.3.0 and later
-            else if (version[0] >= 5 || (version[0] == 4 && version[1] >= 3))
-            {
-                m_Shapes = new BlendShapeData(reader);
 
-                m_BindPose = new float[reader.ReadInt32()][,];
-                for (int i = 0; i < m_BindPose.Length; i++)
+            #endregion
+
+            #region BlendShapeData and BindPose for 4.3.0 and later
+
+            else if (this.version[0] >= 5 || this.version[0] == 4 && this.version[1] >= 3)
+            {
+                this.m_Shapes = new BlendShapeData(reader);
+
+                this.m_BindPose = new float[reader.ReadInt32()][,];
+                for (var i = 0; i < this.m_BindPose.Length; i++)
                 {
-                    m_BindPose[i] = new[,] {
-                        { reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle() },
-                        { reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle() },
-                        { reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle() },
-                        { reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle() } };
+                    this.m_BindPose[i] = new[,]
+                    {
+                        {
+                            reader.ReadSingle(),
+                            reader.ReadSingle(),
+                            reader.ReadSingle(),
+                            reader.ReadSingle()
+                        },
+                        {
+                            reader.ReadSingle(),
+                            reader.ReadSingle(),
+                            reader.ReadSingle(),
+                            reader.ReadSingle()
+                        },
+                        {
+                            reader.ReadSingle(),
+                            reader.ReadSingle(),
+                            reader.ReadSingle(),
+                            reader.ReadSingle()
+                        },
+                        {
+                            reader.ReadSingle(),
+                            reader.ReadSingle(),
+                            reader.ReadSingle(),
+                            reader.ReadSingle()
+                        }
+                    };
                 }
 
                 int m_BoneNameHashes_size = reader.ReadInt32();
-                m_BoneNameHashes = new uint[m_BoneNameHashes_size];
-                for (int i = 0; i < m_BoneNameHashes_size; i++)
+                this.m_BoneNameHashes = new uint[m_BoneNameHashes_size];
+                for (var i = 0; i < m_BoneNameHashes_size; i++)
                 {
-                    m_BoneNameHashes[i] = reader.ReadUInt32();
+                    this.m_BoneNameHashes[i] = reader.ReadUInt32();
                 }
 
                 uint m_RootBoneNameHash = reader.ReadUInt32();
             }
+
             #endregion
 
             #region Index Buffer for 2.6.0 and later
-            if (version[0] >= 3 || (version[0] == 2 && version[1] >= 6))
+
+            if (this.version[0] >= 3 || this.version[0] == 2 && this.version[1] >= 6)
             {
                 m_MeshCompression = reader.ReadByte();
-                if (version[0] >= 4)
+                if (this.version[0] >= 4)
                 {
-                    if (version[0] < 5)
+                    if (this.version[0] < 5)
                     {
                         uint m_StreamCompression = reader.ReadByte();
                     }
                     bool m_IsReadable = reader.ReadBoolean();
                     bool m_KeepVertices = reader.ReadBoolean();
                     bool m_KeepIndices = reader.ReadBoolean();
-                    if (preloadData.HasStructMember("m_UsedForStaticMeshColliderOnly"))
+                    if (reader.HasStructMember("m_UsedForStaticMeshColliderOnly"))
                     {
-                        var m_UsedForStaticMeshColliderOnly = reader.ReadBoolean();
+                        bool m_UsedForStaticMeshColliderOnly = reader.ReadBoolean();
                     }
                 }
                 reader.AlignStream(4);
                 //This is a bug fixed in 2017.3.1p1 and later versions
-                if ((version[0] > 2017 || (version[0] == 2017 && version[1] >= 4)) || //2017.4
-                    ((version[0] == 2017 && version[1] == 3 && version[2] == 1) && preloadData.sourceFile.buildType[0] == "p") || //fixed after 2017.3.1px
-                    ((version[0] == 2017 && version[1] == 3) && m_MeshCompression == 0))//2017.3.xfx with no compression
+                if (this.version[0] > 2017 || this.version[0] == 2017 && this.version[1] >= 4 || //2017.4
+                    this.version[0] == 2017 && this.version[1] == 3 && this.version[2] == 1 && this.buildType[0] == "p" || //fixed after 2017.3.1px
+                    this.version[0] == 2017 && this.version[1] == 3 && m_MeshCompression == 0) //2017.3.xfx with no compression
                 {
-                    var m_IndexFormat = reader.ReadInt32();
+                    int m_IndexFormat = reader.ReadInt32();
                 }
                 int m_IndexBuffer_size = reader.ReadInt32();
 
                 if (m_Use16BitIndices)
                 {
-                    m_IndexBuffer = new uint[m_IndexBuffer_size / 2];
-                    for (int i = 0; i < m_IndexBuffer_size / 2; i++) { m_IndexBuffer[i] = reader.ReadUInt16(); }
+                    this.m_IndexBuffer = new uint[m_IndexBuffer_size / 2];
+                    for (var i = 0; i < m_IndexBuffer_size / 2; i++)
+                    {
+                        this.m_IndexBuffer[i] = reader.ReadUInt16();
+                    }
                     reader.AlignStream(4);
                 }
                 else
                 {
-                    m_IndexBuffer = new uint[m_IndexBuffer_size / 4];
-                    for (int i = 0; i < m_IndexBuffer_size / 4; i++) { m_IndexBuffer[i] = reader.ReadUInt32(); }
-                    reader.AlignStream(4);//untested
+                    this.m_IndexBuffer = new uint[m_IndexBuffer_size / 4];
+                    for (var i = 0; i < m_IndexBuffer_size / 4; i++)
+                    {
+                        this.m_IndexBuffer[i] = reader.ReadUInt32();
+                    }
+                    reader.AlignStream(4); //untested
                 }
             }
+
             #endregion
 
             #region Vertex Buffer for 3.4.2 and earlier
-            if (version[0] < 3 || (version[0] == 3 && version[1] < 5))
-            {
-                m_VertexCount = reader.ReadInt32();
-                m_Vertices = new float[m_VertexCount * 3];
-                for (int v = 0; v < m_VertexCount * 3; v++) { m_Vertices[v] = reader.ReadSingle(); }
 
-                m_Skin = new List<BoneInfluence>[reader.ReadInt32()];
-                for (int s = 0; s < m_Skin.Length; s++)
+            if (this.version[0] < 3 || this.version[0] == 3 && this.version[1] < 5)
+            {
+                this.m_VertexCount = reader.ReadInt32();
+                this.m_Vertices = new float[this.m_VertexCount * 3];
+                for (var v = 0; v < this.m_VertexCount * 3; v++)
                 {
-                    m_Skin[s] = new List<BoneInfluence>();
-                    for (int i = 0; i < 4; i++) { m_Skin[s].Add(new BoneInfluence() { weight = reader.ReadSingle() }); }
-                    for (int i = 0; i < 4; i++) { m_Skin[s][i].boneIndex = reader.ReadInt32(); }
+                    this.m_Vertices[v] = reader.ReadSingle();
                 }
 
-                m_BindPose = new float[reader.ReadInt32()][,];
-                for (int i = 0; i < m_BindPose.Length; i++)
+                this.m_Skin = new List<BoneInfluence>[reader.ReadInt32()];
+                for (var s = 0; s < this.m_Skin.Length; s++)
                 {
-                    m_BindPose[i] = new[,] {
-                        { reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle() },
-                        { reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle() },
-                        { reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle() },
-                        { reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle() } };
+                    this.m_Skin[s] = new List<BoneInfluence>();
+                    for (var i = 0; i < 4; i++)
+                    {
+                        this.m_Skin[s].
+                            Add(new BoneInfluence()
+                            {
+                                weight = reader.ReadSingle()
+                            });
+                    }
+                    for (var i = 0; i < 4; i++)
+                    {
+                        this.m_Skin[s][i].boneIndex = reader.ReadInt32();
+                    }
+                }
+
+                this.m_BindPose = new float[reader.ReadInt32()][,];
+                for (var i = 0; i < this.m_BindPose.Length; i++)
+                {
+                    this.m_BindPose[i] = new[,]
+                    {
+                        {
+                            reader.ReadSingle(),
+                            reader.ReadSingle(),
+                            reader.ReadSingle(),
+                            reader.ReadSingle()
+                        },
+                        {
+                            reader.ReadSingle(),
+                            reader.ReadSingle(),
+                            reader.ReadSingle(),
+                            reader.ReadSingle()
+                        },
+                        {
+                            reader.ReadSingle(),
+                            reader.ReadSingle(),
+                            reader.ReadSingle(),
+                            reader.ReadSingle()
+                        },
+                        {
+                            reader.ReadSingle(),
+                            reader.ReadSingle(),
+                            reader.ReadSingle(),
+                            reader.ReadSingle()
+                        }
+                    };
                 }
 
                 int m_UV1_size = reader.ReadInt32();
-                m_UV1 = new float[m_UV1_size * 2];
-                for (int v = 0; v < m_UV1_size * 2; v++) { m_UV1[v] = reader.ReadSingle(); }
+                this.m_UV1 = new float[m_UV1_size * 2];
+                for (var v = 0; v < m_UV1_size * 2; v++)
+                {
+                    this.m_UV1[v] = reader.ReadSingle();
+                }
 
                 int m_UV2_size = reader.ReadInt32();
-                m_UV2 = new float[m_UV2_size * 2];
-                for (int v = 0; v < m_UV2_size * 2; v++) { m_UV2[v] = reader.ReadSingle(); }
+                this.m_UV2 = new float[m_UV2_size * 2];
+                for (var v = 0; v < m_UV2_size * 2; v++)
+                {
+                    this.m_UV2[v] = reader.ReadSingle();
+                }
 
-                if (version[0] == 2 && version[1] <= 5)
+                if (this.version[0] == 2 && this.version[1] <= 5)
                 {
                     int m_TangentSpace_size = reader.ReadInt32();
-                    m_Normals = new float[m_TangentSpace_size * 3];
-                    for (int v = 0; v < m_TangentSpace_size; v++)
+                    this.m_Normals = new float[m_TangentSpace_size * 3];
+                    for (var v = 0; v < m_TangentSpace_size; v++)
                     {
-                        m_Normals[v * 3] = reader.ReadSingle();
-                        m_Normals[v * 3 + 1] = reader.ReadSingle();
-                        m_Normals[v * 3 + 2] = reader.ReadSingle();
-                        reader.Position += 16; //Vector3f tangent & float handedness 
+                        this.m_Normals[v * 3] = reader.ReadSingle();
+                        this.m_Normals[v * 3 + 1] = reader.ReadSingle();
+                        this.m_Normals[v * 3 + 2] = reader.ReadSingle();
+                        reader.Position += 16; //Vector3f tangent & float handedness
                     }
                 }
                 else //2.6.0 and later
@@ -430,117 +521,164 @@ namespace AssetStudio
                     reader.Position += m_Tangents_size * 16; //Vector4f
 
                     int m_Normals_size = reader.ReadInt32();
-                    m_Normals = new float[m_Normals_size * 3];
-                    for (int v = 0; v < m_Normals_size * 3; v++) { m_Normals[v] = reader.ReadSingle(); }
+                    this.m_Normals = new float[m_Normals_size * 3];
+                    for (var v = 0; v < m_Normals_size * 3; v++)
+                    {
+                        this.m_Normals[v] = reader.ReadSingle();
+                    }
                 }
             }
+
             #endregion
+
             #region Vertex Buffer for 3.5.0 and later
+
             else
             {
                 #region read vertex stream
 
-                if (version[0] < 2018 || (version[0] == 2018 && version[1] < 2)) //2018.2 down
+                if (this.version[0] < 2018 || this.version[0] == 2018 && this.version[1] < 2) //2018.2 down
                 {
-                    m_Skin = new List<BoneInfluence>[reader.ReadInt32()];
-                    for (int s = 0; s < m_Skin.Length; s++)
+                    this.m_Skin = new List<BoneInfluence>[reader.ReadInt32()];
+                    for (var s = 0; s < this.m_Skin.Length; s++)
                     {
-                        m_Skin[s] = new List<BoneInfluence>();
-                        for (int i = 0; i < 4; i++)
+                        this.m_Skin[s] = new List<BoneInfluence>();
+                        for (var i = 0; i < 4; i++)
                         {
-                            m_Skin[s].Add(new BoneInfluence() { weight = reader.ReadSingle() });
+                            this.m_Skin[s].
+                                Add(new BoneInfluence()
+                                {
+                                    weight = reader.ReadSingle()
+                                });
                         }
 
-                        for (int i = 0; i < 4; i++)
+                        for (var i = 0; i < 4; i++)
                         {
-                            m_Skin[s][i].boneIndex = reader.ReadInt32();
+                            this.m_Skin[s][i].boneIndex = reader.ReadInt32();
                         }
                     }
                 }
 
-                if (version[0] == 3 || (version[0] == 4 && version[1] <= 2))
+                if (this.version[0] == 3 || this.version[0] == 4 && this.version[1] <= 2)
                 {
-                    m_BindPose = new float[reader.ReadInt32()][,];
-                    for (int i = 0; i < m_BindPose.Length; i++)
+                    this.m_BindPose = new float[reader.ReadInt32()][,];
+                    for (var i = 0; i < this.m_BindPose.Length; i++)
                     {
-                        m_BindPose[i] = new[,] {
-                        { reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle() },
-                        { reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle() },
-                        { reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle() },
-                        { reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle() } };
+                        this.m_BindPose[i] = new[,]
+                        {
+                            {
+                                reader.ReadSingle(),
+                                reader.ReadSingle(),
+                                reader.ReadSingle(),
+                                reader.ReadSingle()
+                            },
+                            {
+                                reader.ReadSingle(),
+                                reader.ReadSingle(),
+                                reader.ReadSingle(),
+                                reader.ReadSingle()
+                            },
+                            {
+                                reader.ReadSingle(),
+                                reader.ReadSingle(),
+                                reader.ReadSingle(),
+                                reader.ReadSingle()
+                            },
+                            {
+                                reader.ReadSingle(),
+                                reader.ReadSingle(),
+                                reader.ReadSingle(),
+                                reader.ReadSingle()
+                            }
+                        };
                     }
                 }
 
-                if (version[0] < 2018)//2018 down
+                if (this.version[0] < 2018) //2018 down
                 {
-                    var m_CurrentChannels = reader.ReadInt32();
+                    int m_CurrentChannels = reader.ReadInt32();
                 }
 
-                m_VertexCount = reader.ReadInt32();
-                int streamCount = 0;
+                this.m_VertexCount = reader.ReadInt32();
+                var streamCount = 0;
 
                 #region streams for 3.5.0 - 3.5.7
-                if (version[0] < 4)
+
+                if (this.version[0] < 4)
                 {
-                    if (m_MeshCompression != 0 && version[2] == 0) //special case not just on platform 9
+                    if (m_MeshCompression != 0 && this.version[2] == 0) //special case not just on platform 9
                     {
                         reader.Position += 12;
                     }
                     else
                     {
-                        m_Streams = new StreamInfo[4];
-                        for (int s = 0; s < 4; s++)
+                        this.m_Streams = new StreamInfo[4];
+                        for (var s = 0; s < 4; s++)
                         {
-                            m_Streams[s] = new StreamInfo();
-                            m_Streams[s].channelMask = new BitArray(new int[1] { reader.ReadInt32() });
-                            m_Streams[s].offset = reader.ReadInt32();
-                            m_Streams[s].stride = reader.ReadInt32();
-                            m_Streams[s].align = reader.ReadUInt32();
+                            this.m_Streams[s] = new StreamInfo();
+                            this.m_Streams[s].channelMask = new BitArray(new int[]
+                            {
+                                reader.ReadInt32()
+                            });
+                            this.m_Streams[s].offset = reader.ReadInt32();
+                            this.m_Streams[s].stride = reader.ReadInt32();
+                            this.m_Streams[s].align = reader.ReadUInt32();
                         }
                     }
                 }
+
                 #endregion
+
                 #region channels and streams for 4.0.0 and later
+
                 else
                 {
-                    m_Channels = new ChannelInfo[reader.ReadInt32()];
-                    for (int c = 0; c < m_Channels.Length; c++)
+                    this.m_Channels = new ChannelInfo[reader.ReadInt32()];
+                    for (var c = 0; c < this.m_Channels.Length; c++)
                     {
-                        m_Channels[c] = new ChannelInfo();
-                        m_Channels[c].stream = reader.ReadByte();
-                        m_Channels[c].offset = reader.ReadByte();
-                        m_Channels[c].format = reader.ReadByte();
-                        m_Channels[c].dimension = reader.ReadByte();
+                        this.m_Channels[c] = new ChannelInfo();
+                        this.m_Channels[c].stream = reader.ReadByte();
+                        this.m_Channels[c].offset = reader.ReadByte();
+                        this.m_Channels[c].format = reader.ReadByte();
+                        this.m_Channels[c].dimension = reader.ReadByte();
 
-                        if (m_Channels[c].stream >= streamCount) { streamCount = m_Channels[c].stream + 1; }
+                        if (this.m_Channels[c].stream >= streamCount)
+                        {
+                            streamCount = this.m_Channels[c].stream + 1;
+                        }
                     }
 
-                    if (version[0] < 5)
+                    if (this.version[0] < 5)
                     {
-                        m_Streams = new StreamInfo[reader.ReadInt32()];
-                        for (int s = 0; s < m_Streams.Length; s++)
+                        this.m_Streams = new StreamInfo[reader.ReadInt32()];
+                        for (var s = 0; s < this.m_Streams.Length; s++)
                         {
-                            m_Streams[s] = new StreamInfo();
-                            m_Streams[s].channelMask = new BitArray(new[] { reader.ReadInt32() });
-                            m_Streams[s].offset = reader.ReadInt32();
-                            m_Streams[s].stride = reader.ReadByte();
-                            m_Streams[s].dividerOp = reader.ReadByte();
-                            m_Streams[s].frequency = reader.ReadUInt16();
+                            this.m_Streams[s] = new StreamInfo();
+                            this.m_Streams[s].channelMask = new BitArray(new[]
+                            {
+                                reader.ReadInt32()
+                            });
+                            this.m_Streams[s].offset = reader.ReadInt32();
+                            this.m_Streams[s].stride = reader.ReadByte();
+                            this.m_Streams[s].dividerOp = reader.ReadByte();
+                            this.m_Streams[s].frequency = reader.ReadUInt16();
                         }
                     }
                 }
+
                 #endregion
-                if (version[0] >= 5) //ComputeCompressedStreams
+
+                if (this.version[0] >= 5) //ComputeCompressedStreams
                 {
-                    m_Streams = new StreamInfo[streamCount];
-                    int offset = 0;
-                    for (int s = 0; s < streamCount; s++)
+                    this.m_Streams = new StreamInfo[streamCount];
+                    var offset = 0;
+                    for (var s = 0; s < streamCount; s++)
                     {
-                        int chnMask = 0;
-                        int stride = 0;
-                        for (int chn = 0; chn < m_Channels.Length; chn++)
+                        var chnMask = 0;
+                        var stride = 0;
+                        for (var chn = 0; chn < this.m_Channels.Length; chn++)
                         {
-                            var m_Channel = m_Channels[chn];
+                            ChannelInfo m_Channel = this.m_Channels[chn];
                             if (m_Channel.stream == s)
                             {
                                 if (m_Channel.dimension > 0)
@@ -550,53 +688,59 @@ namespace AssetStudio
                                 }
                             }
                         }
-                        m_Streams[s] = new StreamInfo
+                        this.m_Streams[s] = new StreamInfo
                         {
-                            channelMask = new BitArray(new[] { chnMask }),
+                            channelMask = new BitArray(new[]
+                            {
+                                chnMask
+                            }),
                             offset = offset,
                             stride = stride,
                             dividerOp = 0,
                             frequency = 0
                         };
-                        offset += m_VertexCount * stride;
+                        offset += this.m_VertexCount * stride;
                         //static size_t AlignStreamSize (size_t size) { return (size + (kVertexStreamAlign-1)) & ~(kVertexStreamAlign-1); }
                         offset = (offset + (16 - 1)) & ~(16 - 1);
                     }
                 }
 
                 //actual Vertex Buffer
-                var m_DataSize = reader.ReadBytes(reader.ReadInt32());
+                byte[] m_DataSize = reader.ReadBytes(reader.ReadInt32());
+                reader.AlignStream(4);
+
                 #endregion
 
                 #region compute FvF
+
                 #region 2018 and up
-                if (version[0] >= 2018)
+
+                if (this.version[0] >= 2018)
                 {
-                    InitMSkin();
-                    foreach (var m_Channel in m_Channels)
+                    foreach (ChannelInfo m_Channel in this.m_Channels)
                     {
                         if (m_Channel.dimension > 0)
                         {
-                            var m_Stream = m_Streams[m_Channel.stream];
+                            StreamInfo m_Stream = this.m_Streams[m_Channel.stream];
 
-                            for (int b = 0; b < 14; b++)
+                            for (var b = 0; b < 14; b++)
                             {
                                 if (m_Stream.channelMask.Get(b))
                                 {
-                                    var componentByteSize = GetChannelFormatSize(m_Channel.format);
-                                    var componentBytes = new byte[m_VertexCount * m_Channel.dimension * componentByteSize];
+                                    int componentByteSize = GetChannelFormatSize(m_Channel.format);
+                                    var componentBytes = new byte[this.m_VertexCount * m_Channel.dimension * componentByteSize];
 
-                                    for (int v = 0; v < m_VertexCount; v++)
+                                    for (var v = 0; v < this.m_VertexCount; v++)
                                     {
                                         int vertexOffset = m_Stream.offset + m_Channel.offset + m_Stream.stride * v;
-                                        for (int d = 0; d < m_Channel.dimension; d++)
+                                        for (var d = 0; d < m_Channel.dimension; d++)
                                         {
                                             int componentOffset = vertexOffset + componentByteSize * d;
                                             Buffer.BlockCopy(m_DataSize, componentOffset, componentBytes, componentByteSize * (v * m_Channel.dimension + d), componentByteSize);
                                         }
                                     }
 
-                                    if (preloadData.sourceFile.m_TargetPlatform == BuildTarget.XBOX360 && componentByteSize > 1) //swap bytes for Xbox
+                                    if (this.platform == BuildTarget.XBOX360 && componentByteSize > 1) //swap bytes for Xbox
                                     {
                                         for (var i = 0; i < componentBytes.Length / componentByteSize; i++)
                                         {
@@ -610,52 +754,68 @@ namespace AssetStudio
                                     int[] componentsIntArray = null;
                                     float[] componentsFloatArray = null;
                                     if (m_Channel.format == 11)
+                                    {
                                         componentsIntArray = BytesToIntArray(componentBytes);
+                                    }
                                     else
+                                    {
                                         componentsFloatArray = BytesToFloatArray(componentBytes, componentByteSize);
+                                    }
 
                                     switch (b)
                                     {
                                         case 0: //kShaderChannelVertex
-                                            m_Vertices = componentsFloatArray;
+                                            this.m_Vertices = componentsFloatArray;
                                             break;
                                         case 1: //kShaderChannelNormal
-                                            m_Normals = componentsFloatArray;
+                                            this.m_Normals = componentsFloatArray;
                                             break;
                                         case 2: //kShaderChannelTangent
-                                            m_Tangents = componentsFloatArray;
+                                            this.m_Tangents = componentsFloatArray;
                                             break;
                                         case 3: //kShaderChannelColor
-                                            m_Colors = componentsFloatArray;
+                                            this.m_Colors = componentsFloatArray;
                                             break;
                                         case 4: //kShaderChannelTexCoord0
-                                            m_UV1 = componentsFloatArray;
+                                            this.m_UV1 = componentsFloatArray;
                                             break;
                                         case 5: //kShaderChannelTexCoord1
-                                            m_UV2 = componentsFloatArray;
+                                            this.m_UV2 = componentsFloatArray;
                                             break;
                                         case 6: //kShaderChannelTexCoord2
-                                            m_UV3 = componentsFloatArray;
+                                            this.m_UV3 = componentsFloatArray;
                                             break;
                                         case 7: //kShaderChannelTexCoord3
-                                            m_UV4 = componentsFloatArray;
+                                            this.m_UV4 = componentsFloatArray;
                                             break;
+                                        //kShaderChannelTexCoord4 8
+                                        //kShaderChannelTexCoord5 9
+                                        //kShaderChannelTexCoord6 10
+                                        //kShaderChannelTexCoord7 11
                                         //2018.2 and up
-                                        case 12:
-                                            for (int i = 0; i < m_VertexCount; i++)
+                                        case 12: //kShaderChannelBlendWeight
+                                            if (this.m_Skin == null)
                                             {
-                                                for (int j = 0; j < 4; j++)
+                                                this.InitMSkin();
+                                            }
+                                            for (var i = 0; i < this.m_VertexCount; i++)
+                                            {
+                                                for (var j = 0; j < 4; j++)
                                                 {
-                                                    m_Skin[i][j].weight = componentsFloatArray[i * 4 + j];
+                                                    this.m_Skin[i][j].weight = componentsFloatArray[i * 4 + j];
                                                 }
                                             }
                                             break;
-                                        case 13:
-                                            for (int i = 0; i < m_VertexCount; i++)
+                                        case 13: //kShaderChannelBlendIndices
+                                            if (this.m_Skin == null)
                                             {
-                                                for (int j = 0; j < 4; j++)
+                                                this.InitMSkin();
+                                            }
+                                            for (var i = 0; i < this.m_VertexCount; i++)
+                                            {
+                                                for (var j = 0; j < 4; j++)
                                                 {
-                                                    m_Skin[i][j].boneIndex = componentsIntArray[i * 4 + j];
+                                                    this.m_Skin[i][j].boneIndex = componentsIntArray[i * 4 + j];
                                                 }
                                             }
                                             break;
@@ -668,21 +828,24 @@ namespace AssetStudio
                         }
                     }
                 }
+
                 #endregion
+
                 else
                 {
                     #region 4.0 - 2017.x
-                    if (m_Channels != null)
+
+                    if (this.m_Channels != null)
                     {
                         //it is better to loop channels instead of streams
                         //because channels are likely to be sorted by vertex property
-                        foreach (var m_Channel in m_Channels)
+                        foreach (ChannelInfo m_Channel in this.m_Channels)
                         {
                             if (m_Channel.dimension > 0)
                             {
-                                var m_Stream = m_Streams[m_Channel.stream];
+                                StreamInfo m_Stream = this.m_Streams[m_Channel.stream];
 
-                                for (int b = 0; b < 8; b++)
+                                for (var b = 0; b < 8; b++)
                                 {
                                     if (m_Stream.channelMask.Get(b))
                                     {
@@ -692,20 +855,20 @@ namespace AssetStudio
                                             m_Channel.dimension = 4; //set this so that don't need to convert int to 4 bytes
                                         }
 
-                                        var componentByteSize = GetChannelFormatSize(m_Channel.format);
-                                        var componentBytes = new byte[m_VertexCount * m_Channel.dimension * componentByteSize];
+                                        int componentByteSize = GetChannelFormatSize(m_Channel.format);
+                                        var componentBytes = new byte[this.m_VertexCount * m_Channel.dimension * componentByteSize];
 
-                                        for (int v = 0; v < m_VertexCount; v++)
+                                        for (var v = 0; v < this.m_VertexCount; v++)
                                         {
                                             int vertexOffset = m_Stream.offset + m_Channel.offset + m_Stream.stride * v;
-                                            for (int d = 0; d < m_Channel.dimension; d++)
+                                            for (var d = 0; d < m_Channel.dimension; d++)
                                             {
                                                 int componentOffset = vertexOffset + componentByteSize * d;
                                                 Buffer.BlockCopy(m_DataSize, componentOffset, componentBytes, componentByteSize * (v * m_Channel.dimension + d), componentByteSize);
                                             }
                                         }
 
-                                        if (preloadData.sourceFile.m_TargetPlatform == BuildTarget.XBOX360 && componentByteSize > 1) //swap bytes for Xbox
+                                        if (this.platform == BuildTarget.XBOX360 && componentByteSize > 1) //swap bytes for Xbox
                                         {
                                             for (var i = 0; i < componentBytes.Length / componentByteSize; i++)
                                             {
@@ -716,40 +879,40 @@ namespace AssetStudio
                                             }
                                         }
 
-                                        var componentsFloatArray = BytesToFloatArray(componentBytes, componentByteSize);
+                                        float[] componentsFloatArray = BytesToFloatArray(componentBytes, componentByteSize);
 
                                         switch (b)
                                         {
                                             case 0: //kShaderChannelVertex
-                                                m_Vertices = componentsFloatArray;
+                                                this.m_Vertices = componentsFloatArray;
                                                 break;
                                             case 1: //kShaderChannelNormal
-                                                m_Normals = componentsFloatArray;
+                                                this.m_Normals = componentsFloatArray;
                                                 break;
                                             case 2: //kShaderChannelColor
-                                                m_Colors = componentsFloatArray;
+                                                this.m_Colors = componentsFloatArray;
                                                 break;
                                             case 3: //kShaderChannelTexCoord0
-                                                m_UV1 = componentsFloatArray;
+                                                this.m_UV1 = componentsFloatArray;
                                                 break;
                                             case 4: //kShaderChannelTexCoord1
-                                                m_UV2 = componentsFloatArray;
+                                                this.m_UV2 = componentsFloatArray;
                                                 break;
                                             case 5: //kShaderChannelTangent & kShaderChannelTexCoord2
-                                                if (version[0] >= 5)
+                                                if (this.version[0] >= 5)
                                                 {
-                                                    m_UV3 = componentsFloatArray;
+                                                    this.m_UV3 = componentsFloatArray;
                                                 }
                                                 else
                                                 {
-                                                    m_Tangents = componentsFloatArray;
+                                                    this.m_Tangents = componentsFloatArray;
                                                 }
                                                 break;
                                             case 6: //kShaderChannelTexCoord3
-                                                m_UV4 = componentsFloatArray;
+                                                this.m_UV4 = componentsFloatArray;
                                                 break;
                                             case 7: //kShaderChannelTangent
-                                                m_Tangents = componentsFloatArray;
+                                                this.m_Tangents = componentsFloatArray;
                                                 break;
                                         }
 
@@ -760,19 +923,22 @@ namespace AssetStudio
                             }
                         }
                     }
+
                     #endregion
+
                     #region 3.5.0 - 3.5.7
-                    else if (m_Streams != null)
+
+                    else if (this.m_Streams != null)
                     {
-                        foreach (var m_Stream in m_Streams)
+                        foreach (StreamInfo m_Stream in this.m_Streams)
                         {
                             //a stream may have multiple vertex components but without channels there are no offsets, so I assume all vertex properties are in order
                             //version 3.5.x only uses floats, and that's probably why channels were introduced in version 4
 
-                            ChannelInfo m_Channel = new ChannelInfo();//create my own channel so I can use the same methods
+                            var m_Channel = new ChannelInfo(); //create my own channel so I can use the same methods
                             m_Channel.offset = 0;
-                            int componentByteSize = 0;
-                            for (int b = 0; b < 6; b++)
+                            var componentByteSize = 0;
+                            for (var b = 0; b < 6; b++)
                             {
                                 if (m_Stream.channelMask.Get(b))
                                 {
@@ -799,84 +965,106 @@ namespace AssetStudio
                                     }
 
                                     var componentBytes = new byte[componentByteSize];
-                                    var componentsArray = new float[m_VertexCount * m_Channel.dimension];
+                                    var componentsArray = new float[this.m_VertexCount * m_Channel.dimension];
 
-                                    for (int v = 0; v < m_VertexCount; v++)
+                                    for (var v = 0; v < this.m_VertexCount; v++)
                                     {
                                         int vertexOffset = m_Stream.offset + m_Channel.offset + m_Stream.stride * v;
-                                        for (int d = 0; d < m_Channel.dimension; d++)
+                                        for (var d = 0; d < m_Channel.dimension; d++)
                                         {
                                             int m_DataSizeOffset = vertexOffset + componentByteSize * d;
                                             Buffer.BlockCopy(m_DataSize, m_DataSizeOffset, componentBytes, 0, componentByteSize);
-                                            componentsArray[v * m_Channel.dimension + d] = BytesToFloat(componentBytes);
+                                            componentsArray[v * m_Channel.dimension + d] = this.BytesToFloat(componentBytes, reader.endian);
                                         }
                                     }
 
                                     switch (b)
                                     {
-                                        case 0: m_Vertices = componentsArray; break;
-                                        case 1: m_Normals = componentsArray; break;
-                                        case 2: m_Colors = componentsArray; break;
-                                        case 3: m_UV1 = componentsArray; break;
-                                        case 4: m_UV2 = componentsArray; break;
-                                        case 5: m_Tangents = componentsArray; break;
+                                        case 0:
+                                            this.m_Vertices = componentsArray;
+                                            break;
+                                        case 1:
+                                            this.m_Normals = componentsArray;
+                                            break;
+                                        case 2:
+                                            this.m_Colors = componentsArray;
+                                            break;
+                                        case 3:
+                                            this.m_UV1 = componentsArray;
+                                            break;
+                                        case 4:
+                                            this.m_UV2 = componentsArray;
+                                            break;
+                                        case 5:
+                                            this.m_Tangents = componentsArray;
+                                            break;
                                     }
 
-                                    m_Channel.offset += (byte)(m_Channel.dimension * componentByteSize); //safe to cast as byte because strides larger than 255 are unlikely
+                                    m_Channel.offset += (byte) (m_Channel.dimension * componentByteSize); //safe to cast as byte because strides larger than 255 are unlikely
                                     m_Stream.channelMask.Set(b, false);
                                 }
                             }
                         }
                     }
+
                     #endregion
                 }
+
                 #endregion
             }
+
             #endregion
 
             #region Compressed Mesh data for 2.6.0 and later - 160 bytes
-            if (version[0] >= 3 || (version[0] == 2 && version[1] >= 6))
+
+            if (this.version[0] >= 3 || this.version[0] == 2 && this.version[1] >= 6)
             {
                 #region m_Vertices;
+
                 var m_Vertices_Packed = new PackedFloatVector(reader);
                 if (m_Vertices_Packed.m_NumItems > 0)
                 {
-                    m_VertexCount = (int)m_Vertices_Packed.m_NumItems / 3;
-                    m_Vertices = m_Vertices_Packed.UnpackFloats(3, 4);
+                    this.m_VertexCount = (int) m_Vertices_Packed.m_NumItems / 3;
+                    this.m_Vertices = m_Vertices_Packed.UnpackFloats(3, 4);
                 }
+
                 #endregion
 
                 #region m_UV
+
                 var m_UV_Packed = new PackedFloatVector(reader);
                 if (m_UV_Packed.m_NumItems > 0)
                 {
-                    m_UV1 = m_UV_Packed.UnpackFloats(2, 4, 0, m_VertexCount);
-                    if (m_UV_Packed.m_NumItems >= m_VertexCount * 4)
+                    this.m_UV1 = m_UV_Packed.UnpackFloats(2, 4, 0, this.m_VertexCount);
+                    if (m_UV_Packed.m_NumItems >= this.m_VertexCount * 4)
                     {
-                        m_UV2 = m_UV_Packed.UnpackFloats(2, 4, m_VertexCount * 2, m_VertexCount);
+                        this.m_UV2 = m_UV_Packed.UnpackFloats(2, 4, this.m_VertexCount * 2, this.m_VertexCount);
                     }
-                    if (m_UV_Packed.m_NumItems >= m_VertexCount * 6)
+                    if (m_UV_Packed.m_NumItems >= this.m_VertexCount * 6)
                     {
-                        m_UV3 = m_UV_Packed.UnpackFloats(2, 4, m_VertexCount * 4, m_VertexCount);
+                        this.m_UV3 = m_UV_Packed.UnpackFloats(2, 4, this.m_VertexCount * 4, this.m_VertexCount);
                     }
-                    if (m_UV_Packed.m_NumItems >= m_VertexCount * 8)
+                    if (m_UV_Packed.m_NumItems >= this.m_VertexCount * 8)
                     {
-                        m_UV4 = m_UV_Packed.UnpackFloats(2, 4, m_VertexCount * 6, m_VertexCount);
+                        this.m_UV4 = m_UV_Packed.UnpackFloats(2, 4, this.m_VertexCount * 6, this.m_VertexCount);
                     }
                 }
+
                 #endregion
 
                 #region m_BindPoses
-                if (version[0] < 5)
+
+                if (this.version[0] < 5)
                 {
                     var m_BindPoses_Packed = new PackedFloatVector(reader);
                     if (m_BindPoses_Packed.m_NumItems > 0)
                     {
-                        m_BindPose = new float[m_BindPoses_Packed.m_NumItems / 16][,];
-                        var m_BindPoses_Unpacked = m_BindPoses_Packed.UnpackFloats(16, 4 * 16);
+                        this.m_BindPose = new float[m_BindPoses_Packed.m_NumItems / 16][,];
+                        float[] m_BindPoses_Unpacked = m_BindPoses_Packed.UnpackFloats(16, 4 * 16);
                         throw new NotImplementedException();
                     }
                 }
+
                 #endregion
 
                 var m_Normals_Packed = new PackedFloatVector(reader);
@@ -886,20 +1074,23 @@ namespace AssetStudio
                 var m_Weights = new PackedIntVector(reader);
 
                 #region m_Normals
+
                 var m_NormalSigns = new PackedIntVector(reader);
                 if (m_Normals_Packed.m_NumItems > 0)
                 {
-                    var normalData = m_Normals_Packed.UnpackFloats(2, 4 * 2);
-                    var signs = m_NormalSigns.UnpackInts();
-                    m_Normals = new float[m_Normals_Packed.m_NumItems / 2 * 3];
-                    for (int i = 0; i < m_Normals_Packed.m_NumItems / 2; ++i)
+                    float[] normalData = m_Normals_Packed.UnpackFloats(2, 4 * 2);
+                    int[] signs = m_NormalSigns.UnpackInts();
+                    this.m_Normals = new float[m_Normals_Packed.m_NumItems / 2 * 3];
+                    for (var i = 0; i < m_Normals_Packed.m_NumItems / 2; ++i)
                     {
-                        var x = normalData[i * 2 + 0];
-                        var y = normalData[i * 2 + 1];
-                        var zsqr = 1 - x * x - y * y;
+                        float x = normalData[i * 2 + 0];
+                        float y = normalData[i * 2 + 1];
+                        float zsqr = 1 - x * x - y * y;
                         float z;
                         if (zsqr >= 0f)
-                            z = (float)Math.Sqrt(zsqr);
+                        {
+                            z = (float) Math.Sqrt(zsqr);
+                        }
                         else
                         {
                             z = 0;
@@ -910,29 +1101,35 @@ namespace AssetStudio
                             z = normal.Z;
                         }
                         if (signs[i] == 0)
+                        {
                             z = -z;
-                        m_Normals[i * 3] = x;
-                        m_Normals[i * 3 + 1] = y;
-                        m_Normals[i * 3 + 2] = z;
+                        }
+                        this.m_Normals[i * 3] = x;
+                        this.m_Normals[i * 3 + 1] = y;
+                        this.m_Normals[i * 3 + 2] = z;
                     }
                 }
+
                 #endregion
 
                 #region m_Tangents
+
                 var m_TangentSigns = new PackedIntVector(reader);
                 if (m_Tangents_Packed.m_NumItems > 0)
                 {
-                    var tangentData = m_Tangents_Packed.UnpackFloats(2, 4 * 2);
-                    var signs = m_TangentSigns.UnpackInts();
-                    m_Tangents = new float[m_Tangents_Packed.m_NumItems / 2 * 4];
-                    for (int i = 0; i < m_Tangents_Packed.m_NumItems / 2; ++i)
+                    float[] tangentData = m_Tangents_Packed.UnpackFloats(2, 4 * 2);
+                    int[] signs = m_TangentSigns.UnpackInts();
+                    this.m_Tangents = new float[m_Tangents_Packed.m_NumItems / 2 * 4];
+                    for (var i = 0; i < m_Tangents_Packed.m_NumItems / 2; ++i)
                     {
-                        var x = tangentData[i * 2 + 0];
-                        var y = tangentData[i * 2 + 1];
-                        var zsqr = 1 - x * x - y * y;
+                        float x = tangentData[i * 2 + 0];
+                        float y = tangentData[i * 2 + 1];
+                        float zsqr = 1 - x * x - y * y;
                         float z;
                         if (zsqr >= 0f)
-                            z = (float)Math.Sqrt(zsqr);
+                        {
+                            z = (float) Math.Sqrt(zsqr);
+                        }
                         else
                         {
                             z = 0;
@@ -943,46 +1140,52 @@ namespace AssetStudio
                             z = vector3f.Z;
                         }
                         if (signs[i * 2 + 0] == 0)
+                        {
                             z = -z;
-                        var w = signs[i * 2 + 1] > 0 ? 1.0f : -1.0f;
-                        m_Tangents[i * 4] = x;
-                        m_Tangents[i * 4 + 1] = y;
-                        m_Tangents[i * 4 + 2] = z;
-                        m_Tangents[i * 4 + 3] = w;
+                        }
+                        float w = signs[i * 2 + 1] > 0 ? 1.0f : -1.0f;
+                        this.m_Tangents[i * 4] = x;
+                        this.m_Tangents[i * 4 + 1] = y;
+                        this.m_Tangents[i * 4 + 2] = z;
+                        this.m_Tangents[i * 4 + 3] = w;
                     }
                 }
+
                 #endregion
 
                 #region m_FloatColors
-                if (version[0] >= 5)
+
+                if (this.version[0] >= 5)
                 {
                     var m_FloatColors = new PackedFloatVector(reader);
                     if (m_FloatColors.m_NumItems > 0)
                     {
-                        m_Colors = m_FloatColors.UnpackFloats(1, 4);
+                        this.m_Colors = m_FloatColors.UnpackFloats(1, 4);
                     }
                 }
+
                 #endregion
 
                 #region m_Skin
+
                 var m_BoneIndices = new PackedIntVector(reader);
                 if (m_Weights.m_NumItems > 0)
                 {
-                    var weights = m_Weights.UnpackInts();
-                    var boneIndices = m_BoneIndices.UnpackInts();
+                    int[] weights = m_Weights.UnpackInts();
+                    int[] boneIndices = m_BoneIndices.UnpackInts();
 
-                    InitMSkin();
+                    this.InitMSkin();
 
-                    int bonePos = 0;
-                    int boneIndexPos = 0;
-                    int j = 0;
-                    int sum = 0;
+                    var bonePos = 0;
+                    var boneIndexPos = 0;
+                    var j = 0;
+                    var sum = 0;
 
-                    for (int i = 0; i < m_Weights.m_NumItems; i++)
+                    for (var i = 0; i < m_Weights.m_NumItems; i++)
                     {
                         //read bone index and weight.
-                        m_Skin[bonePos][j].weight = weights[i] / 31.0f;
-                        m_Skin[bonePos][j].boneIndex = boneIndices[boneIndexPos++];
+                        this.m_Skin[bonePos][j].weight = weights[i] / 31.0f;
+                        this.m_Skin[bonePos][j].boneIndex = boneIndices[boneIndexPos++];
                         j++;
                         sum += weights[i];
 
@@ -991,8 +1194,8 @@ namespace AssetStudio
                         {
                             for (; j < 4; j++)
                             {
-                                m_Skin[bonePos][j].weight = 0;
-                                m_Skin[bonePos][j].boneIndex = 0;
+                                this.m_Skin[bonePos][j].weight = 0;
+                                this.m_Skin[bonePos][j].boneIndex = 0;
                             }
                             bonePos++;
                             j = 0;
@@ -1002,69 +1205,81 @@ namespace AssetStudio
                         //missing bone index. continue with next vertex.
                         else if (j == 3)
                         {
-                            m_Skin[bonePos][j].weight = (31 - sum) / 31.0f;
-                            m_Skin[bonePos][j].boneIndex = boneIndices[boneIndexPos++];
+                            this.m_Skin[bonePos][j].weight = (31 - sum) / 31.0f;
+                            this.m_Skin[bonePos][j].boneIndex = boneIndices[boneIndexPos++];
                             bonePos++;
                             j = 0;
                             sum = 0;
                         }
                     }
                 }
+
                 #endregion
 
                 #region m_IndexBuffer
+
                 var m_Triangles = new PackedIntVector(reader);
                 if (m_Triangles.m_NumItems > 0)
                 {
-                    m_IndexBuffer = Array.ConvertAll(m_Triangles.UnpackInts(), x => (uint)x);
+                    this.m_IndexBuffer = Array.ConvertAll(m_Triangles.UnpackInts(), x => (uint) x);
                 }
+
                 #endregion
             }
+
             #endregion
 
             #region Colors & Collision triangles for 3.4.2 and earlier
-            if (version[0] <= 2 || (version[0] == 3 && version[1] <= 4))
+
+            if (this.version[0] <= 2 || this.version[0] == 3 && this.version[1] <= 4)
             {
                 reader.Position += 24; //Axis-Aligned Bounding Box
                 int m_Colors_size = reader.ReadInt32();
-                m_Colors = new float[m_Colors_size * 4];
-                for (int v = 0; v < m_Colors_size * 4; v++) { m_Colors[v] = (float)(reader.ReadByte()) / 0xFF; }
+                this.m_Colors = new float[m_Colors_size * 4];
+                for (var v = 0; v < m_Colors_size * 4; v++)
+                {
+                    this.m_Colors[v] = (float) reader.ReadByte() / 0xFF;
+                }
 
                 int m_CollisionTriangles_size = reader.ReadInt32();
                 reader.Position += m_CollisionTriangles_size * 4; //UInt32 indices
                 int m_CollisionVertexCount = reader.ReadInt32();
             }
+
             #endregion
+
             #region Compressed colors
+
             else
             {
-                if (version[0] < 5)
+                if (this.version[0] < 5)
                 {
                     var m_Colors_Packed = new PackedIntVector(reader);
                     if (m_Colors_Packed.m_NumItems > 0)
                     {
                         m_Colors_Packed.m_NumItems *= 4;
                         m_Colors_Packed.m_BitSize /= 4;
-                        var tempColors = m_Colors_Packed.UnpackInts();
-                        m_Colors = new float[m_Colors_Packed.m_NumItems];
-                        for (int v = 0; v < m_Colors_Packed.m_NumItems; v++)
+                        int[] tempColors = m_Colors_Packed.UnpackInts();
+                        this.m_Colors = new float[m_Colors_Packed.m_NumItems];
+                        for (var v = 0; v < m_Colors_Packed.m_NumItems; v++)
                         {
-                            m_Colors[v] = tempColors[v] / 255f;
+                            this.m_Colors[v] = tempColors[v] / 255f;
                         }
                     }
                 }
                 else
                 {
-                    var m_UVInfo = reader.ReadUInt32();
+                    uint m_UVInfo = reader.ReadUInt32();
                 }
 
                 reader.Position += 24; //AABB m_LocalAABB
             }
+
             #endregion
 
             int m_MeshUsageFlags = reader.ReadInt32();
 
-            if (version[0] >= 5)
+            if (this.version[0] >= 5)
             {
                 //int m_BakedConvexCollisionMesh = a_Stream.ReadInt32();
                 //a_Stream.Position += m_BakedConvexCollisionMesh;
@@ -1073,51 +1288,56 @@ namespace AssetStudio
             }
 
             #region Build face indices
-            for (int s = 0; s < m_SubMeshes_size; s++)
-            {
-                uint firstIndex = m_SubMeshes[s].firstByte / 2;
-                if (!m_Use16BitIndices) { firstIndex /= 2; }
 
-                if (m_SubMeshes[s].topology == 0)
+            for (var s = 0; s < m_SubMeshes_size; s++)
+            {
+                uint firstIndex = this.m_SubMeshes[s].firstByte / 2;
+                if (!m_Use16BitIndices)
                 {
-                    for (int i = 0; i < m_SubMeshes[s].indexCount / 3; i++)
+                    firstIndex /= 2;
+                }
+
+                if (this.m_SubMeshes[s].topology == 0)
+                {
+                    for (var i = 0; i < this.m_SubMeshes[s].indexCount / 3; i++)
                     {
-                        m_Indices.Add(m_IndexBuffer[firstIndex + i * 3]);
-                        m_Indices.Add(m_IndexBuffer[firstIndex + i * 3 + 1]);
-                        m_Indices.Add(m_IndexBuffer[firstIndex + i * 3 + 2]);
-                        m_materialIDs.Add(s);
+                        this.m_Indices.Add(this.m_IndexBuffer[firstIndex + i * 3]);
+                        this.m_Indices.Add(this.m_IndexBuffer[firstIndex + i * 3 + 1]);
+                        this.m_Indices.Add(this.m_IndexBuffer[firstIndex + i * 3 + 2]);
+                        this.m_materialIDs.Add(s);
                     }
                 }
                 else
                 {
                     uint j = 0;
-                    for (int i = 0; i < m_SubMeshes[s].indexCount - 2; i++)
+                    for (var i = 0; i < this.m_SubMeshes[s].indexCount - 2; i++)
                     {
-                        uint fa = m_IndexBuffer[firstIndex + i];
-                        uint fb = m_IndexBuffer[firstIndex + i + 1];
-                        uint fc = m_IndexBuffer[firstIndex + i + 2];
+                        uint fa = this.m_IndexBuffer[firstIndex + i];
+                        uint fb = this.m_IndexBuffer[firstIndex + i + 1];
+                        uint fc = this.m_IndexBuffer[firstIndex + i + 2];
 
-                        if ((fa != fb) && (fa != fc) && (fc != fb))
+                        if (fa != fb && fa != fc && fc != fb)
                         {
-                            m_Indices.Add(fa);
-                            if ((i % 2) == 0)
+                            this.m_Indices.Add(fa);
+                            if (i % 2 == 0)
                             {
-                                m_Indices.Add(fb);
-                                m_Indices.Add(fc);
+                                this.m_Indices.Add(fb);
+                                this.m_Indices.Add(fc);
                             }
                             else
                             {
-                                m_Indices.Add(fc);
-                                m_Indices.Add(fb);
+                                this.m_Indices.Add(fc);
+                                this.m_Indices.Add(fb);
                             }
-                            m_materialIDs.Add(s);
+                            this.m_materialIDs.Add(s);
                             j++;
                         }
                     }
                     //TODO just fix it
-                    m_SubMeshes[s].indexCount = j * 3;
+                    this.m_SubMeshes[s].indexCount = j * 3;
                 }
             }
+
             #endregion
         }
     }

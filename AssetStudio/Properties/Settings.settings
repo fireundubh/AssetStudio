@@ -29,7 +29,7 @@
     <Setting Name="displayOriginalName" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>
-    <Setting Name="EulerFilter" Type="System.Boolean" Scope="User">
+    <Setting Name="eulerFilter" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">True</Value>
     </Setting>
     <Setting Name="filterPrecision" Type="System.Decimal" Scope="User">
@@ -58,6 +58,9 @@
     </Setting>
     <Setting Name="enableLiveSearch" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="scaleFactor" Type="System.Decimal" Scope="User">
+      <Value Profile="(Default)">1</Value>
     </Setting>
   </Settings>
 </SettingsFile>

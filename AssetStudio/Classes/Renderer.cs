@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using AssetStudio.Extensions;
+using AssetStudio.StudioClasses;
 
 namespace AssetStudio
 {
@@ -18,55 +15,61 @@ namespace AssetStudio
         public StaticBatchInfo m_StaticBatchInfo;
         public uint[] m_SubsetIndices;
 
-        protected Renderer(AssetPreloadData preloadData) : base(preloadData)
+        protected Renderer(ObjectReader reader) : base(reader)
         {
-            if (version[0] < 5)
+            if (this.version[0] < 5)
             {
-                var m_Enabled = reader.ReadBoolean();
-                var m_CastShadows = reader.ReadByte();
-                var m_ReceiveShadows = reader.ReadBoolean();
-                var m_LightmapIndex = reader.ReadByte();
+                bool m_Enabled = reader.ReadBoolean();
+                byte m_CastShadows = reader.ReadByte();
+                bool m_ReceiveShadows = reader.ReadBoolean();
+                byte m_LightmapIndex = reader.ReadByte();
             }
             else
             {
-                var m_Enabled = reader.ReadBoolean();
+                bool m_Enabled = reader.ReadBoolean();
+
                 reader.AlignStream(4);
-                var m_CastShadows = reader.ReadByte();
-                var m_ReceiveShadows = reader.ReadBoolean();
+
+                byte m_CastShadows = reader.ReadByte();
+                bool m_ReceiveShadows = reader.ReadBoolean();
+
                 reader.AlignStream(4);
-                if (version[0] >= 2018)//2018 and up
+
+                if (this.version[0] >= 2018) //2018 and up
                 {
-                    var m_RenderingLayerMask = reader.ReadUInt32();
+                    uint m_RenderingLayerMask = reader.ReadUInt32();
                 }
-                var m_LightmapIndex = reader.ReadUInt16();
-                var m_LightmapIndexDynamic = reader.ReadUInt16();
+
+                ushort m_LightmapIndex = reader.ReadUInt16();
+                ushort m_LightmapIndexDynamic = reader.ReadUInt16();
             }
 
-            if (version[0] >= 3)
+            if (this.version[0] >= 3)
             {
-                reader.Position += 16;//Vector4f m_LightmapTilingOffset
+                reader.Position += 16; //Vector4f m_LightmapTilingOffset
             }
 
-            if (version[0] >= 5)
+            if (this.version[0] >= 5)
             {
-                reader.Position += 16;//Vector4f m_LightmapTilingOffsetDynamic
+                reader.Position += 16; //Vector4f m_LightmapTilingOffsetDynamic
             }
 
-            m_Materials = new PPtr[reader.ReadInt32()];
-            for (int m = 0; m < m_Materials.Length; m++)
+            this.m_Materials = new PPtr[reader.ReadInt32()];
+
+            for (var m = 0; m < this.m_Materials.Length; m++)
             {
-                m_Materials[m] = sourceFile.ReadPPtr();
+                this.m_Materials[m] = reader.ReadPPtr();
             }
 
-            if (version[0] < 3)
+            if (this.version[0] < 3)
             {
-                reader.Position += 16;//m_LightmapTilingOffset vector4d
+                reader.Position += 16; //m_LightmapTilingOffset vector4d
             }
             else
             {
-                if ((sourceFile.version[0] == 5 && sourceFile.version[1] >= 5) || sourceFile.version[0] > 5)//5.5.0 and up
+                if (reader.version[0] == 5 && reader.version[1] >= 5 || reader.version[0] > 5) //5.5.0 and up
                 {
-                    m_StaticBatchInfo = new StaticBatchInfo
+                    this.m_StaticBatchInfo = new StaticBatchInfo
                     {
                         firstSubMesh = reader.ReadUInt16(),
                         subMeshCount = reader.ReadUInt16()
@@ -75,30 +78,33 @@ namespace AssetStudio
                 else
                 {
                     int numSubsetIndices = reader.ReadInt32();
-                    m_SubsetIndices = reader.ReadUInt32Array(numSubsetIndices);
+                    this.m_SubsetIndices = reader.ReadUInt32Array(numSubsetIndices);
                 }
 
-                var m_StaticBatchRoot = sourceFile.ReadPPtr();
+                PPtr m_StaticBatchRoot = reader.ReadPPtr();
 
-                if ((sourceFile.version[0] == 5 && sourceFile.version[1] >= 4) || sourceFile.version[0] > 5)//5.4.0 and up
+                if (this.version[0] == 5 && this.version[1] >= 4 || this.version[0] > 5) //5.4.0 and up
                 {
-                    var m_ProbeAnchor = sourceFile.ReadPPtr();
-                    var m_LightProbeVolumeOverride = sourceFile.ReadPPtr();
+                    PPtr m_ProbeAnchor = reader.ReadPPtr();
+                    PPtr m_LightProbeVolumeOverride = reader.ReadPPtr();
                 }
-                else if (version[0] >= 4 || (version[0] == 3 && version[1] >= 5))//3.5 - 5.3
+                else if (this.version[0] >= 4 || this.version[0] == 3 && this.version[1] >= 5) //3.5 - 5.3
                 {
-                    var m_UseLightProbes = reader.ReadBoolean();
+                    bool m_UseLightProbes = reader.ReadBoolean();
+
                     reader.AlignStream(4);
-                    if (version[0] == 5)//5.0 and up
+
+                    if (this.version[0] == 5) //5.0 and up
                     {
                         int m_ReflectionProbeUsage = reader.ReadInt32();
                     }
-                    var m_LightProbeAnchor = sourceFile.ReadPPtr();
+
+                    PPtr m_LightProbeAnchor = reader.ReadPPtr();
                 }
 
-                if (version[0] >= 5 || (version[0] == 4 && version[1] >= 3))//4.3 and up
+                if (this.version[0] >= 5 || this.version[0] == 4 && this.version[1] >= 3) //4.3 and up
                 {
-                    if (version[0] == 4 && version[1] == 3)//4.3
+                    if (this.version[0] == 4 && this.version[1] == 3) //4.3
                     {
                         int m_SortingLayer = reader.ReadInt16();
                     }
@@ -109,6 +115,7 @@ namespace AssetStudio
                     }
 
                     int m_SortingOrder = reader.ReadInt16();
+
                     reader.AlignStream(4);
                 }
             }

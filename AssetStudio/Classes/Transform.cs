@@ -1,8 +1,5 @@
-﻿using SharpDX;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using AssetStudio.StudioClasses;
 
 namespace AssetStudio
 {
@@ -14,18 +11,38 @@ namespace AssetStudio
         public List<PPtr> m_Children;
         public PPtr m_Father;
 
-        public Transform(AssetPreloadData preloadData) : base(preloadData)
+        public Transform(ObjectReader reader) : base(reader)
         {
-            m_LocalRotation = new[] { reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle() };
-            m_LocalPosition = new[] { reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle() };
-            m_LocalScale = new[] { reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle() };
-            int m_ChildrenCount = reader.ReadInt32();
-            m_Children = new List<PPtr>(m_ChildrenCount);
-            for (int j = 0; j < m_ChildrenCount; j++)
+            this.m_LocalRotation = new[]
             {
-                m_Children.Add(sourceFile.ReadPPtr());
+                reader.ReadSingle(),
+                reader.ReadSingle(),
+                reader.ReadSingle(),
+                reader.ReadSingle()
+            };
+            this.m_LocalPosition = new[]
+            {
+                reader.ReadSingle(),
+                reader.ReadSingle(),
+                reader.ReadSingle()
+            };
+            this.m_LocalScale = new[]
+            {
+                reader.ReadSingle(),
+                reader.ReadSingle(),
+                reader.ReadSingle()
+            };
+
+            int m_ChildrenCount = reader.ReadInt32();
+
+            this.m_Children = new List<PPtr>(m_ChildrenCount);
+
+            for (var j = 0; j < m_ChildrenCount; j++)
+            {
+                this.m_Children.Add(reader.ReadPPtr());
             }
-            m_Father = sourceFile.ReadPPtr();
+
+            this.m_Father = reader.ReadPPtr();
         }
     }
 }

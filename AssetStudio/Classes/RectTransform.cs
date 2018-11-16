@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using AssetStudio.StudioClasses;
 
 namespace AssetStudio
 {
     public sealed class RectTransform : Transform
     {
-        public RectTransform(AssetPreloadData preloadData) : base(preloadData)
+        public RectTransform(ObjectReader reader) : base(reader)
         {
         }
     }

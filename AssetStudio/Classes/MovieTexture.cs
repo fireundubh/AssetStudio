@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using AssetStudio.Extensions;
+using AssetStudio.StudioClasses;
 
 namespace AssetStudio
 {
@@ -10,13 +7,13 @@ namespace AssetStudio
     {
         public byte[] m_MovieData;
 
-        public MovieTexture(AssetPreloadData preloadData) : base(preloadData)
+        public MovieTexture(ObjectReader reader) : base(reader)
         {
-            var m_Loop = reader.ReadBoolean();
+            bool m_Loop = reader.ReadBoolean();
             reader.AlignStream(4);
             //PPtr<AudioClip>
-            sourceFile.ReadPPtr();
-            m_MovieData = reader.ReadBytes(reader.ReadInt32());
+            reader.ReadPPtr();
+            this.m_MovieData = reader.ReadBytes(reader.ReadInt32());
         }
     }
 }

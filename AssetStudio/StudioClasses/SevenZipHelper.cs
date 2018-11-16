@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using SevenZip.Compression.LZMA;
 
-
 namespace AssetStudio
 {
     public static class SevenZipHelper
@@ -23,7 +22,7 @@ namespace AssetStudio
                 var v = inStream.ReadByte();
                 if (v < 0)
                     throw (new Exception("Can't Read 1"));
-                outSize |= ((long)(byte)v) << (8 * i);
+                outSize |= ((long) (byte) v) << (8 * i);
             }
             decoder.SetDecoderProperties(properties);
 

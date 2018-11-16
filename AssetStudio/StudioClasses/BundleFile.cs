@@ -35,65 +35,65 @@ namespace AssetStudio
                 case "UnityWeb":
                 case "UnityRaw":
                 case "\xFA\xFA\xFA\xFA\xFA\xFA\xFA\xFA":
+                {
+                    var format = bundleReader.ReadInt32();
+                    versionPlayer = bundleReader.ReadStringToNull();
+                    versionEngine = bundleReader.ReadStringToNull();
+                    if (format < 6)
                     {
-                        var format = bundleReader.ReadInt32();
-                        versionPlayer = bundleReader.ReadStringToNull();
-                        versionEngine = bundleReader.ReadStringToNull();
-                        if (format < 6)
-                        {
-                            int bundleSize = bundleReader.ReadInt32();
-                        }
-                        else if (format == 6)
-                        {
-                            ReadFormat6(bundleReader, true);
-                            return;
-                        }
-                        short dummy2 = bundleReader.ReadInt16();
-                        int offset = bundleReader.ReadInt16();
-                        int dummy3 = bundleReader.ReadInt32();
-                        int lzmaChunks = bundleReader.ReadInt32();
-
-                        int lzmaSize = 0;
-                        long streamSize = 0;
-
-                        for (int i = 0; i < lzmaChunks; i++)
-                        {
-                            lzmaSize = bundleReader.ReadInt32();
-                            streamSize = bundleReader.ReadInt32();
-                        }
-
-                        bundleReader.Position = offset;
-                        switch (signature)
-                        {
-                            case "\xFA\xFA\xFA\xFA\xFA\xFA\xFA\xFA": //.bytes
-                            case "UnityWeb":
-                                {
-                                    var lzmaBuffer = bundleReader.ReadBytes(lzmaSize);
-                                    using (var lzmaStream = new EndianBinaryReader(SevenZipHelper.StreamDecompress(new MemoryStream(lzmaBuffer))))
-                                    {
-                                        GetAssetsFiles(lzmaStream, 0);
-                                    }
-                                    break;
-                                }
-                            case "UnityRaw":
-                                {
-                                    GetAssetsFiles(bundleReader, offset);
-                                    break;
-                                }
-                        }
-                        break;
+                        int bundleSize = bundleReader.ReadInt32();
                     }
+                    else if (format == 6)
+                    {
+                        ReadFormat6(bundleReader, true);
+                        return;
+                    }
+                    short dummy2 = bundleReader.ReadInt16();
+                    int offset = bundleReader.ReadInt16();
+                    int dummy3 = bundleReader.ReadInt32();
+                    int lzmaChunks = bundleReader.ReadInt32();
+
+                    int lzmaSize = 0;
+                    long streamSize = 0;
+
+                    for (int i = 0; i < lzmaChunks; i++)
+                    {
+                        lzmaSize = bundleReader.ReadInt32();
+                        streamSize = bundleReader.ReadInt32();
+                    }
+
+                    bundleReader.Position = offset;
+                    switch (signature)
+                    {
+                        case "\xFA\xFA\xFA\xFA\xFA\xFA\xFA\xFA": //.bytes
+                        case "UnityWeb":
+                        {
+                            var lzmaBuffer = bundleReader.ReadBytes(lzmaSize);
+                            using (var lzmaStream = new EndianBinaryReader(SevenZipHelper.StreamDecompress(new MemoryStream(lzmaBuffer))))
+                            {
+                                GetAssetsFiles(lzmaStream, 0);
+                            }
+                            break;
+                        }
+                        case "UnityRaw":
+                        {
+                            GetAssetsFiles(bundleReader, offset);
+                            break;
+                        }
+                    }
+                    break;
+                }
                 case "UnityFS":
+                {
+                    var format = bundleReader.ReadInt32();
+                    versionPlayer = bundleReader.ReadStringToNull();
+                    versionEngine = bundleReader.ReadStringToNull();
+                    if (format == 6)
                     {
-                        var format = bundleReader.ReadInt32();
-                        versionPlayer = bundleReader.ReadStringToNull();
-                        versionEngine = bundleReader.ReadStringToNull();
-                        if (format == 6)
-                        {
-                            ReadFormat6(bundleReader);
-                        }
-                        break;
+                        ReadFormat6(bundleReader);
                     }
+                    break;
+                }
             }
         }
 
@@ -125,7 +125,7 @@ namespace AssetStudio
             if (padding)
                 bundleReader.ReadByte();
             byte[] blocksInfoBytes;
-            if ((flag & 0x80) != 0)//at end of file
+            if ((flag & 0x80) != 0) //at end of file
             {
                 var position = bundleReader.Position;
                 bundleReader.Position = bundleReader.BaseStream.Length - compressedSize;
@@ -139,28 +139,28 @@ namespace AssetStudio
             MemoryStream blocksInfoStream;
             switch (flag & 0x3F)
             {
-                default://None
+                default: //None
+                {
+                    blocksInfoStream = new MemoryStream(blocksInfoBytes);
+                    break;
+                }
+                case 1: //LZMA
+                {
+                    blocksInfoStream = SevenZipHelper.StreamDecompress(new MemoryStream(blocksInfoBytes));
+                    break;
+                }
+                case 2: //LZ4
+                case 3: //LZ4HC
+                {
+                    byte[] uncompressedBytes = new byte[uncompressedSize];
+                    using (var decoder = new Lz4DecoderStream(new MemoryStream(blocksInfoBytes)))
                     {
-                        blocksInfoStream = new MemoryStream(blocksInfoBytes);
-                        break;
+                        decoder.Read(uncompressedBytes, 0, uncompressedSize);
                     }
-                case 1://LZMA
-                    {
-                        blocksInfoStream = SevenZipHelper.StreamDecompress(new MemoryStream(blocksInfoBytes));
-                        break;
-                    }
-                case 2://LZ4
-                case 3://LZ4HC
-                    {
-                        byte[] uncompressedBytes = new byte[uncompressedSize];
-                        using (var decoder = new Lz4DecoderStream(new MemoryStream(blocksInfoBytes)))
-                        {
-                            decoder.Read(uncompressedBytes, 0, uncompressedSize);
-                        }
-                        blocksInfoStream = new MemoryStream(uncompressedBytes);
-                        break;
-                    }
-                    //case 4:LZHAM?
+                    blocksInfoStream = new MemoryStream(uncompressedBytes);
+                    break;
+                }
+                //case 4:LZHAM?
             }
             using (var blocksInfoReader = new EndianBinaryReader(blocksInfoStream))
             {
@@ -192,24 +192,24 @@ namespace AssetStudio
                 {
                     switch (blockInfo.flag & 0x3F)
                     {
-                        default://None
-                            {
-                                bundleReader.BaseStream.CopyTo(dataStream, blockInfo.compressedSize);
-                                break;
-                            }
-                        case 1://LZMA
-                            {
-                                SevenZipHelper.StreamDecompress(bundleReader.BaseStream, dataStream, blockInfo.compressedSize, blockInfo.uncompressedSize);
-                                break;
-                            }
-                        case 2://LZ4
-                        case 3://LZ4HC
-                            {
-                                var lz4Stream = new Lz4DecoderStream(bundleReader.BaseStream, blockInfo.compressedSize);
-                                lz4Stream.CopyTo(dataStream, blockInfo.uncompressedSize);
-                                break;
-                            }
-                            //case 4:LZHAM?
+                        default: //None
+                        {
+                            bundleReader.BaseStream.CopyTo(dataStream, blockInfo.compressedSize);
+                            break;
+                        }
+                        case 1: //LZMA
+                        {
+                            SevenZipHelper.StreamDecompress(bundleReader.BaseStream, dataStream, blockInfo.compressedSize, blockInfo.uncompressedSize);
+                            break;
+                        }
+                        case 2: //LZ4
+                        case 3: //LZ4HC
+                        {
+                            var lz4Stream = new Lz4DecoderStream(bundleReader.BaseStream, blockInfo.compressedSize);
+                            lz4Stream.CopyTo(dataStream, blockInfo.uncompressedSize);
+                            break;
+                        }
+                        //case 4:LZHAM?
                     }
                 }
                 dataStream.Position = 0;

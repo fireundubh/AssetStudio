@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using AssetStudio.Extensions;
+using AssetStudio.StudioClasses;
 
 namespace AssetStudio
 {
@@ -10,9 +7,9 @@ namespace AssetStudio
     {
         public byte m_Enabled;
 
-        protected Behaviour(AssetPreloadData preloadData) : base(preloadData)
+        protected Behaviour(ObjectReader reader) : base(reader)
         {
-            m_Enabled = reader.ReadByte();
+            this.m_Enabled = reader.ReadByte();
             reader.AlignStream(4);
         }
     }

@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using AssetStudio.Extensions;
+using AssetStudio.StudioClasses;
 
 namespace AssetStudio
 {
@@ -10,9 +7,9 @@ namespace AssetStudio
     {
         public string m_Name;
 
-        public NamedObject(AssetPreloadData preloadData) : base(preloadData)
+        public NamedObject(ObjectReader reader) : base(reader)
         {
-            m_Name = reader.ReadAlignedString();
+            this.m_Name = reader.ReadAlignedString();
         }
     }
 }
