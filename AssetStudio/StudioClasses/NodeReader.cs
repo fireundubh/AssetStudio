@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
@@ -20,7 +19,7 @@ namespace AssetStudio.StudioClasses
             {
                 object value = TypeReader.ReadAlignedPrimitiveValue(reader, typeSig);
 
-                CreateValueNode(rootNode, typeDef, typeSig, name, value, false, isArray, arrayIndex, out TreeNode node);
+                NodeHelper.CreateValueNode(rootNode, typeDef, typeSig, name, value, false, isArray, arrayIndex, out TreeNode node);
 
                 yield return node;
                 yield break;
@@ -31,37 +30,23 @@ namespace AssetStudio.StudioClasses
             {
                 string value = reader.ReadAlignedString();
 
-                CreateValueNode(rootNode, typeDef, typeSig, name, string.Concat("\"", value, "\""), false, isArray, arrayIndex, out TreeNode node);
+                NodeHelper.CreateValueNode(rootNode, typeDef, typeSig, name, string.Concat("\"", value, "\""), false, isArray, arrayIndex, out TreeNode node);
 
                 yield return node;
-                yield break;
-            }
-
-            // TODO: add type support
-            if (typeDef.FullName == "UnityEngine.Font")
-            {
-                LogWarn($"typeSig.FullName == \"{typeSig.FullName}\"");
-                yield break;
-            }
-
-            // TODO: add type support
-            if (typeDef.FullName == "UnityEngine.GUIStyle")
-            {
-                LogWarn($"typeSig.FullName == \"{typeSig.FullName}\"");
                 yield break;
             }
 
             // TODO: add type support, or okay to skip?
             if (typeSig.FullName == "System.Object")
             {
-                LogWarn("typeSig.FullName == \"System.Object\"");
+                LogWarn(string.Format("typeSig.FullName = {0}, name = {1}", typeSig.FullName, name));
                 yield break;
             }
 
             // TODO: add type support, or okay to skip?
             if (typeDef.IsDelegate)
             {
-                LogWarn("typeDef.IsDelegate");
+                LogWarn(string.Format("typeDef.IsDelegate: typeSig.FullName = {0}, name = {1}", typeSig.FullName, name));
                 yield break;
             }
 
@@ -102,9 +87,11 @@ namespace AssetStudio.StudioClasses
             {
                 PPtr pptr = reader.ReadPPtr();
 
-                CreateValueNode(rootNode, typeDef, typeSig, name, pptr.ID, false, isArray, arrayIndex, out TreeNode node);
+                NodeHelper.CreatePointerNode(rootNode, typeDef, name, pptr);
 
-                yield return node;
+//                CreateValueNode(rootNode, typeDef, typeSig, name, pptr.ID, false, isArray, arrayIndex, out TreeNode node);
+
+//                yield return node;
                 yield break;
             }
 
@@ -113,7 +100,7 @@ namespace AssetStudio.StudioClasses
             {
                 uint value = reader.ReadUInt32();
 
-                CreateValueNode(rootNode, typeDef, typeSig, name, value, isRoot, isArray, arrayIndex, out TreeNode node);
+                NodeHelper.CreateValueNode(rootNode, typeDef, typeSig, name, value, isRoot, isArray, arrayIndex, out TreeNode node);
 
                 yield return node;
                 yield break;
@@ -130,7 +117,7 @@ namespace AssetStudio.StudioClasses
             {
                 float[] value = reader.ReadSingleArray(4);
 
-                CreateValueNode(rootNode, typeDef, typeSig, name, value, isRoot, isArray, arrayIndex, out TreeNode node);
+                NodeHelper.CreateValueNode(rootNode, typeDef, typeSig, name, value, isRoot, isArray, arrayIndex, out TreeNode node);
 
                 yield return node;
                 yield break;
@@ -141,7 +128,7 @@ namespace AssetStudio.StudioClasses
             {
                 int value = reader.ReadInt32();
 
-                CreateValueNode(rootNode, typeDef, typeSig, name, value, isRoot, isArray, arrayIndex, out TreeNode node);
+                NodeHelper.CreateValueNode(rootNode, typeDef, typeSig, name, value, isRoot, isArray, arrayIndex, out TreeNode node);
 
                 yield return node;
                 yield break;
@@ -163,7 +150,7 @@ namespace AssetStudio.StudioClasses
                     reader.Position += 168;
                 }
 
-                CreateKeyNode(rootNode, typeDef, typeSig, name, isRoot, isArray, arrayIndex, out TreeNode node);
+                NodeHelper.CreateKeyNode(rootNode, typeDef, typeSig, name, isRoot, isArray, arrayIndex, out TreeNode node);
 
                 yield return node;
                 yield break;
@@ -179,58 +166,22 @@ namespace AssetStudio.StudioClasses
                 int m_Top = reader.ReadInt32();
                 int m_Bottom = reader.ReadInt32();
 
-                CreateKeyNode(rootNode, typeDef, typeSig, name, isRoot, isArray, arrayIndex, out TreeNode node);
+                NodeHelper.CreateKeyNode(rootNode, typeDef, typeSig, name, isRoot, isArray, arrayIndex, out TreeNode node);
 
                 yield return node;
                 yield break;
             }
 
             // TypeReader equivalent: DumpClassOrValueType
-            if (!typeDef.IsClass && !typeDef.IsValueType)
+            if (typeDef.IsClass || typeDef.IsValueType)
             {
-                // TODO
-                LogWarn("!typeDef.IsClass && !typeDef.IsValueType");
-                yield break;
+                foreach (TreeNode node in DumpNodeObject(rootNode, reader, typeDef, name).AsEnumerable())
+                {
+                    yield return node;
+                }
             }
 
-            foreach (TreeNode node in DumpNodeObject(rootNode, reader, typeDef, name).AsEnumerable())
-            {
-                yield return node;
-            }
-        }
-
-        private static TreeNode BuildNode(string name, string nodeText, ElementType tag)
-        {
-            return new TreeNode
-            {
-                Name = name,
-                Text = nodeText,
-                Tag = tag
-            };
-        }
-
-        private static void CreateKeyNode(TreeNode rootNode, TypeDef typeDef, TypeSig typeSig, string name, bool isRoot, bool isArray, int arrayIndex, out TreeNode node)
-        {
-            string nodeText = !isArray ? string.Format("{0} {1}", typeDef.Name, name) : string.Format("[{0}] {1} {2}", arrayIndex, typeDef.Name, name);
-
-            node = BuildNode(name, nodeText, typeSig.ElementType);
-
-            if (!isRoot)
-            {
-                rootNode.Nodes.Add(node);
-            }
-        }
-
-        private static void CreateValueNode(TreeNode rootNode, TypeDef typeDef, TypeSig typeSig, string name, object value, bool isRoot, bool isArray, int arrayIndex, out TreeNode node)
-        {
-            string nodeText = !isArray ? string.Format("{0} {1} = {2}", typeDef.Name, name, value) : string.Format("[{0}] {1} {2} = {3}", arrayIndex, typeDef.Name, name, value);
-
-            node = BuildNode(name, nodeText, typeSig.ElementType);
-
-            if (!isRoot)
-            {
-                rootNode.Nodes.Add(node);
-            }
+            LogWarn(string.Format("Conditions not met. typeDef.FullName = {0}, name = {1}", typeDef.FullName, name));
         }
 
         private static IEnumerator<TreeNode> NodeDumpArray(TreeNode rootNode, ObjectReader reader, TypeDef type, TypeSig typeSig, string name)
@@ -245,7 +196,7 @@ namespace AssetStudio.StudioClasses
 
             string nodeText = string.Format("{0} {1}", typeSig.TypeName, name);
 
-            TreeNode arrayNode = BuildNode(name, nodeText, typeSig.ElementType);
+            TreeNode arrayNode = NodeHelper.BuildNode(name, nodeText, typeSig.ElementType);
 
             if (!isRoot)
             {
@@ -273,7 +224,7 @@ namespace AssetStudio.StudioClasses
             {
                 string nodeText = $"{typeDef.Name} {name}";
 
-                TreeNode node = BuildNode(name, nodeText, typeDef.ToTypeSig().ElementType);
+                TreeNode node = NodeHelper.BuildNode(name, nodeText, typeDef.ToTypeSig().ElementType);
 
                 if (!isRoot)
                 {

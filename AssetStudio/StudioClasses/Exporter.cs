@@ -154,22 +154,6 @@ namespace AssetStudio
             return true;
         }
 
-        public static void WriteMonoText(ObjectReader reader, string exportFullPath)
-        {
-            string str;
-
-            if (reader.serializedType?.m_Nodes != null)
-            {
-                str = reader.Dump();
-            }
-            else
-            {
-                str = ScriptHelper.GetScriptString(reader);
-            }
-
-            File.WriteAllText(exportFullPath, str);
-        }
-
         public static string GetExportMonoScriptPath(ObjectReader reader, string exportPath, string fileExtension = ".txt")
         {
             var m_Script = new MonoScript(reader);
@@ -201,34 +185,6 @@ namespace AssetStudio
             }
 
             return Path.Combine(exportPath, m_Script.m_Namespace, m_Script.m_ClassName, string.Concat(reader.exportName, fileExtension));
-        }
-
-        public static bool ExportMonoScript(ObjectReader reader, string exportPath)
-        {
-            string exportFullName = GetExportMonoScriptPath(reader, exportPath);
-
-            if (ExportFileExists(exportFullName))
-            {
-                return false;
-            }
-
-            WriteMonoText(reader, exportFullName);
-
-            return true;
-        }
-
-        public static bool ExportMonoBehaviour(ObjectReader reader, string exportPath)
-        {
-            string exportFullName = GetExportMonoBehaviourPath(reader, exportPath);
-
-            if (ExportFileExists(exportFullName))
-            {
-                return false;
-            }
-
-            WriteMonoText(reader, exportFullName);
-
-            return true;
         }
 
         public static bool ExportFont(ObjectReader reader, string exportPath)

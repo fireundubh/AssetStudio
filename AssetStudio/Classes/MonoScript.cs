@@ -38,7 +38,7 @@ namespace AssetStudio
             {
                 var rootNode = new TreeNode();
 
-                rootNode.Nodes.Add(scriptKey, Resources.PPtr_MonoScript);
+                rootNode.Nodes.Add(scriptKey, string.Format("PPtr<MonoScript> {0}", scriptKey));
 
                 if (this.version[0] > 3 || this.version[0] == 3 && this.version[1] >= 4)
                 {

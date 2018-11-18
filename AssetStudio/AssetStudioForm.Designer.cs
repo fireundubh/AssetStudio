@@ -629,6 +629,7 @@ namespace AssetStudio
             this.monoPreviewBox.Name = "monoPreviewBox";
             this.monoPreviewBox.Size = new System.Drawing.Size(838, 690);
             this.monoPreviewBox.TabIndex = 10;
+            this.monoPreviewBox.ShowNodeToolTips = true;
             this.monoPreviewBox.Visible = false;
             //
             // glControl1

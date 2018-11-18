@@ -227,12 +227,6 @@ void main()
   <data name="PPtr_FileID_Format" xml:space="preserve">
     <value>int m_FileID = {0}</value>
   </data>
-  <data name="PPtr_GameObject" xml:space="preserve">
-    <value>PPtr&lt;GameObject&gt; m_GameObject</value>
-  </data>
-  <data name="PPtr_MonoScript" xml:space="preserve">
-    <value>PPtr&lt;MonoScript&gt; m_Script</value>
-  </data>
   <data name="PPtr_PathID_Format" xml:space="preserve">
     <value>int64 m_PathID = {0}</value>
   </data>
@@ -256,5 +250,8 @@ void main()
   </data>
   <data name="Exporter_FileExistsPrompt_Caption" xml:space="preserve">
     <value>Replace or Skip Files</value>
+  </data>
+  <data name="PPtr_Generic_Format" xml:space="preserve">
+    <value>PPtr&lt;{0}&gt; {1}</value>
   </data>
 </root>

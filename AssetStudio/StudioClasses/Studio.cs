@@ -678,11 +678,11 @@ namespace AssetStudio
                                     ExportAsset(reader, exportPath, Exporter.ExportTextAsset, ref exportedCount);
                                     break;
                                 case ClassIDType.MonoScript:
-                                    ExportAsset(reader, exportPath, Exporter.ExportMonoScript, ref exportedCount);
-                                    break;
+//                                    ExportAsset(reader, exportPath, Exporter.ExportMonoScript, ref exportedCount);
+                                    goto default;
                                 case ClassIDType.MonoBehaviour:
-                                    ExportAsset(reader, exportPath, Exporter.ExportMonoBehaviour, ref exportedCount);
-                                    break;
+//                                    ExportAsset(reader, exportPath, Exporter.ExportMonoBehaviour, ref exportedCount);
+                                    goto default;
                                 case ClassIDType.Font:
                                     ExportAsset(reader, exportPath, Exporter.ExportFont, ref exportedCount);
                                     break;

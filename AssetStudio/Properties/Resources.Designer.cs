@@ -317,20 +317,11 @@ namespace AssetStudio.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to PPtr&lt;GameObject&gt; m_GameObject.
+        ///   Looks up a localized string similar to PPtr&lt;{0}&gt; {1}.
         /// </summary>
-        internal static string PPtr_GameObject {
+        internal static string PPtr_Generic_Format {
             get {
-                return ResourceManager.GetString("PPtr_GameObject", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to PPtr&lt;MonoScript&gt; m_Script.
-        /// </summary>
-        internal static string PPtr_MonoScript {
-            get {
-                return ResourceManager.GetString("PPtr_MonoScript", resourceCulture);
+                return ResourceManager.GetString("PPtr_Generic_Format", resourceCulture);
             }
         }
         

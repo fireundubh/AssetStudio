@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
+using AssetStudio.Properties;
+using dnlib.DotNet;
 
 namespace AssetStudio.StudioClasses
 {
@@ -38,6 +40,55 @@ namespace AssetStudio.StudioClasses
             return strings;
         }
 
+        public static void CreatePointerNode(TreeNode rootNode, string typeName, string pointerName, PPtr pointerObject)
+        {
+            rootNode.Nodes.Add(pointerName, string.Format(Resources.PPtr_Generic_Format, typeName, pointerName));
+            NodeHelper.AddKeyedChildNode(rootNode, pointerName, ref pointerObject.m_FileID, Resources.PPtr_FileID_Format);
+            NodeHelper.AddKeyedChildNode(rootNode, pointerName, ref pointerObject.m_PathID, Resources.PPtr_PathID_Format);
+        }
+
+        public static void CreatePointerNode(TreeNode rootNode, TypeDef typeDef, string pointerName, PPtr pointerObject)
+        {
+            rootNode.Nodes.Add(pointerName, string.Format(Resources.PPtr_Generic_Format, typeDef.Name, pointerName));
+            NodeHelper.AddKeyedChildNode(rootNode, pointerName, ref pointerObject.m_FileID, Resources.PPtr_FileID_Format);
+            NodeHelper.AddKeyedChildNode(rootNode, pointerName, ref pointerObject.m_PathID, Resources.PPtr_PathID_Format);
+        }
+
+        public static TreeNode BuildNode(string name, string nodeText, ElementType tag)
+        {
+            return new TreeNode
+            {
+                Name = name,
+                Text = nodeText,
+                Tag = tag,
+                ToolTipText = name
+            };
+        }
+
+        public static void CreateKeyNode(TreeNode rootNode, TypeDef typeDef, TypeSig typeSig, string name, bool isRoot, bool isArray, int arrayIndex, out TreeNode node)
+        {
+            string nodeText = !isArray ? string.Format("{0} {1}", typeDef.Name, name) : string.Format("[{0}] {1} {2}", arrayIndex, typeDef.Name, name);
+
+            node = BuildNode(name, nodeText, typeSig.ElementType);
+
+            if (!isRoot)
+            {
+                rootNode.Nodes.Add(node);
+            }
+        }
+
+        public static void CreateValueNode(TreeNode rootNode, TypeDef typeDef, TypeSig typeSig, string name, object value, bool isRoot, bool isArray, int arrayIndex, out TreeNode node)
+        {
+            string nodeText = !isArray ? string.Format("{0} {1} = {2}", typeDef.Name, name, value) : string.Format("[{0}] {1} {2} = {3}", arrayIndex, typeDef.Name, name, value);
+
+            node = BuildNode(name, nodeText, typeSig.ElementType);
+
+            if (!isRoot)
+            {
+                rootNode.Nodes.Add(node);
+            }
+        }
+
         public static TreeNode AddKeyedNode<T>(TreeNode rootNode, ref T nodeText, string nodeTextFormat = null)
         {
             // TODO: confusing var names
@@ -54,7 +105,9 @@ namespace AssetStudio.StudioClasses
                 return parentNode.Nodes.Add(string.Concat(parentKey, ".", nameof(childText)), string.Format(childTextFormat, childText));
             }
 
-            throw new NullReferenceException(string.Format("Call to AddKeyedChildNode could not find parentNode with key {0}", parentKey));
+            Logging.LoggingHelper.LogWarn(string.Format("Call to AddKeyedChildNode could not find parentNode with key {0}", parentKey));
+
+            return rootNode.Nodes.Add(string.Concat(parentKey, ".", nameof(childText)), string.Format(childTextFormat, childText));
         }
     }
 }

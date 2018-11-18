@@ -20,15 +20,11 @@ namespace AssetStudio
             {
                 var rootNode = new TreeNode();
 
-                rootNode.Nodes.Add(gameObjectKey, Resources.PPtr_GameObject);
-                NodeHelper.AddKeyedChildNode(rootNode, gameObjectKey, ref this.m_GameObject.m_FileID, Resources.PPtr_FileID_Format);
-                NodeHelper.AddKeyedChildNode(rootNode, gameObjectKey, ref this.m_GameObject.m_PathID, Resources.PPtr_PathID_Format);
+                NodeHelper.CreatePointerNode(rootNode, "GameObject", gameObjectKey, this.m_GameObject);
 
                 NodeHelper.AddKeyedNode(rootNode, ref this.m_Enabled, Resources.Behaviour_Enabled_Format);
 
-                rootNode.Nodes.Add(scriptKey, Resources.PPtr_MonoScript);
-                NodeHelper.AddKeyedChildNode(rootNode, scriptKey, ref this.m_Script.m_FileID, Resources.PPtr_FileID_Format);
-                NodeHelper.AddKeyedChildNode(rootNode, scriptKey, ref this.m_Script.m_PathID, Resources.PPtr_PathID_Format);
+                NodeHelper.CreatePointerNode(rootNode, "MonoScript", scriptKey, this.m_Script);
 
                 NodeHelper.AddKeyedNode(rootNode, ref this.m_Name, Resources.NamedObject_Name_Format);
 
