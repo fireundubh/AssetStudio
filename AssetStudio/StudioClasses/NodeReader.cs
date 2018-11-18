@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
@@ -39,14 +40,14 @@ namespace AssetStudio.StudioClasses
             // TODO: add type support, or okay to skip?
             if (typeSig.FullName == "System.Object")
             {
-                LogWarn(string.Format("typeSig.FullName = {0}, name = {1}", typeSig.FullName, name));
+                LogInfo(string.Format("typeDef.FullName = {0}, name = {1}, readerPosition = {2}", typeDef.FullName, name, reader.Position));
                 yield break;
             }
 
             // TODO: add type support, or okay to skip?
             if (typeDef.IsDelegate)
             {
-                LogWarn(string.Format("typeDef.IsDelegate: typeSig.FullName = {0}, name = {1}", typeSig.FullName, name));
+                LogInfo(string.Format("IsDelegate. typeDef.FullName = {0}, name = {1}, readerPosition = {2}", typeDef.FullName, name, reader.Position));
                 yield break;
             }
 
@@ -67,7 +68,7 @@ namespace AssetStudio.StudioClasses
                 if (genericInstSig.GenericArguments.Count != 1)
                 {
                     // TODO
-                    LogWarn("genericInstSig.GenericArguments.Count != 1");
+                    LogInfo("genericInstSig.GenericArguments.Count != 1");
                     yield break;
                 }
 
@@ -83,15 +84,13 @@ namespace AssetStudio.StudioClasses
             }
 
             // TypeReader equivalent: GetUnityObjectPPtrValue
-            if (!isRoot && ScriptHelper.IsAssignFromUnityObject(typeDef))
+            if (!isRoot  && ScriptHelper.IsAssignFromUnityObject(typeDef))
             {
                 PPtr pptr = reader.ReadPPtr();
 
-                NodeHelper.CreatePointerNode(rootNode, typeDef, name, pptr);
+                NodeHelper.CreatePointerNode(rootNode, typeDef, name, pptr, out TreeNode node);
 
-//                CreateValueNode(rootNode, typeDef, typeSig, name, pptr.ID, false, isArray, arrayIndex, out TreeNode node);
-
-//                yield return node;
+                yield return node;
                 yield break;
             }
 
@@ -108,7 +107,7 @@ namespace AssetStudio.StudioClasses
 
             if (!isRoot && !ScriptHelper.IsEngineType(typeDef) && !typeDef.IsSerializable)
             {
-                LogWarn("!isRoot && !Studio.IsEngineType(typeDef) && !typeDef.IsSerializable");
+                LogInfo("!isRoot && !Studio.IsEngineType(typeDef) && !typeDef.IsSerializable");
                 yield break;
             }
 
@@ -159,8 +158,6 @@ namespace AssetStudio.StudioClasses
             // TypeReader equivalent: ReadRectOffsetName
             if (typeDef.FullName == "UnityEngine.RectOffset")
             {
-                LogWarn($"typeDef.FullName == \"{typeDef.FullName}\"");
-
                 int m_Left = reader.ReadInt32();
                 int m_Right = reader.ReadInt32();
                 int m_Top = reader.ReadInt32();
@@ -175,13 +172,16 @@ namespace AssetStudio.StudioClasses
             // TypeReader equivalent: DumpClassOrValueType
             if (typeDef.IsClass || typeDef.IsValueType)
             {
-                foreach (TreeNode node in DumpNodeObject(rootNode, reader, typeDef, name).AsEnumerable())
+                NodeHelper.CreateKeyNode(rootNode, typeDef, typeSig, name, isRoot, isArray, arrayIndex, out TreeNode parentNode);
+                yield return parentNode;
+
+                foreach (TreeNode node in DumpNodeObject(parentNode, reader, typeDef, name).AsEnumerable())
                 {
                     yield return node;
                 }
             }
 
-            LogWarn(string.Format("Conditions not met. typeDef.FullName = {0}, name = {1}", typeDef.FullName, name));
+            LogInfo(string.Format("Not handled, maybe. typeDef.FullName = {0}, name = {1}, readerPosition = {2}", typeDef.FullName, name, reader.Position));
         }
 
         private static IEnumerator<TreeNode> NodeDumpArray(TreeNode rootNode, ObjectReader reader, TypeDef type, TypeSig typeSig, string name)
@@ -206,6 +206,11 @@ namespace AssetStudio.StudioClasses
             yield return arrayNode;
 
             TreeNode arraySizeNode = NodeHelper.AddKeyedChildNode(arrayNode, name, ref size, "int size = {0}");
+
+            if (size > 1000)
+            {
+                throw new NotImplementedException();
+            }
 
             for (var i = 0; i < size; i++)
             {

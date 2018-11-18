@@ -190,6 +190,7 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Extensions\EnumeratorExtensions.cs" />
+    <Compile Include="Extensions\TreeNodeCollectionExtensions.cs" />
     <Compile Include="Extensions\UIExtensions.cs" />
     <Compile Include="Extensions\WrappedEnumerator.cs" />
     <Compile Include="Logging\LoggingHelper.cs" />

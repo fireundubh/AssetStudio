@@ -2049,7 +2049,6 @@ namespace AssetStudio
 
             this.FMODreset();
 
-            ScriptHelper.moduleLoaded = false;
             ScriptHelper.LoadedModuleDic.Clear();
             Studio.treeNodeCollection.Clear();
             Studio.treeNodeDictionary.Clear();

@@ -20,11 +20,11 @@ namespace AssetStudio
             {
                 var rootNode = new TreeNode();
 
-                NodeHelper.CreatePointerNode(rootNode, "GameObject", gameObjectKey, this.m_GameObject);
+                NodeHelper.CreatePointerNode(rootNode, "GameObject", gameObjectKey, this.m_GameObject, out TreeNode _);
 
                 NodeHelper.AddKeyedNode(rootNode, ref this.m_Enabled, Resources.Behaviour_Enabled_Format);
 
-                NodeHelper.CreatePointerNode(rootNode, "MonoScript", scriptKey, this.m_Script);
+                NodeHelper.CreatePointerNode(rootNode, "MonoScript", scriptKey, this.m_Script, out TreeNode _);
 
                 NodeHelper.AddKeyedNode(rootNode, ref this.m_Name, Resources.NamedObject_Name_Format);
 

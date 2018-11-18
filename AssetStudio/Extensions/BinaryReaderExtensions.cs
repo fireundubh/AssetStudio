@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using AssetStudio.Logging;
 using AssetStudio.StudioClasses;
 using SharpDX;
 
@@ -9,6 +10,20 @@ namespace AssetStudio.Extensions
 {
     public static class BinaryReaderExtensions
     {
+        public static string ReadHexByteArray(this BinaryReader reader, int length, bool resetPosition = true)
+        {
+            long savedPosition = reader.BaseStream.Position;
+
+            byte[] bytes = reader.ReadBytes(length);
+
+            if (resetPosition)
+            {
+                reader.BaseStream.Position = savedPosition;
+            }
+
+            return BitConverter.ToString(bytes).Replace("-", "");
+        }
+
         public static void AlignStream(this BinaryReader reader)
         {
             long pos = reader.BaseStream.Position;

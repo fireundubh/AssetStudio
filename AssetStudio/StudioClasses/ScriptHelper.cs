@@ -4,13 +4,13 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using AssetStudio.Extensions;
+using AssetStudio.Logging;
 using dnlib.DotNet;
 
 namespace AssetStudio.StudioClasses
 {
     public static class ScriptHelper
     {
-        public static bool moduleLoaded;
         public static Dictionary<string, ModuleDef> LoadedModuleDic = new Dictionary<string, ModuleDef>();
 
         public static ModuleContext moduleContext;
@@ -76,6 +76,8 @@ namespace AssetStudio.StudioClasses
         {
             treeView.Nodes.Clear();
 
+            TryToLoadModules();
+
             if (!isMonoBehaviour)
             {
                 AddNodes_MonoScript(treeView, reader);
@@ -88,28 +90,16 @@ namespace AssetStudio.StudioClasses
 
         private static void AddNodes_MonoScript(TreeView monoPreviewBox, ObjectReader reader)
         {
-            TryToLoadModules();
-
             var m_Script = new MonoScript(reader);
 
-            TreeNodeCollection nodes = m_Script.RootNode.Nodes;
-
-            foreach (TreeNode treeNode in nodes)
-            {
-                monoPreviewBox.Nodes.Add(treeNode);
-            }
+            monoPreviewBox.Nodes.AddRange(m_Script.RootNode.Nodes, monoPreviewBox);
         }
 
-        private static void AddNodes_MonoBehaviour(TreeView previewTree, ObjectReader reader, int indent = -1, bool isRoot = true)
+        private static void AddNodes_MonoBehaviour(TreeView previewTree, ObjectReader reader)
         {
-            TryToLoadModules();
-
             var m_MonoBehaviour = new MonoBehaviour(reader);
 
-            foreach (TreeNode node in m_MonoBehaviour.RootNode.Nodes)
-            {
-                previewTree.Nodes.Add(node);
-            }
+            previewTree.Nodes.AddRange(m_MonoBehaviour.RootNode.Nodes, previewTree);
 
             if (!m_MonoBehaviour.m_Script.TryGet(out ObjectReader script))
             {
@@ -120,13 +110,7 @@ namespace AssetStudio.StudioClasses
 
             TreeNode scriptNode = previewTree.Nodes.Find("m_Script", true).FirstOrDefault();
 
-            if (scriptNode != null)
-            {
-                foreach (TreeNode node in m_Script.RootNode.Nodes["m_Script"].Nodes)
-                {
-                    scriptNode.Nodes.Add(node);
-                }
-            }
+            scriptNode?.Nodes.AddRange(m_Script.RootNode.Nodes["m_Script"].Nodes, previewTree);
 
             if (!LoadedModuleDic.TryGetValue(m_Script.m_AssemblyName, out ModuleDef module))
             {
@@ -140,7 +124,11 @@ namespace AssetStudio.StudioClasses
                 return;
             }
 
-            IEnumerator<TreeNode> nodeEnumerator = NodeReader.DumpNode(null, reader, typeDef.ToTypeSig(), null);
+            TypeSig typeSig = typeDef.ToTypeSig();
+
+            LoggingHelper.LogInfo(string.Format("typeDef.FullName = {0}, readerPosition = {1}", typeDef.FullName, reader.Position));
+
+            IEnumerator<TreeNode> nodeEnumerator = NodeReader.DumpNode(null, reader, typeSig, null);
 
             if (!nodeEnumerator.MoveNext())
             {
@@ -158,9 +146,12 @@ namespace AssetStudio.StudioClasses
 
             // visit each node as needed, or just iterate to fill tree
             // node.Parent == null check is possibly not needed
-            foreach (TreeNode node in nodeEnumerator.AsEnumerable().Where(node => node.Parent == null))
+            foreach (TreeNode node in nodeEnumerator.AsEnumerable())
             {
-                previewTree.Nodes.Add(node);
+                if (node.Parent == null)
+                {
+                    previewTree.Nodes.Add(node);
+                }
             }
         }
 

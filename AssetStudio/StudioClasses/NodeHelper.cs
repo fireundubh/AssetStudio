@@ -40,16 +40,16 @@ namespace AssetStudio.StudioClasses
             return strings;
         }
 
-        public static void CreatePointerNode(TreeNode rootNode, string typeName, string pointerName, PPtr pointerObject)
+        public static void CreatePointerNode(TreeNode rootNode, string typeName, string pointerName, PPtr pointerObject, out TreeNode node)
         {
-            rootNode.Nodes.Add(pointerName, string.Format(Resources.PPtr_Generic_Format, typeName, pointerName));
+            node = rootNode.Nodes.Add(pointerName, string.Format(Resources.PPtr_Generic_Format, typeName, pointerName));
             NodeHelper.AddKeyedChildNode(rootNode, pointerName, ref pointerObject.m_FileID, Resources.PPtr_FileID_Format);
             NodeHelper.AddKeyedChildNode(rootNode, pointerName, ref pointerObject.m_PathID, Resources.PPtr_PathID_Format);
         }
 
-        public static void CreatePointerNode(TreeNode rootNode, TypeDef typeDef, string pointerName, PPtr pointerObject)
+        public static void CreatePointerNode(TreeNode rootNode, TypeDef typeDef, string pointerName, PPtr pointerObject, out TreeNode node)
         {
-            rootNode.Nodes.Add(pointerName, string.Format(Resources.PPtr_Generic_Format, typeDef.Name, pointerName));
+            node = rootNode.Nodes.Add(pointerName, string.Format(Resources.PPtr_Generic_Format, typeDef.Name, pointerName));
             NodeHelper.AddKeyedChildNode(rootNode, pointerName, ref pointerObject.m_FileID, Resources.PPtr_FileID_Format);
             NodeHelper.AddKeyedChildNode(rootNode, pointerName, ref pointerObject.m_PathID, Resources.PPtr_PathID_Format);
         }
