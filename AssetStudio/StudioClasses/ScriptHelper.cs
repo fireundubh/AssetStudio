@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 using AssetStudio.Extensions;
 using dnlib.DotNet;
@@ -227,106 +225,28 @@ namespace AssetStudio.StudioClasses
         {
             switch (typeDef.FullName)
             {
-                case "UnityEngine.Vector2":
-                case "UnityEngine.Vector3":
-                case "UnityEngine.Vector4":
-                case "UnityEngine.Rect":
-                case "UnityEngine.Quaternion":
-                case "UnityEngine.Matrix4x4":
+                case "UnityEngine.AnimationCurve":
+                case "UnityEngine.Bounds":
+                case "UnityEngine.BoundsInt":
                 case "UnityEngine.Color":
                 case "UnityEngine.Color32":
-                case "UnityEngine.LayerMask":
-                case "UnityEngine.AnimationCurve":
                 case "UnityEngine.Gradient":
-                case "UnityEngine.RectOffset":
                 case "UnityEngine.GUIStyle":
+                case "UnityEngine.LayerMask":
+                case "UnityEngine.Matrix4x4":
+                case "UnityEngine.Quaternion":
+                case "UnityEngine.Rect":
+                case "UnityEngine.RectInt":
+                case "UnityEngine.RectOffset":
+                case "UnityEngine.Vector2":
+                case "UnityEngine.Vector2Int":
+                case "UnityEngine.Vector3":
+                case "UnityEngine.Vector3Int":
+                case "UnityEngine.Vector4":
                     return true;
                 default:
                     return false;
             }
-        }
-
-        public static string GetScriptString(ObjectReader reader, int indent = -1, bool isRoot = true)
-        {
-            TryToLoadModules();
-
-            var strings = new List<string>();
-
-            ObjectReader script = reader;
-
-            if (reader.type == ClassIDType.MonoBehaviour)
-            {
-                var m_MonoBehaviour = new MonoBehaviour(reader);
-
-                strings.AddRange(m_MonoBehaviour.RootNodeText);
-
-                if (!m_MonoBehaviour.m_Script.TryGet(out script))
-                {
-                    return string.Join(Environment.NewLine, strings);
-                }
-            }
-
-            var m_Script = new MonoScript(script);
-
-            List<string> scriptHeader = m_Script.RootNodeText;
-
-            if (reader.type == ClassIDType.MonoBehaviour)
-            {
-                // remove PPtr name
-                scriptHeader.RemoveAt(0);
-
-                // remove newline
-                scriptHeader.RemoveAt(scriptHeader.Count - 1);
-            }
-
-            switch (reader.type)
-            {
-                case ClassIDType.MonoBehaviour:
-                    strings.InsertRange(strings.Count > 1 ? strings.Count - 2 : 0, scriptHeader);
-                    break;
-                case ClassIDType.MonoScript:
-                    strings.AddRange(scriptHeader);
-                    return string.Join(Environment.NewLine, strings);
-            }
-
-            if (!LoadedModuleDic.TryGetValue(m_Script.m_AssemblyName, out ModuleDef module))
-            {
-                return string.Join(Environment.NewLine, strings);
-            }
-
-            TypeDef typeDef = GetTypeDefOfMonoScript(module, m_Script.BasePath);
-
-            if (typeDef == null)
-            {
-                return string.Join(Environment.NewLine, strings);
-            }
-
-            var stringBuilder = new StringBuilder();
-            stringBuilder.Append(string.Join(Environment.NewLine, strings).Replace(Environment.NewLine + Environment.NewLine, Environment.NewLine));
-
-            strings.Clear();
-
-            try
-            {
-                TypeReader.DumpType(typeDef.ToTypeSig(), stringBuilder, reader, null, indent, isRoot);
-            }
-            catch (Exception e)
-            {
-                Debug.WriteLine(e.Message);
-
-                if (reader.type != ClassIDType.MonoBehaviour)
-                {
-                    return stringBuilder.ToString();
-                }
-
-                stringBuilder.Clear();
-
-                var m_MonoBehaviour = new MonoBehaviour(reader);
-
-                stringBuilder.Append(string.Join(Environment.NewLine, m_MonoBehaviour.RootNodeText));
-            }
-
-            return stringBuilder.ToString();
         }
     }
 }
